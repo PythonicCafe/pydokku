@@ -6,11 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
+from .ssh import KEY_TYPES
 from .utils import parse_bool, parse_timestamp
 
 REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
 REGEXP_HEADER = re.compile("^=====> ", flags=re.MULTILINE)
-REGEXP_SSH_KEY = re.compile('([^=]+)="([^ ]+)"')
+REGEXP_SSH_PUBLIC_KEY = re.compile(f"ssh-({'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+( [^@]+@[^@]+)?")
 
 
 @dataclass
@@ -143,30 +144,49 @@ class ConfigPlugin(DokkuPlugin):
         return stdout
 
 
+@dataclass
+class SSHKey:
+    fingerprint: str
+    name: str
+    options: dict
+
+
 class SSHKeysPlugin(DokkuPlugin):
     name = "ssh-keys"
 
     def list(self) -> List[dict]:
-        # We don't return a dataclass here since I don't know if there are different options Dokku could add and
-        # there's no way to create a ssh key with these options For some weird reason, using `dokku ssh-keys:list
-        # --format=json` outputs nothing even when there are keys
-        _, stdout, stderr = self._execute("list", check=False)
+        _, stdout, stderr = self._execute("list", ["--format", "--json"], check=False)
         if "No public keys found" in stderr:
             return []
-        lines = stdout.strip().splitlines()
         result = []
-        for line in lines:
-            fingerprint, rest = line.split(maxsplit=1)
-            result.append(
-                {
-                    "fingerprint": fingerprint,
-                    **{key.strip().lower(): value for key, value in REGEXP_SSH_KEY.findall(rest)},
-                }
-            )
+        for item in json.loads(stdout):
+            name, fingerprint = item.pop("name"), item.pop("fingerprint")
+            result.append(SSHKey(name=name, fingerprint=fingerprint, options=item))
         return result
 
-    # TODO: implement ssh-keys:add <name> [/path/to/key]                   Add a new public key by pipe or path
-    # TODO: implement ssh-keys:remove [--fingerprint fingerprint|<name>]   Remove SSH public key by name
+    def add(self, name: str, key: str | Path):
+        """Add a SSH key to Dokku
+
+        `key` can be the public key itself or the path to the public key file
+        """
+        key_content = None
+        if isinstance(key, str):
+            if REGEXP_SSH_PUBLIC_KEY.match(key):  # key is the actual string
+                key_content = key
+            else:
+                key = Path(key)
+        if isinstance(key, Path):
+            with key.open() as fobj:
+                key_content = fobj.read()
+        if key_content is None:
+            raise ValueError(f"Unknown key type: {repr(key)}")
+        _, stdout, _ = self._execute("add", [name], stdin=key_content, sudo=True)
+        return stdout
+
+    def remove(self, name: str, is_fingerprint=False) -> str:
+        _, stdout, _ = self._execute("remove", ["--fingerprint", name] if is_fingerprint else [name], sudo=True)
+        return stdout
+
 
 class StoragePlugin(DokkuPlugin):
     name = "storage"
