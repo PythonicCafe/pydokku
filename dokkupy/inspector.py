@@ -6,30 +6,33 @@ from pathlib import Path
 
 from dotenv import dotenv_values  # TODO: remove this dependency?
 
-
 # Env vars as in `/usr/bin/dokku`
 DOKKU_LIB_ROOT = Path(os.environ.get("DOKKU_LIB_ROOT", "/var/lib/dokku/"))
 DOKKU_ROOT = Path(os.environ.get("DOKKU_ROOT", "~dokku")).expanduser()
-#export PLUGIN_PATH=${PLUGIN_PATH:="$DOKKU_LIB_ROOT/plugins"}
-#export PLUGIN_AVAILABLE_PATH=${PLUGIN_AVAILABLE_PATH:="$PLUGIN_PATH/available"}
-#export PLUGIN_ENABLED_PATH=${PLUGIN_ENABLED_PATH:="$PLUGIN_PATH/enabled"}
-#export PLUGIN_CORE_PATH=${PLUGIN_CORE_PATH:="$DOKKU_LIB_ROOT/core-plugins"}
-#export PLUGIN_CORE_AVAILABLE_PATH=${PLUGIN_CORE_AVAILABLE_PATH:="$PLUGIN_CORE_PATH/available"}
-#export PLUGIN_CORE_ENABLED_PATH=${PLUGIN_CORE_ENABLED_PATH:="$PLUGIN_CORE_PATH/enabled"}
+# export PLUGIN_PATH=${PLUGIN_PATH:="$DOKKU_LIB_ROOT/plugins"}
+# export PLUGIN_AVAILABLE_PATH=${PLUGIN_AVAILABLE_PATH:="$PLUGIN_PATH/available"}
+# export PLUGIN_ENABLED_PATH=${PLUGIN_ENABLED_PATH:="$PLUGIN_PATH/enabled"}
+# export PLUGIN_CORE_PATH=${PLUGIN_CORE_PATH:="$DOKKU_LIB_ROOT/core-plugins"}
+# export PLUGIN_CORE_AVAILABLE_PATH=${PLUGIN_CORE_AVAILABLE_PATH:="$PLUGIN_CORE_PATH/available"}
+# export PLUGIN_CORE_ENABLED_PATH=${PLUGIN_CORE_ENABLED_PATH:="$PLUGIN_CORE_PATH/enabled"}
+
 
 def directory_size(path: Path):
     """Return directory (with all its contents, recursively) size in bytes"""
     return sum(child.stat().st_size for child in path.glob("**/*"))
 
+
 def read_env_file(filename: Path | str) -> dict:
     """Return env files as in `https://github.com/dokku/dokku/blob/master/plugins/config/environment.go`"""
     return dotenv_values(filename)
+
 
 def read_vhost_file(filename: Path | str) -> list[str]:
     """Return virtual hosts from VHOST file"""
     # TODO: mention the source dokku code that generates this file
     with Path(filename).open() as fobj:
         return [item.strip() for item in fobj.readlines()]
+
 
 def read_redirects_file(filename: Path | str) -> list[dict]:
     """Return redirects from REDIRECTS file"""
@@ -58,6 +61,7 @@ def parse_docker_options(filename: Path):
             else:
                 print(f"WARNING: line not processed {repr(line)}")
     return data
+
 
 class Dokku:
     """Interfaces with Dokku reading the files it creates"""

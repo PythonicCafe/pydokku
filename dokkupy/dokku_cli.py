@@ -4,7 +4,6 @@ from pathlib import Path
 from . import ssh
 from .plugins import AppsPlugin, ConfigPlugin, SSHKeysPlugin, StoragePlugin
 
-
 # TODO: transform each plugin into an attribute of Dokku class, so specific commands will be inside the plugin object
 # TODO: add docstrings in all the functions
 # TODO: implement CLI `dump` command (inspect the whole system and export a JSON). add options for filters
@@ -13,7 +12,11 @@ from .plugins import AppsPlugin, ConfigPlugin, SSHKeysPlugin, StoragePlugin
 
 def execute_command(command: list[str], stdin: str = None, check=True) -> str:
     process = subprocess.Popen(
-        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8",
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
     )
     if stdin is not None:
         process.stdin.write(stdin)
@@ -30,20 +33,26 @@ def execute_command(command: list[str], stdin: str = None, check=True) -> str:
 class Dokku:
     """Interfaces with Dokku using the `dokku` command"""
 
-    def __init__(self,
-        ssh_host: str = None, ssh_port: int = 22, ssh_private_key: Path | str = None, ssh_user: str = "dokku",
+    def __init__(
+        self,
+        ssh_host: str = None,
+        ssh_port: int = 22,
+        ssh_private_key: Path | str = None,
+        ssh_user: str = "dokku",
         ssh_key_password: str = None,
     ):
         self._cmd_prefix = []
         self.__files_to_delete = []
         if ssh_host:
             self.ssh_host, self.ssh_port, self.ssh_user = ssh_host, ssh_port, ssh_user
-            self.ssh_private_key = Path(ssh_private_key).expanduser().absolute() if ssh_private_key is not None else None
+            self.ssh_private_key = (
+                Path(ssh_private_key).expanduser().absolute() if ssh_private_key is not None else None
+            )
             if ssh_private_key is None:
-                raise ValueError(f"ssh_private_key must be provided to ensure the execution is non-interactive")
+                raise ValueError("ssh_private_key must be provided to ensure the execution is non-interactive")
             elif ssh.key_requires_password(self.ssh_private_key):
                 if ssh_key_password is None:
-                    raise ValueError(f"The SSH key password must be provided so the execution is non-interactive")
+                    raise ValueError("The SSH key password must be provided so the execution is non-interactive")
                 self.ssh_private_key = ssh.key_unlock(self.ssh_private_key, ssh_key_password)
                 self.__files_to_delete.append(self.ssh_private_key)
             self._cmd_prefix = ssh.command(

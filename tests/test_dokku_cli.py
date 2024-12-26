@@ -11,10 +11,12 @@ from dokkupy.dokku_cli import Dokku
 # TODO: implement tests for SSH (key without passphrase)
 # TODO: implement tests for SSH (key with passphrase)
 
+
 def test_version():
     dokku = Dokku()
     version = dokku.version()
     assert re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version) is not None
+
 
 def test_list_create_destroy_app():
     app_name = "test-app"
@@ -26,6 +28,7 @@ def test_list_create_destroy_app():
     assert apps_after[-1].name == app_name
     dokku.apps.destroy(app_name)
     assert len(dokku.apps.list()) == 0
+
 
 def test_config_set_get():
     key1, value1 = "key1", "some value\nwith multiple lines"
@@ -51,6 +54,7 @@ def test_config_set_get():
     expected.update(pairs)
     assert final_configs == expected
 
+
 def test_config_clear():
     pairs = {"k1": "v1", "k2": "v2"}
     dokku = Dokku()
@@ -60,6 +64,7 @@ def test_config_clear():
     dokku.config.clear(app_name=None)
     final_configs = dokku.config.get(app_name=None)
     assert len(final_configs) == 0
+
 
 def test_ssh_keys():
     dokku = Dokku()
@@ -71,7 +76,7 @@ def test_ssh_keys():
         ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC9bIQ9NsZXsOVy/ho6KmRob3MPDgXdmj3XsRzUUjTgjMOPjrGkzKnKQmT+Cq05eGqYqJJChsbWrbazYsEntfYwqE2UGuYJRCs7zlXs10nXb007QkxBaiGkrJz94zayR/8qt6+geGejVl9I7l8EINRK1+SOvv62+8fc1TWQwnsboY0kMN59eS64Lvq35k3gSFn6ZC03ompqZp1OJFqMW+wT7FHGCm9Hoe0si+XU6GWqIKrjg+1GBLUxdtcmfxmUjiimHwAcof3OYl+iTl0zCykYLvamTVwjNLV9guRJ9sq68ljtmxNEZtMs3SgS1y9my/HYM8LQYeePxCuXAFFu3lh493e/mu4YrMdk4rO+3Fqlkr10im+SkEIo3EmKnCWturUrf2i3d37w2QNnX+77T313yH6FYx826ZxfoDknktVZYEmeVQNHG1903bmFNfoDY+R+PI3Pkn0NCs7uhXLFL+pDYJHw12ys32XALYQXyIQbx2H2NHFlugGTGemqYQhCm5U= debian@localhost
     """.strip()
     fingerprint = "SHA256:XiRjUCWNDCrKwSFRSqhR2kP33fEkDsUKbbwhCbnJXas"
-    result = dokku.ssh_keys.add(name=name, content=content)
+    dokku.ssh_keys.add(name=name, content=content)
 
     keys = dokku.ssh_keys.list()
     assert len(keys) == 1

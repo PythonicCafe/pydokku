@@ -1,1 +1,1 @@
-from .dokku_cli import Dokku
+from .dokku_cli import Dokku  # noqa
