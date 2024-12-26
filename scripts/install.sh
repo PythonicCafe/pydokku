@@ -7,7 +7,7 @@ function log() { echo; echo; echo "[$(date --iso=seconds)] $@"; }
 log "Installing Docker"
 apt remove docker.io docker-doc docker-compose podman-docker containerd runc
 apt update
-apt install -y ca-certificates curl gnupg lsb-release python3 python3-pip
+apt install -y byobu ca-certificates curl gnupg lsb-release python3 python3-pip
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
 chmod a+r /etc/apt/keyrings/docker.asc
@@ -49,3 +49,8 @@ log "Installing Python tools"
 apt install -y python3-venv
 sudo -u debian bash -c 'python3 -m venv /home/debian/venv'
 sudo -u debian bash -c 'cd /home/debian && source venv/bin/activate && pip install ipython pytest'
+
+sudo bash -c 'echo "host_shared /shared virtiofs defaults 0 0" >> /etc/fstab'
+sudo systemctl daemon-reload
+sudo mkdir /shared
+sudo mount /shared

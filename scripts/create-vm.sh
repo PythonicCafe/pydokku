@@ -21,10 +21,12 @@ TMP_PATH=$(mktemp -d)
 VM_NAME="debian12-${PROJECT_NAME}"
 VM_VCPUS=2
 VM_RAM=2048
+SHARED_FOLDER="/var/lib/libvirt/shared/${VM_NAME}"
+mkdir -p "$SHARED_FOLDER"
 
 log "Installing system packages"
 apt update
-apt install -y libvirt-daemon-system
+apt install -y libvirt-daemon-system virtiofsd
 
 log "Configuring libvirt user permission and network"
 if ! groups $USER | grep -q "\blibvirt\b"; then
@@ -88,6 +90,8 @@ virt-install \
 	--vcpus $VM_VCPUS \
 	--os-variant debian12 \
 	--disk "path=$OVERLAY_QCOW2,format=qcow2,bus=virtio" \
+	--filesystem "source.dir=${SHARED_FOLDER},target.dir=host_shared,driver.type=virtiofs" \
+	--memorybacking "source.type=memfd,access.mode=shared" \
 	--cloud-init "meta-data=$CLOUDINIT_META_YAML,disable=on" \
 	--cloud-init "user-data=$CLOUDINIT_USER_YAML,disable=on" \
 	--network "network=default,model=virtio" \
@@ -100,6 +104,7 @@ log "Waiting for the VM network to be up..."
 VM_IP=""
 while [[ -z $VM_IP ]]; do
 	VM_IP=$(virsh -q domifaddr $VM_NAME | grep --color=no ipv4 | sed 's/.*ipv4\s\+//; s/\/.*//')
+	sleep 1
 done
 echo "VM IP address: $VM_IP - connect using (password: $DEFAULT_PASSWORD):"
 echo "ssh $DEFAULT_USERNAME@$VM_IP"
