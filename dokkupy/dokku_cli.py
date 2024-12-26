@@ -8,13 +8,14 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from . import ssh
 
 REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
 REGEXP_SSH_KEY = re.compile('([^=]+)="([^ ]+)"')
 
 # TODO: transform each plugin into an attribute of Dokku class, so specific commands will be inside the plugin object
 # TODO: add docstrings in all the functions
-# TODO: implement CLI `dump` command (inspect the whole system and export a JSON)
+# TODO: implement CLI `dump` command (inspect the whole system and export a JSON). add options for filters
 # TODO: implement CLI `commands` command (read a JSON from `dump` and print commands to execute to reproduce)
 
 
@@ -32,40 +33,6 @@ def execute_command(command: list[str], stdin: str = None, check=True) -> str:
             f"(stdout: {repr(process.stdout.read())}, stderr: {repr(process.stderr.read())})"
         )
     return result, process.stdout.read(), process.stderr.read()
-
-def ssh_key_requires_password(filename: Path | str) -> bool:
-    """Use `ssh-keygen` to check if a SSH key file is password-protected
-
-    `ssh-keygen` is used to print the public key related to a private one. If the key is password-protected, the
-    program will wait for input on stdin. As we're closing the stdin without sending anything, it'll end with an
-    error.
-    """
-    command = ["ssh-keygen", "-y", "-f", str(Path(filename).expanduser().absolute())]
-    process = subprocess.Popen(
-        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8",
-    )
-    process.stdin.close()
-    return process.wait() != 0
-
-def ssh_key_unlock(filename: Path | str, password: str) -> Path:
-    """Copy the SSH key to a temp file and uses `ssh-keygen` to unlock and overwrite the newly created file"""
-    filename = Path(filename).expanduser().absolute()
-    temp = tempfile.NamedTemporaryFile(delete=False)
-    temp_filename = Path(temp.name)
-    temp_filename.chmod(0o600)
-    with filename.open(mode="rb") as in_fobj, temp_filename.open(mode="wb") as out_fobj:
-        out_fobj.write(in_fobj.read())
-    command = ["ssh-keygen", "-p", "-P", password, "-N", "", "-f", str(temp_filename)]
-    process = subprocess.Popen(
-        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8",
-    )
-    result = process.wait()
-    if result != 0:
-        temp_filename.unlink()
-        stdout = process.stdout.read().strip()
-        stderr = process.stderr.read().strip()
-        raise ValueError(f"Error unlocking SSH key: {stderr}")
-    return temp_filename
 
 
 @lru_cache
@@ -104,10 +71,10 @@ class Dokku:
             self.ssh_private_key = Path(ssh_private_key).expanduser().absolute() if ssh_private_key is not None else None
             if ssh_private_key is None:
                 raise ValueError(f"ssh_private_key must be provided to ensure the execution is non-interactive")
-            elif ssh_key_requires_password(self.ssh_private_key):
+            elif ssh.key_requires_password(self.ssh_private_key):
                 if ssh_key_password is None:
                     raise ValueError(f"The SSH key password must be provided so the execution is non-interactive")
-                self.ssh_private_key = ssh_key_unlock(self.ssh_private_key, ssh_key_password)
+                self.ssh_private_key = ssh.key_unlock(self.ssh_private_key, ssh_key_password)
                 self.__files_to_delete.append(self.ssh_private_key)
             self._cmd_prefix = [
                 "ssh",
