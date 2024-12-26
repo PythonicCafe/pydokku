@@ -11,6 +11,8 @@ from .utils import parse_bool, parse_timestamp
 
 REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
 REGEXP_HEADER = re.compile("^=====> ", flags=re.MULTILINE)
+REGEXP_ENSURE_DIR = re.compile("-----> Ensuring (.*) exists")
+REGEXP_USER_GROUP = re.compile("Setting directory ownership to (.*):(.*)$")
 REGEXP_SSH_PUBLIC_KEY = re.compile(f"ssh-({'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+( [^@]+@[^@]+)?")
 
 
@@ -192,15 +194,28 @@ class StoragePlugin(DokkuPlugin):
     name = "storage"
 
     def list(self, app_name: str) -> List[dict]:
-        _, stdout, stderr = self._execute("list", [app_name, "--format", "json"], check=False)
-        # TODO: check if stderr has "no ..."
+        _, stdout, _ = self._execute("list", [app_name, "--format", "json"], check=False)
         return json.loads(stdout)
 
+    def ensure_directory(self, name, chown=None):
+        chown_options = ("heroku", "herokuish", "packeto", "root")
+        if chown is not None and chown not in chown_options:
+            raise ValueError(f"Invalid value for chown: {repr(chown)} (expected: {', '.join(chown_options)})")
+        params = [name]
+        if chown is not None:
+            params.extend(["--chown", chown])
+        _, stdout, _ = self._execute("ensure-directory", params)
+        lines = stdout.strip().splitlines()
+        path = Path(REGEXP_ENSURE_DIR.findall(lines[0])[0])
+        user, group = [int(item) for item in REGEXP_USER_GROUP.findall(lines[1])[0]]
+        return path, (user, group)
+
     # TODO: implement storage:list <app> [--format text|json]                 List bind mounts for app's container(s) (host:container)
-    # TODO: implement storage:ensure-directory [--chown option] <directory>   Creates a persistent storage directory in the recommended storage path
-    # TODO: implement storage:mount <app> <host-dir:container-dir>            Create a new bind mount
     # TODO: implement storage:report [<app>] [<flag>]                         Displays a checks report for one or more apps
+    # TODO: implement storage:mount <app> <host-dir:container-dir>            Create a new bind mount
     # TODO: implement storage:unmount <app> <host-dir:container-dir>          Remove an existing bind mount
+    # TODO: implement storage:ensure-directory [--chown option] <directory>   Creates a persistent storage directory in the recommended storage path
+
 
 # TODO: implement checks:disable <app> [process-type(s)]   Disable zero-downtime deployment for all processes (or comma-separated process-type list) ***WARNING: this will cause downtime during deployments***
 # TODO: implement checks:enable <app> [process-type(s)]    Enable zero-downtime deployment for all processes (or comma-separated process-type list)
