@@ -46,14 +46,12 @@ class Dokku:
                     raise ValueError(f"The SSH key password must be provided so the execution is non-interactive")
                 self.ssh_private_key = ssh.key_unlock(self.ssh_private_key, ssh_key_password)
                 self.__files_to_delete.append(self.ssh_private_key)
-            self._cmd_prefix = [
-                "ssh",
-                "-i",
-                str(self.ssh_private_key),
-                "-p",
-                str(self.ssh_port),
-                f"{self.ssh_user}@{self.ssh_host}",
-            ]
+            self._cmd_prefix = ssh.command(
+                user=self.ssh_user,
+                host=self.ssh_host,
+                port=self.ssh_port,
+                private_key=self.ssh_private_key,
+            )
 
         # Instantiate default plugins
         self.apps = AppsPlugin(dokku=self)
