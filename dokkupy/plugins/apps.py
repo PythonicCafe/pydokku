@@ -44,33 +44,57 @@ class AppsPlugin(DokkuPlugin):
             row["created_at"] = parse_timestamp(row["created_at"])
             row["dir"] = Path(row["dir"])
             row["locked"] = parse_bool(row["locked"])
-            result.append(App(**row))
+            result.append(self.object_class(**row))
         return result
 
-    def create(self, name: str) -> str:
-        _, stdout, _ = self._execute("create", [name])
+    def create(self, name: str, execute: bool = True) -> str | dict:
+        cmd_spec = {"command": "create", "params": [name]}
+        if not execute:
+            return cmd_spec
+        _, stdout, _ = self._execute(**cmd_spec)
         return stdout
 
-    def destroy(self, name: str) -> str:
-        _, stdout, _ = self._execute("destroy", [name], stdin=name)
+    def destroy(self, name: str, execute: bool = True) -> str | dict:
+        cmd_spec = {"command": "destroy", "params": [name], "stdin": name}
+        if not execute:
+            return cmd_spec
+        _, stdout, _ = self._execute(**cmd_spec)
         return stdout
 
-    def clone(self, old_name: str, new_name: str) -> str:
-        _, stdout, _ = self._execute("clone", [old_name, new_name])
+    def clone(self, old_name: str, new_name: str, execute: bool = True) -> str | dict:
+        cmd_spec = {"command": "clone", "params": [old_name, new_name]}
+        if not execute:
+            return cmd_spec
+        _, stdout, _ = self._execute(**cmd_spec)
         return stdout
 
-    def lock(self, name: str) -> str:
-        _, stdout, _ = self._execute("lock", [name])
+    def lock(self, name: str, execute: bool = True) -> str | dict:
+        cmd_spec = {"command": "lock", "params": [name]}
+        if not execute:
+            return cmd_spec
+        _, stdout, _ = self._execute(**cmd_spec)
         return stdout
 
-    def unlock(self, name: str) -> str:
-        _, stdout, _ = self._execute("unlock", [name])
+    def unlock(self, name: str, execute: bool = True) -> str | dict:
+        cmd_spec = {"command": "unlock", "params": [name]}
+        if not execute:
+            return cmd_spec
+        _, stdout, _ = self._execute(**cmd_spec)
         return stdout
 
     def locked(self, name: str) -> str:
         _, stdout, stderr = self._execute("unlock", [name], check=False)
         return bool(stdout)
 
-    def rename(self, old_name: str, new_name: str) -> str:
-        _, stdout, _ = self._execute("rename", [old_name, new_name])
+    def rename(self, old_name: str, new_name: str, execute: bool = True) -> str | dict:
+        cmd_spec = {"command": "rename", "params": [old_name, new_name]}
+        if not execute:
+            return cmd_spec
+        _, stdout, _ = self._execute(**cmd_spec)
         return stdout
+
+    def ensure_object(self, obj: App, execute: bool = True) -> List:
+        result = [self.create(name=obj.name, execute=execute)]
+        if obj.locked:
+            result.append(self.lock(name=obj.name, execute=execute))
+        return result

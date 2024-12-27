@@ -19,7 +19,7 @@ def parse_bool(value):
     return {"true": True, "t": True, "false": False, "f": False}[value]
 
 
-def execute_command(command: list[str], stdin: str = None, check=True) -> str:
+def execute_command(command: list[str], stdin: str = None, check=True) -> tuple[int, str, str]:
     process = subprocess.Popen(
         command,
         stdin=subprocess.PIPE,

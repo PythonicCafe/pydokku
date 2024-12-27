@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from . import ssh
-from .plugins import AppsPlugin, ConfigPlugin, SSHKeysPlugin, StoragePlugin
+from .models import Command
 from .utils import execute_command
 
 # TODO: add docstrings to all the functions
@@ -41,6 +41,8 @@ class Dokku:
 
         # Instantiate default plugins
         # TODO: autodiscover based on `DokkuPlugin` subclasses?
+        from .plugins import AppsPlugin, ConfigPlugin, SSHKeysPlugin, StoragePlugin  # noqa
+
         available_plugins = {
             "apps": AppsPlugin,
             "config": ConfigPlugin,
@@ -58,18 +60,19 @@ class Dokku:
             if filename.exists():
                 filename.unlink()
 
-    def _execute(self, command: list[str], stdin: str = None, check=True, sudo=False) -> str:
-        add_ssh_prefix = self._ssh_prefix and command[0] == "dokku"
-        if add_ssh_prefix and sudo and self.ssh_user != "root":
+    def _execute(self, command: Command) -> tuple[int, str, str]:
+        cmd = list(command.command)
+        add_ssh_prefix = self._ssh_prefix and cmd[0] == "dokku"
+        if add_ssh_prefix and command.sudo and self.ssh_user != "root":
             raise ValueError(
                 "Executing `sudo` via SSH is not currently supported - you must log-in as root on remote machine and execute the command"
             )
         elif add_ssh_prefix:
-            command = self._ssh_prefix + command[1:]
-        elif sudo:
-            command = ["sudo"] + command
-        return execute_command(command=command, stdin=stdin, check=check)
+            cmd = self._ssh_prefix + cmd[1:]
+        elif command.sudo:
+            cmd = ["sudo"] + cmd
+        return execute_command(command=cmd, stdin=command.stdin, check=command.check)
 
     def version(self) -> str:
-        _, stdout, _ = self._execute(["dokku", "--version"])
+        _, stdout, _ = self._execute(Command(["dokku", "--version"]))
         return stdout.strip().split()[2]
