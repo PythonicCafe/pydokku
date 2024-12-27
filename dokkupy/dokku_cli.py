@@ -63,11 +63,18 @@ class Dokku:
             )
 
         # Instantiate default plugins
-        self.apps = AppsPlugin(dokku=self)
-        self.config = ConfigPlugin(dokku=self)
-        self.ssh_keys = SSHKeysPlugin(dokku=self)
-        self.storage = StoragePlugin(dokku=self)
         # TODO: autodiscover based on `DokkuPlugin` subclasses?
+        available_plugins = {
+            "apps": AppsPlugin,
+            "config": ConfigPlugin,
+            "ssh_keys": SSHKeysPlugin,
+            "storage": StoragePlugin,
+        }
+        self.plugins = {}
+        for name, klass in available_plugins.items():
+            instance = klass(dokku=self)
+            setattr(self, name, instance)
+            self.plugins[name] = instance
 
     def __del__(self):
         for filename in self.__files_to_delete:
