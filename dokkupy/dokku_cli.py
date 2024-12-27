@@ -4,7 +4,6 @@ from pathlib import Path
 from . import ssh
 from .plugins import AppsPlugin, ConfigPlugin, SSHKeysPlugin, StoragePlugin
 
-# TODO: transform each plugin into an attribute of Dokku class, so specific commands will be inside the plugin object
 # TODO: add docstrings in all the functions
 # TODO: implement CLI `dump` command (inspect the whole system and export a JSON). add options for filters
 # TODO: implement CLI `commands` command (read a JSON from `dump` and print commands to execute to reproduce)
