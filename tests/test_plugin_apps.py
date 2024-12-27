@@ -1,8 +1,8 @@
 from dokkupy.dokku_cli import Dokku
 
-
 # TODO: may use dokkupy.inspector to assert the result of each command or mock the command execution and check the
 # to-be-executed command (list of strings)
+
 
 def test_list_create_destroy_app():
     app_name = "test-app"
@@ -14,6 +14,7 @@ def test_list_create_destroy_app():
     assert apps_after[-1].name == app_name
     dokku.apps.destroy(app_name)
     assert len(dokku.apps.list()) == 0
+
 
 # TODO: implement tests for apps:clone
 # TODO: implement tests for apps:lock/unlock

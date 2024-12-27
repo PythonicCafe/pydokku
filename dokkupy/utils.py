@@ -1,4 +1,5 @@
 import datetime
+import subprocess
 from functools import lru_cache
 
 
@@ -16,3 +17,23 @@ def parse_bool(value):
     if not value:
         return None
     return {"true": True, "t": True, "false": False, "f": False}[value]
+
+
+def execute_command(command: list[str], stdin: str = None, check=True) -> str:
+    process = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+    )
+    if stdin is not None:
+        process.stdin.write(stdin)
+        process.stdin.close()
+    result = process.wait()
+    if check:
+        assert result == 0, (
+            f"Command {command} exited with status {result} "
+            f"(stdout: {repr(process.stdout.read())}, stderr: {repr(process.stderr.read())})"
+        )
+    return result, process.stdout.read(), process.stderr.read()

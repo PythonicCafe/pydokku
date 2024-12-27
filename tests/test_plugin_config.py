@@ -1,8 +1,8 @@
 from dokkupy.dokku_cli import Dokku
 
-
 # TODO: may use dokkupy.inspector to assert the result of each command or mock the command execution and check the
 # to-be-executed command (list of strings)
+
 
 def test_config_set_get():
     key1, value1 = "key1", "some value\nwith multiple lines"
@@ -38,5 +38,6 @@ def test_config_clear():
     dokku.config.clear(app_name=None)
     final_configs = dokku.config.get(app_name=None)
     assert len(final_configs) == 0
+
 
 # TODO: implement tests for Dokku.config.* using an app (instead of global), alternating between restart=True|False

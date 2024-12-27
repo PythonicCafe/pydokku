@@ -1,8 +1,8 @@
 from dokkupy.dokku_cli import Dokku
 
-
 # TODO: may use dokkupy.inspector to assert the result of each command or mock the command execution and check the
 # to-be-executed command (list of strings)
+
 
 def test_ssh_keys():
     dokku = Dokku()
@@ -27,6 +27,7 @@ def test_ssh_keys():
 
     # (venv) debian@localhost:~$ echo "oiioioi" | sudo dokku ssh-keys:add turicasssss
     #  !     Key specified in is not a valid ssh public key
+
 
 # TODO: implement tests for deleting existing key
 # TODO: implement tests for trying to delete a non-existing key

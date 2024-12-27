@@ -1,32 +1,10 @@
-import subprocess
 from pathlib import Path
 
 from . import ssh
 from .plugins import AppsPlugin, ConfigPlugin, SSHKeysPlugin, StoragePlugin
+from .utils import execute_command
 
-# TODO: add docstrings in all the functions
-# TODO: implement CLI `dump` command (inspect the whole system and export a JSON). add options for filters
-# TODO: implement CLI `commands` command (read a JSON from `dump` and print commands to execute to reproduce)
-
-
-def execute_command(command: list[str], stdin: str = None, check=True) -> str:
-    process = subprocess.Popen(
-        command,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding="utf-8",
-    )
-    if stdin is not None:
-        process.stdin.write(stdin)
-        process.stdin.close()
-    result = process.wait()
-    if check:
-        assert result == 0, (
-            f"Command {command} exited with status {result} "
-            f"(stdout: {repr(process.stdout.read())}, stderr: {repr(process.stderr.read())})"
-        )
-    return result, process.stdout.read(), process.stderr.read()
+# TODO: add docstrings to all the functions
 
 
 class Dokku:
@@ -83,7 +61,9 @@ class Dokku:
     def _execute(self, command: list[str], stdin: str = None, check=True, sudo=False) -> str:
         add_ssh_prefix = self._ssh_prefix and command[0] == "dokku"
         if add_ssh_prefix and sudo and self.ssh_user != "root":
-            raise ValueError("Executing `sudo` via SSH is not currently supported - you must log-in as root on remote machine and execute the command")
+            raise ValueError(
+                "Executing `sudo` via SSH is not currently supported - you must log-in as root on remote machine and execute the command"
+            )
         elif add_ssh_prefix:
             command = self._ssh_prefix + command[1:]
         elif sudo:
