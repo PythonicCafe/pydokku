@@ -26,6 +26,7 @@ class App:
 
 class AppsPlugin(DokkuPlugin):
     name = "apps"
+    object_class = App
 
     def list(self) -> List[str]:
         _, stdout, stderr = self._execute("report", check=False)
