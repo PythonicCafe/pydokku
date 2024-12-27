@@ -1,6 +1,19 @@
 import datetime
+import re
 import subprocess
 from functools import lru_cache
+
+REGEXP_ERROR_STR = re.compile(r"^\s*!\s+ (.*)$")
+
+
+def clean_stderr(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    result = REGEXP_ERROR_STR.findall(text)
+    if not result:
+        raise ValueError(f"Cannot parse stderr message: {repr(value)}")
+    return result[0]
 
 
 @lru_cache

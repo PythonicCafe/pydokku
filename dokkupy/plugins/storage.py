@@ -1,36 +1,90 @@
 import json
 import re
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Literal
 
+from ..models import Command
+from ..utils import clean_stderr
 from .base import DokkuPlugin
 
 REGEXP_ENSURE_DIR = re.compile("-----> Ensuring (.*) exists")
 REGEXP_USER_GROUP = re.compile("Setting directory ownership to (.*):(.*)$")
+CHOWN_OPTIONS = ("heroku", "herokuish", "packeto", "root")
+ChownType = None
+for opt in CHOWN_OPTIONS:
+    ChownType |= Literal[opt]
+
+
+@dataclass
+class Storage:
+    host_path: Path | str
+    container_path: Path | str
+    options: str | None = None
+
+    def __post_init__(self):
+        # Force conversion to Path if string is passed
+        self.host_path = Path(self.host_path)
+        self.container_path = Path(self.container_path)
+
+    def serialize(self):
+        return asdict(self)
 
 
 class StoragePlugin(DokkuPlugin):
     name = "storage"
-    _chown_options = ("heroku", "herokuish", "packeto", "root")
+    object_class = Storage
 
-    def list(self, app_name: str) -> List[dict]:
-        _, stdout, _ = self._execute("list", [app_name, "--format", "json"], check=False)
-        return json.loads(stdout)
+    def list(self, app_name: str) -> List[Storage]:
+        stdout = self._evaluate("list", [app_name, "--format", "json"], check=False)
+        result = []
+        for item in json.loads(stdout):
+            result.append(
+                Storage(
+                    host_path=item["host_path"], container_path=item["container_path"], options=item["volume_options"]
+                )
+            )
+        return result
 
-    def ensure_directory(self, name, chown=None):
-        if chown is not None and chown not in self._chown_options:
-            raise ValueError(f"Invalid value for chown: {repr(chown)} (expected: {', '.join(self._chown_options)})")
-        params = [name]
+    def ensure_directory(
+        self, name: str, chown: ChownType = None, execute: bool = True
+    ) -> tuple[Path, tuple[int, int]] | Command:
+        params = []
         if chown is not None:
+            if chown not in CHOWN_OPTIONS:
+                raise ValueError(f"Invalid value for chown: {repr(chown)} (expected: {', '.join(CHOWN_OPTIONS)})")
             params.extend(["--chown", chown])
-        _, stdout, _ = self._execute("ensure-directory", params)
+        params.append(name)
+        result = self._evaluate("ensure-directory", params=params, execute=execute)
+        if not execute:
+            return result
+        stdout = result
         lines = stdout.strip().splitlines()
         path = Path(REGEXP_ENSURE_DIR.findall(lines[0])[0])
-        user, group = [int(item) for item in REGEXP_USER_GROUP.findall(lines[1])[0]]
-        return path, (user, group)
+        user_id, group_id = [int(item) for item in REGEXP_USER_GROUP.findall(lines[1])[0]]
+        return path, (user_id, group_id)
 
-    # TODO: implement storage:list <app> [--format text|json]                 List bind mounts for app's container(s) (host:container)
-    # TODO: implement storage:report [<app>] [<flag>]                         Displays a checks report for one or more apps
-    # TODO: implement storage:mount <app> <host-dir:container-dir>            Create a new bind mount
-    # TODO: implement storage:unmount <app> <host-dir:container-dir>          Remove an existing bind mount
-    # TODO: implement storage:ensure-directory [--chown option] <directory>   Creates a persistent storage directory in the recommended storage path
+    def mount(self, app_name: str, storage: Storage, execute: bool = True) -> str | Command:
+        host_path = storage.host_path
+        container_path = storage.container_path
+        if not host_path.is_absolute():
+            raise ValueError(f"`host_path` must be an absolute path (got: {host_path})")
+        elif not container_path.is_absolute():
+            raise ValueError(f"`container_path` must be an absolute path (got: {container_path})")
+        return self._evaluate("mount", params=[app_name, f"{host_path}:{container_path}"], execute=execute)
+
+    def unmount(self, app_name: str, storage: Storage, execute: bool = True) -> str | Command:
+        host_path = storage.host_path
+        container_path = storage.container_path
+        result = self._evaluate(
+            "unmount", params=[app_name, f"{host_path}:{container_path}"], execute=execute, full_return=True
+        )
+        if not execute:
+            return result
+        _, stdout, stderr = result
+        if stderr:
+            raise RuntimeError(f"Cannot unmount storage for {app_name}: {clean_stderr(stderr)}")
+        return stdout
+
+    # TODO: implement `dump`
+    # TODO: implement `ensure_object`
