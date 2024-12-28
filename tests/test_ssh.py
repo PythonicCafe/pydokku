@@ -3,8 +3,10 @@ from pathlib import Path
 import pytest
 
 from dokkupy import ssh
+from tests.utils import requires_ssh_keygen
 
 
+@requires_ssh_keygen
 def test_command():
     relative_key_path = ".ssh/id_rsa"
     result = ssh.command(user="dokku", host="example.net", port=2222, private_key=relative_key_path)
@@ -13,6 +15,7 @@ def test_command():
     assert expected == result
 
 
+@requires_ssh_keygen
 def test_key_requires_password(temp_dir):
     # Key without password
     key_path = temp_dir / "key_no_pass"
@@ -25,6 +28,7 @@ def test_key_requires_password(temp_dir):
     assert ssh.key_requires_password(key_path_with_pass)
 
 
+@requires_ssh_keygen
 def test_key_create(temp_dir):
     # Invalid key type
     key_path = temp_dir / "test_key"
@@ -44,6 +48,7 @@ def test_key_create(temp_dir):
     assert ssh.key_requires_password(key_path_pass)
 
 
+@requires_ssh_keygen
 def test_key_unlock(temp_dir):
     # Create a password-protected key
     key_path = temp_dir / "protected_key"
@@ -64,6 +69,7 @@ def test_key_unlock(temp_dir):
         ssh.key_unlock(key_path, "wrong_password")
 
 
+@requires_ssh_keygen
 def test_key_fingerprint(temp_dir):
     # Valid key file
     key_path = temp_dir / "test_key"

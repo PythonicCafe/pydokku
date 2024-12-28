@@ -11,14 +11,23 @@ def random_value(max_chars: int, possible_chars: str = ascii_letters + digits + 
     return "".join(random.choice(possible_chars) for _ in range(n_chars))
 
 
-@lru_cache
-def is_dokku_installed():
+def command_available(command):
     try:
-        result = subprocess.run(["dokku", "help"], capture_output=True)
+        subprocess.run(command, capture_output=True)
     except FileNotFoundError:
         return False
-    else:
-        return result.returncode == 0
+    return True
 
 
-requires_dokku = pytest.mark.skipif(not is_dokku_installed(), reason="Dokku command not available")
+@lru_cache
+def is_dokku_installed():
+    return command_available(["dokku", "help"])
+
+
+@lru_cache
+def is_ssh_keygen_installed():
+    return command_available(["ssh-keygen", "--help"])
+
+
+requires_dokku = pytest.mark.skipif(not is_dokku_installed(), reason="`dokku` command not available")
+requires_ssh_keygen = pytest.mark.skipif(not is_ssh_keygen_installed(), reason="`ssh-keygen` command not available")
