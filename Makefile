@@ -7,12 +7,14 @@ lint:					# Run linter commands
 	black --exclude '(.local/|docker/|migrations/|config/settings\.py|manage\.py|\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|venv|\.svn|\.ipynb_checkpoints|_build|buck-out|build|dist|__pypackages__)' -l 120 .
 	flake8 --config setup.cfg
 
-test:					# Execute `pytest`
+test:					# Execute `pytest` and coverage report
 	./scripts/cleanup.sh
-	PYTHONPATH=. pytest -x
+	PYTHONPATH=. coverage run --include="dokkupy/*" -m pytest -xs
+	coverage report
 
-test-v:					# Execute `pytest` with verbose option
+test-v:					# Execute `pytest` with verbose option and coverage report
 	./scripts/cleanup.sh
-	PYTHONPATH=. pytest -xvvv
+	PYTHONPATH=. coverage run --include="dokkupy/*" -m pytest -xvvvs
+	coverage report
 
 .PHONY: help lint test test-v
