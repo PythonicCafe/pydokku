@@ -4,6 +4,7 @@ import pytest
 
 from dokkupy.dokku_cli import Dokku
 from dokkupy.plugins.storage import Storage
+from tests.utils import requires_dokku
 
 
 def test_ensure_directory_command():
@@ -57,6 +58,7 @@ def test_unmount_command():
     assert command.sudo is False
 
 
+@requires_dokku
 def test_ensure_mount_list_unmount():
     app_name = "test-app"
     host_path = Path("/var/lib/dokku/data/storage/test-app-data")

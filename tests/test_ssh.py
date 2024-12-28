@@ -1,16 +1,8 @@
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from dokkupy import ssh
-
-
-@pytest.fixture
-def temp_dir():
-    """Create and cleanup a temporary directory"""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
 
 
 def test_command():

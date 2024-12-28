@@ -1,14 +1,9 @@
 import random
-from string import ascii_letters, digits, punctuation
 
 import pytest
 
 from dokkupy.dokku_cli import Dokku
-
-
-def random_value(max_chars: int, possible_chars: str = ascii_letters + digits + punctuation + " ") -> str:
-    n_chars = random.randint(3, max_chars)
-    return "".join(random.choice(possible_chars) for _ in range(n_chars))
+from tests.utils import random_value, requires_dokku
 
 
 def test_set_many_command():
@@ -74,6 +69,7 @@ def test_clear_command():
         dokku.config.clear(None, restart=True, execute=False)
 
 
+@requires_dokku
 def test_set_get():
     key1, value1 = "key1", "some value\nwith multiple lines"
     key2, value2 = "key2", 123456  # int value instead of str

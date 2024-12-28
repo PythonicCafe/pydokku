@@ -3,6 +3,7 @@ from pathlib import Path
 
 from dokkupy.dokku_cli import Dokku
 from dokkupy.plugins.apps import App
+from tests.utils import requires_dokku
 
 
 def test_create_command():
@@ -79,6 +80,7 @@ def test_ensure_object_command():
     assert dokku.apps.ensure_object(obj=locked_app, execute=False) == [command1, command2]
 
 
+@requires_dokku
 def test_list_create_destroy():
     app_name = "test-app"
     dokku = Dokku()
@@ -92,6 +94,7 @@ def test_list_create_destroy():
     assert len(dokku.apps.list()) == len(apps_before)
 
 
+@requires_dokku
 def test_create_lock_unlock():
     app_name = "test-app"
     dokku = Dokku()
@@ -110,6 +113,7 @@ def test_create_lock_unlock():
     dokku.apps.destroy(app_name)
 
 
+@requires_dokku
 def test_create_clone():
     app_name, clone_app_name = "test-app", "test-app-clone"
     dokku = Dokku()
@@ -126,6 +130,7 @@ def test_create_clone():
     dokku.apps.destroy(clone_app_name)
 
 
+@requires_dokku
 def test_create_rename():
     app_name, renamed_app_name = "test-app", "test-app-renamed"
     dokku = Dokku()

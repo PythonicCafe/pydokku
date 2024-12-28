@@ -1,10 +1,12 @@
 from dokkupy.dokku_cli import Dokku
+from tests.utils import requires_dokku
 
 # TODO: may use dokkupy.inspector to assert the result of each command or mock the command execution and check the
 # to-be-executed command (list of strings)
 
 
-def test_ssh_keys():
+@requires_dokku
+def test_add_remove():
     dokku = Dokku()
     keys = dokku.ssh_keys.list()
     assert len(keys) == 0
