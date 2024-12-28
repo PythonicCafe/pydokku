@@ -1,3 +1,4 @@
+import getpass
 from pathlib import Path
 
 from . import ssh
@@ -20,6 +21,7 @@ class Dokku:
     ):
         self._ssh_prefix = []
         self.__files_to_delete = []
+        self._local_user = getpass.getuser()
         if ssh_host:
             self.ssh_host, self.ssh_port, self.ssh_user = ssh_host, ssh_port, ssh_user
             self.ssh_private_key = (
@@ -60,17 +62,32 @@ class Dokku:
             if filename.exists():
                 filename.unlink()
 
-    def _execute(self, command: Command) -> tuple[int, str, str]:
+    def _prepare_command(self, command: Command) -> tuple[str]:
+        """Prepare the final command to be executed, considering sudo, local/remote user and the command itself"""
         cmd = list(command.command)
-        add_ssh_prefix = self._ssh_prefix and cmd[0] == "dokku"
-        if add_ssh_prefix and command.sudo and self.ssh_user != "root":
-            raise ValueError(
-                "Executing `sudo` via SSH is not currently supported - you must log-in as root on remote machine and execute the command"
-            )
-        elif add_ssh_prefix:
-            cmd = self._ssh_prefix + cmd[1:]
-        elif command.sudo:
-            cmd = ["sudo"] + cmd
+        use_sudo = command.sudo
+        execute_via_ssh = len(self._ssh_prefix) > 0
+        is_dokku_command = cmd[0] == "dokku"
+
+        if execute_via_ssh:  # May consider: self.ssh_user, use_sudo, is_dokku_command. Don't care: self._local_user
+            if self.ssh_user == "dokku":
+                # If running via SSH and the remote user is `dokku`, the only commands we can execute are Dokku
+                # commands
+                if not is_dokku_command:
+                    raise RuntimeError("Cannot execute non-dokku command via SSH for user `dokku`")
+                elif use_sudo:
+                    raise RuntimeError("Cannot execute a sudo-needing dokku command via SSH with user `dokku`")
+                else:
+                    cmd = cmd[1:]  # The `dokku` command is not passed via SSH
+            elif self.ssh_user == "root":
+                use_sudo = False  # If running via SSH and the remote user is `root`, `sudo` is not needed
+        else:  # May consider: self._local_user, use_sudo, is_dokku_command. Don't care: self.ssh_user
+            if self._local_user == "root":
+                use_sudo = False  # If executing locally and the local user is `root`, `sudo` is not needed
+        return self._ssh_prefix + (["sudo"] if use_sudo else []) + cmd
+
+    def _execute(self, command: Command) -> tuple[int, str, str]:
+        cmd = self._prepare_command(command)
         return execute_command(command=cmd, stdin=command.stdin, check=command.check)
 
     def version(self) -> str:

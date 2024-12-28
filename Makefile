@@ -9,10 +9,10 @@ lint:					# Run linter commands
 
 test:					# Execute `pytest`
 	./scripts/cleanup.sh
-	PYTHONPATH=. pytest
+	PYTHONPATH=. pytest -x
 
 test-v:					# Execute `pytest` with verbose option
 	./scripts/cleanup.sh
-	PYTHONPATH=. pytest -vvv
+	PYTHONPATH=. pytest -xvvv
 
 .PHONY: help lint test test-v

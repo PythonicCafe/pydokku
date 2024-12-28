@@ -40,13 +40,10 @@ def execute_command(command: list[str], stdin: str = None, check=True) -> tuple[
         stderr=subprocess.PIPE,
         encoding="utf-8",
     )
-    if stdin is not None:
-        process.stdin.write(stdin)
-        process.stdin.close()
-    result = process.wait()
-    if check:
-        assert result == 0, (
-            f"Command {command} exited with status {result} "
-            f"(stdout: {repr(process.stdout.read())}, stderr: {repr(process.stderr.read())})"
+    stdout, stderr = process.communicate(input=stdin)
+    result = process.returncode
+    if check and result != 0:
+        raise RuntimeError(
+            f"Command {command} exited with status {result} (stdout: {repr(stdout)}, stderr: {repr(stderr)})"
         )
-    return result, process.stdout.read(), process.stderr.read()
+    return result, stdout, stderr
