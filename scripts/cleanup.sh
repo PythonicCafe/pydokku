@@ -1,0 +1,22 @@
+#!/bin/bash
+
+command -v dokku > /dev/null 2>&1 || exit 0
+
+# apps
+dokku apps:list | grep -v '=====> My Apps' | grep -E --color=no 'test-' | while read appName; do
+	echo $appName | dokku apps:destroy $appName
+done
+
+# config
+testVars=$(dokku config:show --global | grep -v '=====> global env vars' | egrep -E --color=no '^test_' | sed 's/:.*//')
+if [[ ! -z $testVars ]]; then
+	dokku config:unset --global $testVars
+fi
+
+# ssh-keys
+dokku ssh-keys:list 2> /dev/null | grep -E --color=no 'NAME="test-' | sed 's/.*NAME="//; s/".*//' | while read keyName; do
+	sudo dokku ssh-keys:remove $keyName
+done
+
+# storage
+sudo rm -rf /var/lib/dokku/data/storage/test-*

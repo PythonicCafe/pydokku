@@ -71,10 +71,10 @@ def test_clear_command():
 
 @requires_dokku
 def test_set_get():
-    key1, value1 = "key1", "some value\nwith multiple lines"
-    key2, value2 = "key2", 123456  # int value instead of str
-    key3, value3 = "key3", True  # bool value instead of str
-    key4, value4 = "key4", None  # None value instead of str
+    key1, value1 = "test_key1", "some value\nwith multiple lines"
+    key2, value2 = "test_key2", 123456  # int value instead of str
+    key3, value3 = "test_key3", True  # bool value instead of str
+    key4, value4 = "test_key4", None  # None value instead of str
     dokku = Dokku()
     configs_before = dokku.config.get(app_name=None)
     dokku.config.set(app_name=None, key=key1, value=value1)
@@ -124,7 +124,7 @@ def test_set_get_merged():
 
 @requires_dokku
 def test_clear():
-    pairs = {"k1": "v1", "k2": "v2"}
+    pairs = {"test_k1": "v1", "test_k2": "v2"}
     dokku = Dokku()
     dokku.config.set_many(app_name=None, keys_values=pairs)
     configs_after = dokku.config.get(app_name=None)

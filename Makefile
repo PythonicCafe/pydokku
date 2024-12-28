@@ -8,9 +8,11 @@ lint:					# Run linter commands
 	flake8 --config setup.cfg
 
 test:					# Execute `pytest`
+	./scripts/cleanup.sh
 	PYTHONPATH=. pytest
 
 test-v:					# Execute `pytest` with verbose option
+	./scripts/cleanup.sh
 	PYTHONPATH=. pytest -vvv
 
 .PHONY: help lint test test-v

@@ -5,7 +5,7 @@ from tests.utils import requires_dokku
 
 
 def test_add_command(temp_file):
-    key_name = "myuser"
+    key_name = "test-myuser"
     key_path = temp_file
     key_content = "test 123"
     with temp_file.open(mode="w") as fobj:
@@ -20,7 +20,7 @@ def test_add_command(temp_file):
 
 
 def test_remove_command():
-    key_name = "myuser"
+    key_name = "test-myuser"
     key_fingerprint = "SHA256:I/Du4ECSnSCpI3Q+CCgg+bWnR0sjwlIVwz2IRCEAwbw"
     dokku = Dokku()
 
@@ -42,8 +42,8 @@ def test_add_remove(temp_file):
     dokku = Dokku()
     keys_before = dokku.ssh_keys.list()
 
-    name = "debian"
-    another_name = "turicas"
+    name = "test-debian"
+    another_name = "test-turicas"
     content = """
         ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC9bIQ9NsZXsOVy/ho6KmRob3MPDgXdmj3XsRzUUjTgjMOPjrGkzKnKQmT+Cq05eGqYqJJChsbWrbazYsEntfYwqE2UGuYJRCs7zlXs10nXb007QkxBaiGkrJz94zayR/8qt6+geGejVl9I7l8EINRK1+SOvv62+8fc1TWQwnsboY0kMN59eS64Lvq35k3gSFn6ZC03ompqZp1OJFqMW+wT7FHGCm9Hoe0si+XU6GWqIKrjg+1GBLUxdtcmfxmUjiimHwAcof3OYl+iTl0zCykYLvamTVwjNLV9guRJ9sq68ljtmxNEZtMs3SgS1y9my/HYM8LQYeePxCuXAFFu3lh493e/mu4YrMdk4rO+3Fqlkr10im+SkEIo3EmKnCWturUrf2i3d37w2QNnX+77T313yH6FYx826ZxfoDknktVZYEmeVQNHG1903bmFNfoDY+R+PI3Pkn0NCs7uhXLFL+pDYJHw12ys32XALYQXyIQbx2H2NHFlugGTGemqYQhCm5U= debian@localhost
     """.strip()
