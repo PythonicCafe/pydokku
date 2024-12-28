@@ -2,9 +2,10 @@ import re
 
 import pytest
 
+from dokkupy import ssh
 from dokkupy.dokku_cli import Dokku
 from dokkupy.models import Command
-from tests.utils import requires_dokku
+from tests.utils import requires_dokku, requires_ssh_keygen
 
 
 @requires_dokku
@@ -14,7 +15,56 @@ def test_version():
     assert re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version) is not None
 
 
-# TODO: implement tests for SSH key errors on Dokku.__init__ (key without passphrase, key with no passphrase)
+@requires_ssh_keygen
+def test_ssh_config_errors(temp_dir):
+    key_without_password_path = temp_dir / "key_without_password"
+    key_with_password_path = temp_dir / "key_with_password"
+    ssh_key_password = "test123"
+    ssh_host = "example.net"
+    ssh_user = "dokku"
+    ssh_port = 22
+
+    ssh.key_create(filename=key_without_password_path, key_type="ed25519", password=None)
+    ssh.key_create(filename=key_with_password_path, key_type="ed25519", password=ssh_key_password)
+
+    # Happy path: key without password -- won't raise exception
+    Dokku(
+        ssh_host=ssh_host,
+        ssh_user=ssh_user,
+        ssh_port=ssh_port,
+        ssh_private_key=key_without_password_path,
+        ssh_key_password=None,
+    )
+
+    # Happy path: key with password (and the correct one is provided) -- won't raise exception
+    Dokku(
+        ssh_host=ssh_host,
+        ssh_user=ssh_user,
+        ssh_port=ssh_port,
+        ssh_private_key=key_with_password_path,
+        ssh_key_password=ssh_key_password,
+    )
+
+    with pytest.raises(ValueError, match="`ssh_private_key` must be provided.*"):
+        Dokku(ssh_host="example.net")
+
+    with pytest.raises(ValueError, match="`ssh_key_password` must be provided.*"):
+        Dokku(
+            ssh_host=ssh_host,
+            ssh_user=ssh_user,
+            ssh_port=ssh_port,
+            ssh_private_key=key_with_password_path,
+            ssh_key_password=None,
+        )
+
+    with pytest.raises(RuntimeError, match="Error unlocking SSH key: Failed to load key .*"):
+        Dokku(
+            ssh_host=ssh_host,
+            ssh_user=ssh_user,
+            ssh_port=ssh_port,
+            ssh_private_key=key_with_password_path,
+            ssh_key_password="wrong-password",
+        )
 
 
 def test_prepare_command_with_ssh():
@@ -102,9 +152,10 @@ def test_prepare_command_with_ssh():
         },
     ]
 
-    for test_case in test_cases:
+    for counter, test_case in enumerate(test_cases, start=1):
         dokku = Dokku()
         # Force SSH without passing an actual key
+        dokku.via_ssh = True
         dokku.ssh_user = test_case["ssh_user"]
         dokku.ssh_host = ssh_host
         dokku.ssh_port = ssh_port
@@ -116,7 +167,7 @@ def test_prepare_command_with_ssh():
                 dokku._prepare_command(test_case["command"])
         else:
             result = dokku._prepare_command(test_case["command"])
-            assert result == test_case["expected_command"]
+            assert result == test_case["expected_command"], f"Error in test case #{counter}"
 
 
 def test_prepare_command_local():
@@ -163,8 +214,11 @@ def test_prepare_command_local():
         },
     ]
 
-    for test_case in test_cases:
+    for counter, test_case in enumerate(test_cases, start=1):
         dokku = Dokku()
-        dokku._local_user = test_case["local_user"]
+        dokku.local_user = test_case["local_user"]
         result = dokku._prepare_command(test_case["command"])
-        assert result == test_case["expected_command"]
+        assert result == test_case["expected_command"], f"Error in test case #{counter}"
+
+
+# TODO: create tests which actuall *execute* Dokku SSH commands?
