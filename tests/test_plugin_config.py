@@ -179,3 +179,7 @@ def test_clear():
     dokku.config.clear(app_name=None)
     final_configs = dokku.config.get(app_name=None, as_dict=True)
     assert len(final_configs) == 0
+
+# TODO: test dump
+# TODO: test create_object
+# TODO: test create_objects

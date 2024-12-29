@@ -1,6 +1,6 @@
-from typing import List, Type, TypeVar
+from typing import Iterator, List, Type, TypeVar
 
-from ..models import Command
+from ..models import App, Command
 
 T = TypeVar("T")
 
@@ -36,21 +36,19 @@ class DokkuPlugin:
     def _execute(self, command: Command) -> tuple[int, str, str]:
         return self.dokku._execute(command)
 
-    def dump(self):
-        if hasattr(self, "list"):
-            return [obj.serialize() for obj in self.list()]
-        raise NotImplementedError(f"Method `dump` not implemented for {self.__class__.__name__}")
+    def dump_all(self, apps: List[App]) -> List[dict]:
+        """Dump all objects for this specific plugin
 
-    def ensure_object(self, obj: T):
-        raise NotImplementedError(f"Class {self.__class__.__name__} does not implement `ensure_object`")
+        The result must always be a list of dictionaries. Each dict must be enough to reconstruct an object for this
+        class with `self.object_class(**dict)`.
+        """
+        raise NotImplementedError(f"Method `dump_all` not implemented for {self.__class__.__name__}")
 
-    def load(self, data: T | dict, execute: bool = True):
-        if isinstance(data, self.object_class):
-            obj = data
-        elif isinstance(data, dict):
-            obj = self.object_class(**data)
-        else:
-            raise ValueError(
-                f"`data` must be either `{self.object_class}` or its serialized version as a `dict` (got: {type(data)})"
-            )
-        self.ensure_object(obj, execute=execute)
+    def create_object(self, obj: T, execute: bool = True) -> List[str] | List[Command]:
+        """Create an object for this specific plugin or return list of commands to do it"""
+        # TODO: add option to not raise exception if object already exists
+        raise NotImplementedError(f"Class {self.__class__.__name__} does not implement `create_object`")
+
+    def create_objects(self, objs: List[T], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+        for obj in objs:
+            yield from self.create_object(obj, execute=execute)

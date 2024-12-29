@@ -61,7 +61,10 @@ class AppsPlugin(DokkuPlugin):
     def rename(self, old_name: str, new_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("rename", params=[old_name, new_name], execute=execute)
 
-    def ensure_object(self, obj: App, execute: bool = True) -> List[str] | List[Command]:
+    def dump_all(self, apps: List[App]) -> List[dict]:
+        return [obj.serialize() for obj in apps]
+
+    def create_object(self, obj: App, execute: bool = True) -> List[str] | List[Command]:
         result = [self.create(name=obj.name, execute=execute)]
         if obj.locked:
             result.append(self.lock(name=obj.name, execute=execute))

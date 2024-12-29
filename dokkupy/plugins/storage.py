@@ -9,10 +9,16 @@ from .base import DokkuPlugin
 
 REGEXP_ENSURE_DIR = re.compile("-----> Ensuring (.*) exists")
 REGEXP_USER_GROUP = re.compile("Setting directory ownership to (.*):(.*)$")
-CHOWN_OPTIONS = ("heroku", "herokuish", "packeto", "root")
+CHOWN_OPTIONS = {
+    "herokuish": (32767, 32767),
+    "heroku": (1000, 1000),
+    "packeto": (2000, 2000),
+    "root": (0, 0),
+}
 ChownType = None
-for opt in CHOWN_OPTIONS:
+for opt in CHOWN_OPTIONS.keys():
     ChownType |= Literal[opt]
+USER_GROUP_ID_CHOWN = {value: key for key, value in CHOWN_OPTIONS.items()}
 
 
 class StoragePlugin(DokkuPlugin):
@@ -37,8 +43,10 @@ class StoragePlugin(DokkuPlugin):
     ) -> tuple[Path, tuple[int, int]] | Command:
         params = []
         if chown is not None:
-            if chown not in CHOWN_OPTIONS:
-                raise ValueError(f"Invalid value for chown: {repr(chown)} (expected: {', '.join(CHOWN_OPTIONS)})")
+            if chown not in CHOWN_OPTIONS.keys():
+                raise ValueError(
+                    f"Invalid value for chown: {repr(chown)} (expected: {', '.join(CHOWN_OPTIONS.keys())})"
+                )
             params.extend(["--chown", chown])
         params.append(name)
         result = self._evaluate("ensure-directory", params=params, execute=execute)
@@ -69,8 +77,16 @@ class StoragePlugin(DokkuPlugin):
             return result
         _, stdout, stderr = result
         if stderr:
-            raise RuntimeError(f"Cannot unmount storage for {app_name}: {clean_stderr(stderr)}")
+            raise RuntimeError(f"Cannot unmount storage for {storage.app_name}: {clean_stderr(stderr)}")
         return stdout
 
-    # TODO: implement `dump`
-    # TODO: implement `ensure_object`
+    def dump_all(self, apps: List[App]) -> List[dict]:
+        return [obj.serialize() for app in apps for obj in self.list(app.name)]
+
+    def create_object(self, obj: Storage, execute: bool = True) -> List[str] | List[Command]:
+        # XXX: if storage's user and group ID can't be found in USER_GROUP_ID_CHOWN, won't apply any chown
+        chown = USER_GROUP_ID_CHOWN.get((obj.user_id, obj.group_id))
+        return [
+            self.ensure_directory(obj.host_path.name, chown=chown, execute=execute),
+            self.mount(obj, execute=execute),
+        ]

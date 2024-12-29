@@ -144,3 +144,6 @@ def test_create_rename():
     assert app_name not in apps_after
 
     dokku.apps.destroy(renamed_app_name)
+
+# TODO: test dump
+# TODO: test create_object

@@ -24,7 +24,7 @@ class ConfigPlugin(DokkuPlugin):
         data = json.loads(stdout)
         if as_dict:
             return data
-        return [Config({"app_name": app_name, "key": key, "value": value}) for key, value in data.items()]
+        return [Config(app_name=app_name, key=key, value=value) for key, value in data.items()]
 
     def set_many(self, configs: List[Config], restart: bool = False, execute: bool = True) -> str | Command:
         """Set many key-value configuration pairs in one command - for one app only"""
@@ -94,5 +94,26 @@ class ConfigPlugin(DokkuPlugin):
         params.append("--global" if system else app_name)
         return self._evaluate("clear", params=params, execute=execute)
 
-    # TODO: implement `dump`
-    # TODO: implement `ensure_object`
+    def dump_all(self, apps: List[App]) -> List[Config]:
+        app_names = [None] + [app.name for app in apps]
+        result = []
+        for app_name in app_names:
+            objs = self.get(app_name=app_name)
+            result.extend([obj.serialize() for obj in objs])
+        return result
+
+    def create_object(self, obj: Config, execute: bool = True) -> List[str] | List[Command]:
+        return [self.set_many(configs=[obj], restart=False, execute=execute)]
+
+    def create_objects(self, objs: List[Config], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+        sort_func = lambda obj: obj.app_name
+        objs.sort(key=sort_func)
+        groups = groupby(objs, key=sort_func)
+        for app_name, configs in groups:
+            configs = list(configs)
+            if not execute:
+                yield self.set_many(configs=list(configs), restart=False, execute=execute)
+            else:
+                # We're using a bulk operation that returns only one string (not a list of them) for a list of objects,
+                # so we can't use `yield from`
+                yield self.set_many(configs=list(configs), restart=False, execute=execute)
