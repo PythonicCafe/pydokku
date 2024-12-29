@@ -25,17 +25,30 @@ class StoragePlugin(DokkuPlugin):
     name = "storage"
     object_class = Storage
 
-    # TODO: create helper method to get a storage size
+    # TODO: create helper method to get a storage's size
 
     def list(self, app_name: str) -> List[Storage]:
         stdout = self._evaluate("list", [app_name, "--format", "json"], check=False)
-        result = []
-        for item in json.loads(stdout):
-            result.append(
-                Storage(
-                    host_path=item["host_path"], container_path=item["container_path"], options=item["volume_options"]
-                )
-            )
+        result = [
+            self.object_class(app_name=app_name, host_path=item["host_path"], container_path=item["container_path"])
+            for item in json.loads(stdout)
+        ]
+        # XXX: if it's running over SSH and the user is `dokku`, we won't be able to execute `stat` to get permission
+        # info
+        # TODO: add a warning regarding this?
+        if result and self.dokku.can_execute_regular_commands:
+            if not self.dokku.via_ssh:
+                for storage in result:
+                    stat = storage.host_path.stat()
+                    storage.user_id, storage.group_id = stat.st_uid, stat.st_gid
+            else:
+                storage_paths = [str(storage.host_path) for storage in result]
+                command = Command(["stat", "--format='%u %g'"] + storage_paths, sudo=self.dokku.requires_sudo)
+                _, stdout, _ = self.dokku._execute(command)  # will execute using SSH connection
+                permissions = stdout.strip().splitlines()
+                assert len(permissions) == len(result), f"Got wrong response from `stat`: {repr(stdout)}"
+                for storage, permission in zip(result, permissions):
+                    storage.user_id, storage.group_id = [int(item) for item in permission.strip().split()]
         return result
 
     def ensure_directory(
