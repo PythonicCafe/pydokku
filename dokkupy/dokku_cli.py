@@ -1,4 +1,6 @@
 import getpass
+import hashlib
+import tempfile
 from pathlib import Path
 
 from . import ssh
@@ -18,11 +20,12 @@ class Dokku:
         ssh_private_key: Path | str = None,
         ssh_user: str = "dokku",
         ssh_key_password: str = None,
+        ssh_mux: bool = True,
     ):
         self._ssh_prefix = []
         self.__files_to_delete = []
         self.local_user = getpass.getuser()
-        self.ssh_host, self.ssh_port, self.ssh_user = None, None, None
+        self.via_ssh, self.ssh_host, self.ssh_port, self.ssh_user = False, None, None, None
         if ssh_host:
             self.ssh_host, self.ssh_port, self.ssh_user = ssh_host, ssh_port, ssh_user
             self.ssh_private_key = (
@@ -35,13 +38,22 @@ class Dokku:
                     raise ValueError("`ssh_key_password` must be provided so the execution is non-interactive")
                 self.ssh_private_key = ssh.key_unlock(self.ssh_private_key, ssh_key_password)
                 self.__files_to_delete.append(self.ssh_private_key)
+            mux_filename = None
+            if ssh_mux:
+                # TODO: create temp file hash (ssh host, ssh port, ssh user, ssh key path) and add to _files_to_delete
+                hash_key = [self.ssh_host, str(self.ssh_port), self.ssh_user, str(self.ssh_private_key)]
+                mux_hash = hashlib.sha1("|".join(hash_key).encode("utf-8")).hexdigest()
+                mux_filename = Path(tempfile.NamedTemporaryFile(delete=False, prefix=f"dokkupy-ssh-{mux_hash}-").name)
+                self.__files_to_delete.append(mux_filename)
             self._ssh_prefix = ssh.command(
                 user=self.ssh_user,
                 host=self.ssh_host,
                 port=self.ssh_port,
                 private_key=self.ssh_private_key,
-            )
-        self.via_ssh = len(self._ssh_prefix) > 0
+                mux=ssh_mux,
+                mux_filename=mux_filename,
+            ) + ["--"]
+            self.via_ssh = True
 
         # Instantiate default plugins
         # TODO: autodiscover based on `DokkuPlugin` subclasses?
@@ -90,6 +102,7 @@ class Dokku:
 
     def _execute(self, command: Command) -> tuple[int, str, str]:
         cmd = self._prepare_command(command)
+        # TODO: may add a debugging log call here with the full command to be executed
         return execute_command(command=cmd, stdin=command.stdin, check=command.check)
 
     def version(self) -> str:
