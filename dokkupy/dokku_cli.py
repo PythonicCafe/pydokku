@@ -1,6 +1,7 @@
 import getpass
 import hashlib
 import tempfile
+from functools import cached_property
 from pathlib import Path
 
 from . import ssh
@@ -25,7 +26,7 @@ class Dokku:
         self._ssh_prefix = []
         self.__files_to_delete = []
         self.local_user = getpass.getuser()
-        self.via_ssh, self.ssh_host, self.ssh_port, self.ssh_user = False, None, None, None
+        self.ssh_host, self.ssh_port, self.ssh_user = None, None, None
         if ssh_host:
             self.ssh_host, self.ssh_port, self.ssh_user = ssh_host, ssh_port, ssh_user
             self.ssh_private_key = (
@@ -53,7 +54,6 @@ class Dokku:
                 mux=ssh_mux,
                 mux_filename=mux_filename,
             ) + ["--"]
-            self.via_ssh = True
 
         # Instantiate default plugins
         # TODO: autodiscover based on `DokkuPlugin` subclasses?
@@ -70,6 +70,26 @@ class Dokku:
             instance = klass(dokku=self)
             setattr(self, name, instance)
             self.plugins[name] = instance
+
+    @cached_property
+    def via_ssh(self):
+        return len(self._ssh_prefix) > 0
+
+    @cached_property
+    def requires_sudo(self):
+        """Check whether the current user requires `sudo` to execute a command locally or remotely"""
+        remote_skip_sudo = ("root",)
+        local_skip_sudo = ("dokku", "root")
+        return (self.via_ssh and self.ssh_user not in remote_skip_sudo) or (
+            not self.via_ssh and self.local_user not in local_skip_sudo
+        )
+
+    @cached_property
+    def can_execute_regular_commands(self):
+        # If running locally, we assume the current user has permissions to execute non-Dokku commands. If running via
+        # SSH, the `dokku` user won't have shell access, so we assume that only if it's running as root or as another
+        # sudoer we can actually execute non-Dokku commands.
+        return not self.via_ssh or self.ssh_user != "dokku"
 
     def __del__(self):
         if hasattr(self, "_Dokku__files_to_delete"):

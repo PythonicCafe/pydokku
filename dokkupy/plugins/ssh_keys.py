@@ -37,10 +37,7 @@ class SSHKeysPlugin(DokkuPlugin):
         It's assumed that the home directory for `dokku` user is `/home/dokku` in the machine it's going to be
         executed.
         """
-        use_sudo = (self.dokku.via_ssh and self.dokku.ssh_user != "root") or (
-            not self.dokku.via_ssh and self.dokku.local_user != "dokku"
-        )
-        command = Command(["cat", "/home/dokku/.ssh/authorized_keys"], sudo=use_sudo)
+        command = Command(["cat", "/home/dokku/.ssh/authorized_keys"], sudo=self.dokku.requires_sudo)
         _, stdout, _ = self.dokku._execute(command)  # will execute using SSH connection, if configured to
         return stdout
 
@@ -54,7 +51,7 @@ class SSHKeysPlugin(DokkuPlugin):
             name, fingerprint = item.pop("name"), item.pop("fingerprint")
             keys.append(self.object_class(name=name, fingerprint=fingerprint, public_key=None))
 
-        if not self.dokku.via_ssh or self.dokku.ssh_user != "dokku":
+        if self.dokku.can_execute_regular_commands:
             # Read the actual `authorized_keys` file (populated by `sshcommand`) to get the public keys
             authorized_keys = parse_authorized_keys(self._read_authorized_keys())
             found_key_names = set(key.name for key in authorized_keys)
