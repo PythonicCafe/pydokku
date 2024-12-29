@@ -76,7 +76,7 @@ def test_prepare_command_with_ssh():
         {
             "ssh_user": "dokku",
             "command": Command(command=["dokku", "ps:report"], sudo=False),
-            "expected_command": ssh_command + [f"dokku@{ssh_host}", "ps:report"],
+            "expected_command": ssh_command + [f"dokku@{ssh_host}", "--", "ps:report"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
@@ -97,56 +97,56 @@ def test_prepare_command_with_ssh():
         {
             "ssh_user": "root",
             "command": Command(command=["dokku", "ps:report"], sudo=False),
-            "expected_command": ssh_command + [f"root@{ssh_host}", "dokku", "ps:report"],
+            "expected_command": ssh_command + [f"root@{ssh_host}", "--", "dokku", "ps:report"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
         {
             "ssh_user": "root",
             "command": Command(command=["dokku", "ps:report"], sudo=True),
-            "expected_command": ssh_command + [f"root@{ssh_host}", "dokku", "ps:report"],
+            "expected_command": ssh_command + [f"root@{ssh_host}", "--", "dokku", "ps:report"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
         {
             "ssh_user": "root",
             "command": Command(command=["non-dokku", "command"], sudo=False),
-            "expected_command": ssh_command + [f"root@{ssh_host}", "non-dokku", "command"],
+            "expected_command": ssh_command + [f"root@{ssh_host}", "--", "non-dokku", "command"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
         {
             "ssh_user": "root",
             "command": Command(command=["non-dokku", "command"], sudo=True),
-            "expected_command": ssh_command + [f"root@{ssh_host}", "non-dokku", "command"],
+            "expected_command": ssh_command + [f"root@{ssh_host}", "--", "non-dokku", "command"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
         {
             "ssh_user": "regular",
             "command": Command(command=["dokku", "ps:report"], sudo=False),
-            "expected_command": ssh_command + [f"regular@{ssh_host}", "dokku", "ps:report"],
+            "expected_command": ssh_command + [f"regular@{ssh_host}", "--", "dokku", "ps:report"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
         {
             "ssh_user": "regular",
             "command": Command(command=["dokku", "ps:report"], sudo=True),
-            "expected_command": ssh_command + [f"regular@{ssh_host}", "sudo", "dokku", "ps:report"],
+            "expected_command": ssh_command + [f"regular@{ssh_host}", "--", "sudo", "dokku", "ps:report"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
         {
             "ssh_user": "regular",
             "command": Command(command=["non-dokku", "command"], sudo=False),
-            "expected_command": ssh_command + [f"regular@{ssh_host}", "non-dokku", "command"],
+            "expected_command": ssh_command + [f"regular@{ssh_host}", "--", "non-dokku", "command"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
         {
             "ssh_user": "regular",
             "command": Command(command=["non-dokku", "command"], sudo=True),
-            "expected_command": ssh_command + [f"regular@{ssh_host}", "sudo", "non-dokku", "command"],
+            "expected_command": ssh_command + [f"regular@{ssh_host}", "--", "sudo", "non-dokku", "command"],
             "should_raise": False,
             "expected_exception_msg": None,
         },
@@ -160,7 +160,7 @@ def test_prepare_command_with_ssh():
         dokku.ssh_host = ssh_host
         dokku.ssh_port = ssh_port
         dokku.ssh_private_key = ssh_private_key
-        dokku._ssh_prefix = ssh_command + [f"{dokku.ssh_user}@{ssh_host}"]
+        dokku._ssh_prefix = ssh_command + [f"{dokku.ssh_user}@{ssh_host}", "--"]
 
         if test_case["should_raise"]:
             with pytest.raises(RuntimeError, match=test_case["expected_exception_msg"]):
@@ -221,4 +221,5 @@ def test_prepare_command_local():
         assert result == test_case["expected_command"], f"Error in test case #{counter}"
 
 
-# TODO: create tests which actuall *execute* Dokku SSH commands?
+# TODO: create tests which actuall *execute* Dokku SSH commands (use parameterized fixtures with a conditional one
+# based on env vars)

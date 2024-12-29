@@ -106,5 +106,5 @@ class Dokku:
         return execute_command(command=cmd, stdin=command.stdin, check=command.check)
 
     def version(self) -> str:
-        _, stdout, _ = self._execute(Command(["dokku", "--version"]))
+        _, stdout, _ = self._execute(Command(["dokku", "version"]))
         return stdout.strip().split()[2]
