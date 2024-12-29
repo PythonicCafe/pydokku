@@ -49,7 +49,9 @@ class ConfigPlugin(DokkuPlugin):
         params.extend([f"{key}={value}" for key, value in encoded_pairs.items()])
         return self._evaluate("set", params=params, execute=execute)
 
-    def set_many_dict(self, app_name: str, keys_values: dict, restart: bool = False, execute: bool = True) -> str | Command:
+    def set_many_dict(
+        self, app_name: str, keys_values: dict, restart: bool = False, execute: bool = True
+    ) -> str | Command:
         """Utility method so you don't need to convert a `dict` into a list of `Config` objects to set many"""
         configs = [Config(app_name=app_name, key=key, value=value) for key, value in keys_values.items()]
         return self.set_many(configs=configs, restart=restart, execute=execute)
@@ -76,7 +78,9 @@ class ConfigPlugin(DokkuPlugin):
         params.extend(keys)
         return self._evaluate("unset", params=params, execute=execute)
 
-    def unset_many_list(self, app_name: str, keys: List[str], restart: bool = False, execute: bool = True) -> str | Command:
+    def unset_many_list(
+        self, app_name: str, keys: List[str], restart: bool = False, execute: bool = True
+    ) -> str | Command:
         """Utility method so you don't need to convert a list of keys into a list of `Config` objects to unset many"""
         configs = [Config(app_name=app_name, key=key, value=None) for key in keys]
         return self.unset_many(configs=configs, restart=restart, execute=execute)

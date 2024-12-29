@@ -6,11 +6,18 @@ from pathlib import Path
 from typing import List
 
 KEY_TYPES = "dsa ecdsa ecdsa-sk ed25519 ed25519-sk rsa".split()
-REGEXP_SSH_PUBLIC_KEY = re.compile(f"ssh-({'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+( [^@]+@[^@]+)?")
+REGEXP_SSH_PUBLIC_KEY = re.compile(f"(ssh-(?:{'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+(?: [^@]+@[^@]+)?)")
 
 
-def command(user: str, host: str, private_key: Path | str, port: int = 22, mux: bool = False,
-            mux_filename: Path | str = None, mux_timeout: int = 60) -> List[str]:
+def command(
+    user: str,
+    host: str,
+    private_key: Path | str,
+    port: int = 22,
+    mux: bool = False,
+    mux_filename: Path | str = None,
+    mux_timeout: int = 60,
+) -> List[str]:
     cmd = [
         "ssh",
         "-i",
@@ -22,9 +29,12 @@ def command(user: str, host: str, private_key: Path | str, port: int = 22, mux: 
         mux_filename = Path(mux_filename).expanduser().absolute()
         cmd.extend(
             [
-                "-o", f"ControlPersist={mux_timeout}",
-                "-o", "ControlMaster=auto",
-                "-o", f"ControlPath={mux_filename}",
+                "-o",
+                f"ControlPersist={mux_timeout}",
+                "-o",
+                "ControlMaster=auto",
+                "-o",
+                f"ControlPath={mux_filename}",
             ]
         )
     cmd.append(f"{user}@{host}")

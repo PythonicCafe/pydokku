@@ -2,13 +2,14 @@ import base64
 import datetime
 import shlex
 from dataclasses import asdict, dataclass
-from typing import List
 from pathlib import Path
+from typing import List
 
 
 class BaseModel:
     def serialize(self):
         return asdict(self)
+
 
 @dataclass
 class Command(BaseModel):
@@ -39,7 +40,7 @@ class SSHKey(BaseModel):
         _, self.fingerprint, _ = result.split(maxsplit=2)
 
     @classmethod
-    def open(cls, name: str, path: str | Path, calculate_fingerprint: bool = True) -> 'SSHKey':
+    def open(cls, name: str, path: str | Path, calculate_fingerprint: bool = True) -> "SSHKey":
         """Open a public SSH key file and create a SSHKey object"""
         obj = cls(name=name, public_key=Path(path).expanduser().read_text(), fingerprint=None)
         if calculate_fingerprint:
@@ -48,6 +49,7 @@ class SSHKey(BaseModel):
             except RuntimeError:
                 raise RuntimeError(f"Cannot calculate key fingerprint for: {repr(obj.public_key)}")
         return obj
+
 
 @dataclass
 class App(BaseModel):

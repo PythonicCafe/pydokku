@@ -125,5 +125,6 @@ def test_add_remove(temp_file):
     keys_final = dokku.ssh_keys.list()
     assert len(keys_before) == len(keys_final)
 
+
 # TODO: test dump
 # TODO: test create_object
