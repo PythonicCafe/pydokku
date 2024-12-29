@@ -1,16 +1,18 @@
 import base64
 import json
-from typing import List
+from itertools import groupby
+from typing import Iterator, List
 
-from ..models import Command
+from ..models import App, Command, Config
 from .base import DokkuPlugin
 
 
 class ConfigPlugin(DokkuPlugin):
     name = "config"
-    object_class = dict
+    object_class = Config
 
-    def get(self, app_name: str, merged: bool = False) -> dict:
+    def get(self, app_name: str, merged: bool = False, as_dict: bool = False) -> List[Config] | dict:
+        """Get all configurations set for an app, with the option to merge them with the global ones"""
         # `dokku config <--global|app_name>` does not encode values, so we can't parse correctly if values have
         # newlines or other special chars. We use `config:export --format=json` instead.
         system = app_name is None
@@ -19,16 +21,27 @@ class ConfigPlugin(DokkuPlugin):
             params.append("--merged")
         params.append("--global" if system else app_name)
         stdout = self._evaluate("export", params=params)
-        return json.loads(stdout)
+        data = json.loads(stdout)
+        if as_dict:
+            return data
+        return [Config({"app_name": app_name, "key": key, "value": value}) for key, value in data.items()]
 
-    def set_many(self, app_name: str, keys_values: dict, restart: bool = False, execute: bool = True) -> str | Command:
+    def set_many(self, configs: List[Config], restart: bool = False, execute: bool = True) -> str | Command:
+        """Set many key-value configuration pairs in one command - for one app only"""
+        encoded_pairs = {}
+        app_names = set()
+        for config in configs:
+            app_names.add(config.app_name)
+            encoded_value = base64.b64encode(
+                str(config.value if config.value is not None else "").encode("utf-8")
+            ).decode("ascii")
+            encoded_pairs[config.key] = encoded_value
+        if len(app_names) != 1:
+            raise ValueError(f"`set_many` can only be called for one app (got {len(app_names)})")
+        app_name = list(app_names)[0]  # TODO: fix (may be empty)
         system = app_name is None
         if system and restart:
             raise ValueError("Cannot restart when setting global config")
-        encoded_pairs = {
-            key: base64.b64encode(str(value if value is not None else "").encode("utf-8")).decode("ascii")
-            for key, value in keys_values.items()
-        }
         params = ["--encoded"]
         if not restart and not system:
             params.append("--no-restart")
@@ -36,10 +49,23 @@ class ConfigPlugin(DokkuPlugin):
         params.extend([f"{key}={value}" for key, value in encoded_pairs.items()])
         return self._evaluate("set", params=params, execute=execute)
 
-    def set(self, app_name: str, key: str, value: str, restart: bool = False, execute: bool = True) -> str | Command:
-        return self.set_many(app_name=app_name, keys_values={key: value}, restart=restart, execute=execute)
+    def set_many_dict(self, app_name: str, keys_values: dict, restart: bool = False, execute: bool = True) -> str | Command:
+        """Utility method so you don't need to convert a `dict` into a list of `Config` objects to set many"""
+        configs = [Config(app_name=app_name, key=key, value=value) for key, value in keys_values.items()]
+        return self.set_many(configs=configs, restart=restart, execute=execute)
 
-    def unset_many(self, app_name: str, keys: List[str], restart: bool = False, execute: bool = True) -> str | Command:
+    def set(self, config: Config, restart: bool = False, execute: bool = True) -> str | Command:
+        return self.set_many(configs=[config], restart=restart, execute=execute)
+
+    def unset_many(self, configs: List[Config], restart: bool = False, execute: bool = True) -> str | Command:
+        keys = []
+        app_names = set()
+        for config in configs:
+            app_names.add(config.app_name)
+            keys.append(config.key)
+        if len(app_names) > 1:
+            raise ValueError(f"`unset_many` cannot be called for multiple apps (got {len(app_names)})")
+        app_name = list(app_names)[0]
         system = app_name is None
         if system and restart:
             raise ValueError("Cannot restart when unsetting global config")
@@ -50,8 +76,13 @@ class ConfigPlugin(DokkuPlugin):
         params.extend(keys)
         return self._evaluate("unset", params=params, execute=execute)
 
-    def unset(self, app_name: str, key: str, restart: bool = False, execute: bool = True) -> str | Command:
-        return self.unset_many(app_name=app_name, keys=[key], restart=restart, execute=execute)
+    def unset_many_list(self, app_name: str, keys: List[str], restart: bool = False, execute: bool = True) -> str | Command:
+        """Utility method so you don't need to convert a list of keys into a list of `Config` objects to unset many"""
+        configs = [Config(app_name=app_name, key=key, value=None) for key in keys]
+        return self.unset_many(configs=configs, restart=restart, execute=execute)
+
+    def unset(self, config: Config, restart: bool = False, execute: bool = True) -> str | Command:
+        return self.unset_many(configs=[config], restart=restart, execute=execute)
 
     def clear(self, app_name: str, restart: bool = False, execute: bool = True) -> str | Command:
         system = app_name is None

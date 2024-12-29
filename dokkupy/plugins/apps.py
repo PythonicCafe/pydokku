@@ -4,25 +4,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List
 
-from ..models import Command
+from ..models import App, Command
 from ..utils import parse_bool, parse_timestamp
 from .base import DokkuPlugin
 
 REGEXP_HEADER = re.compile("^=====> ", flags=re.MULTILINE)
 REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
-
-
-@dataclass
-class App:
-    name: str
-    dir: Path
-    locked: bool
-    created_at: datetime.datetime | None = None
-    deploy_source: str | None = None
-    deploy_source_metadata: str | None = None
-
-    def serialize(self):
-        return asdict(self)
 
 
 class AppsPlugin(DokkuPlugin):
@@ -38,14 +25,18 @@ class AppsPlugin(DokkuPlugin):
         for app_info in apps_infos:
             lines = app_info.splitlines()
             keys_values = [REGEXP_APP_METADATA.findall(line.strip())[0] for line in lines[1:]]
-            row = {
-                "name": lines[0].split()[0],
-                **{key.replace(" ", "_"): value or None for key, value in keys_values},
-            }
-            row["created_at"] = parse_timestamp(row["created_at"]) if row["created_at"] else None
-            row["dir"] = Path(row["dir"])
+            row = {key.replace(" ", "_"): value or None for key, value in keys_values}
             row["locked"] = parse_bool(row["locked"])
-            result.append(self.object_class(**row))
+            result.append(
+                self.object_class(
+                    name=lines[0].split()[0],
+                    path=Path(row["dir"]),
+                    locked=parse_bool(row["locked"]),
+                    created_at=parse_timestamp(row["created_at"]) if row["created_at"] else None,
+                    deploy_source=row.get("deploy_source"),
+                    deploy_source_metadata=row.get("deploy_source_metadata"),
+                )
+            )
         return result
 
     def create(self, name: str, execute: bool = True) -> str | Command:

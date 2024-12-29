@@ -1,10 +1,9 @@
 import json
 import re
-from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Literal
 
-from ..models import Command
+from ..models import App, Command, Storage
 from ..utils import clean_stderr
 from .base import DokkuPlugin
 
@@ -16,24 +15,11 @@ for opt in CHOWN_OPTIONS:
     ChownType |= Literal[opt]
 
 
-@dataclass
-class Storage:
-    host_path: Path | str
-    container_path: Path | str
-    options: str | None = None
-
-    def __post_init__(self):
-        # Force conversion to Path if string is passed
-        self.host_path = Path(self.host_path)
-        self.container_path = Path(self.container_path)
-
-    def serialize(self):
-        return asdict(self)
-
-
 class StoragePlugin(DokkuPlugin):
     name = "storage"
     object_class = Storage
+
+    # TODO: create helper method to get a storage size
 
     def list(self, app_name: str) -> List[Storage]:
         stdout = self._evaluate("list", [app_name, "--format", "json"], check=False)
@@ -64,20 +50,20 @@ class StoragePlugin(DokkuPlugin):
         user_id, group_id = [int(item) for item in REGEXP_USER_GROUP.findall(lines[1])[0]]
         return path, (user_id, group_id)
 
-    def mount(self, app_name: str, storage: Storage, execute: bool = True) -> str | Command:
+    def mount(self, storage: Storage, execute: bool = True) -> str | Command:
         host_path = storage.host_path
         container_path = storage.container_path
         if not host_path.is_absolute():
             raise ValueError(f"`host_path` must be an absolute path (got: {host_path})")
         elif not container_path.is_absolute():
             raise ValueError(f"`container_path` must be an absolute path (got: {container_path})")
-        return self._evaluate("mount", params=[app_name, f"{host_path}:{container_path}"], execute=execute)
+        return self._evaluate("mount", params=[storage.app_name, f"{host_path}:{container_path}"], execute=execute)
 
-    def unmount(self, app_name: str, storage: Storage, execute: bool = True) -> str | Command:
+    def unmount(self, storage: Storage, execute: bool = True) -> str | Command:
         host_path = storage.host_path
         container_path = storage.container_path
         result = self._evaluate(
-            "unmount", params=[app_name, f"{host_path}:{container_path}"], execute=execute, full_return=True
+            "unmount", params=[storage.app_name, f"{host_path}:{container_path}"], execute=execute, full_return=True
         )
         if not execute:
             return result

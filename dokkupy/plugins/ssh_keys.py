@@ -1,25 +1,15 @@
 import json
 import re
-from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List
 
-from ..models import Command
+from ..models import App, Command, SSHKey
 from ..ssh import KEY_TYPES
 from ..utils import clean_stderr
 from .base import DokkuPlugin
 
 REGEXP_SSH_PUBLIC_KEY = re.compile(f"ssh-({'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+( [^@]+@[^@]+)?")
 
-
-@dataclass
-class SSHKey:
-    fingerprint: str
-    name: str
-    options: dict
-
-    def serialize(self):
-        return asdict(self)
 
 
 class SSHKeysPlugin(DokkuPlugin):

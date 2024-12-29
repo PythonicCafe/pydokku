@@ -2,7 +2,7 @@ import datetime
 from pathlib import Path
 
 from dokkupy.dokku_cli import Dokku
-from dokkupy.plugins.apps import App
+from dokkupy.models import App
 from tests.utils import requires_dokku
 
 
@@ -66,18 +66,18 @@ def test_rename_command():
     assert command.sudo is False
 
 
-def test_ensure_object_command():
+def test_create_object_command():
     app_name = "test-app"
     created_at = datetime.datetime.now()
-    app_dir = Path(f"/tmp/{app_name}")
-    unlocked_app = App(name=app_name, created_at=created_at, dir=app_dir, locked=False)
-    locked_app = App(name=app_name, created_at=created_at, dir=app_dir, locked=True)
+    app_path = Path(f"/tmp/{app_name}")
+    unlocked_app = App(name=app_name, created_at=created_at, path=app_path, locked=False)
+    locked_app = App(name=app_name, created_at=created_at, path=app_path, locked=True)
     dokku = Dokku()
     command1 = dokku.apps.create(app_name, execute=False)
     command2 = dokku.apps.lock(app_name, execute=False)
 
-    assert dokku.apps.ensure_object(obj=unlocked_app, execute=False) == [command1]
-    assert dokku.apps.ensure_object(obj=locked_app, execute=False) == [command1, command2]
+    assert dokku.apps.create_object(obj=unlocked_app, execute=False) == [command1]
+    assert dokku.apps.create_object(obj=locked_app, execute=False) == [command1, command2]
 
 
 @requires_dokku

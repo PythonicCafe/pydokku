@@ -3,21 +3,40 @@ import random
 import pytest
 
 from dokkupy.dokku_cli import Dokku
+from dokkupy.models import Config
 from tests.utils import random_value, requires_dokku
 
 
 def test_set_many_command():
     app_name = "test-app"
-    pairs = {random_value(8): random_value(64) for _ in range(random.randint(1, 10))}
+    app_name_2 = "test-app-2"
+    pairs = {"test_" + random_value(8): random_value(64) for _ in range(random.randint(1, 10))}
     dokku = Dokku()
-    command = dokku.config.set_many(app_name, pairs, restart=False, execute=False)
+
+    command = dokku.config.set_many_dict(app_name, pairs, restart=False, execute=False)
     assert command.command[:5] == ["dokku", "config:set", "--encoded", "--no-restart", app_name]
     assert len(command.command[5:]) == len(pairs)
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is False
 
-    command = dokku.config.set_many(None, pairs, restart=False, execute=False)
+    configs_2 = [Config(app_name=app_name_2, key=key, value=value) for key, value in pairs.items()]
+    command = dokku.config.set_many(configs=configs_2, restart=False, execute=False)
+    assert command.command[:5] == ["dokku", "config:set", "--encoded", "--no-restart", app_name_2]
+    assert len(command.command[5:]) == len(pairs)
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    command = dokku.config.set_many_dict(None, pairs, restart=False, execute=False)
+    assert command.command[:4] == ["dokku", "config:set", "--encoded", "--global"]
+    assert len(command.command[4:]) == len(pairs)
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    configs_global = [Config(app_name=None, key=key, value=value) for key, value in pairs.items()]
+    command = dokku.config.set_many(configs=configs_global, restart=False, execute=False)
     assert command.command[:4] == ["dokku", "config:set", "--encoded", "--global"]
     assert len(command.command[4:]) == len(pairs)
     assert command.stdin is None
@@ -25,21 +44,42 @@ def test_set_many_command():
     assert command.sudo is False
 
     with pytest.raises(ValueError, match="Cannot restart when setting global config"):
-        dokku.config.set_many(None, pairs, restart=True, execute=False)
+        dokku.config.set_many_dict(None, pairs, restart=True, execute=False)
+
+    with pytest.raises(ValueError, match=r"`set_many` can only be called for one app \(got 2\)"):
+        dokku.config.set_many(configs=configs_2 + configs_global, restart=False, execute=False)
 
 
 def test_unset_many_command():
     app_name = "test-app"
-    keys = [random_value(8) for _ in range(random.randint(1, 10))]
+    app_name_2 = "test-app-2"
+    keys = ["test_" + random_value(8) for _ in range(random.randint(1, 10))]
     dokku = Dokku()
-    command = dokku.config.unset_many(app_name, keys, restart=False, execute=False)
+
+    command = dokku.config.unset_many_list(app_name, keys, restart=False, execute=False)
     assert command.command[:4] == ["dokku", "config:unset", "--no-restart", app_name]
     assert len(command.command[4:]) == len(keys)
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is False
 
-    command = dokku.config.unset_many(None, keys, restart=False, execute=False)
+    configs_2 = [Config(app_name=app_name_2, key=key, value=None) for key in keys]
+    command = dokku.config.unset_many(configs=configs_2, restart=False, execute=False)
+    assert command.command[:4] == ["dokku", "config:unset", "--no-restart", app_name_2]
+    assert len(command.command[4:]) == len(keys)
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    command = dokku.config.unset_many_list(None, keys, restart=False, execute=False)
+    assert command.command[:3] == ["dokku", "config:unset", "--global"]
+    assert len(command.command[3:]) == len(keys)
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    configs_global = [Config(app_name=None, key=key, value=None) for key in keys]
+    command = dokku.config.unset_many(configs=configs_global, restart=False, execute=False)
     assert command.command[:3] == ["dokku", "config:unset", "--global"]
     assert len(command.command[3:]) == len(keys)
     assert command.stdin is None
@@ -47,7 +87,10 @@ def test_unset_many_command():
     assert command.sudo is False
 
     with pytest.raises(ValueError, match="Cannot restart when unsetting global config"):
-        dokku.config.unset_many(None, keys, restart=True, execute=False)
+        dokku.config.unset_many_list(None, keys, restart=True, execute=False)
+
+    with pytest.raises(ValueError, match=r"`unset_many` cannot be called for multiple apps \(got 2\)"):
+        dokku.config.unset_many(configs=configs_2 + configs_global, restart=False, execute=False)
 
 
 def test_clear_command():
@@ -77,15 +120,16 @@ def test_set_get():
     key4, value4 = "test_key4", None  # None value instead of str
     dokku = Dokku()
     configs_before = dokku.config.get(app_name=None)
-    dokku.config.set(app_name=None, key=key1, value=value1)
+    dokku.config.set(Config(app_name=None, key=key1, value=value1))
     configs_after = dokku.config.get(app_name=None)
-    expected = configs_before.copy()
-    expected.update({key1: value1})
+    expected = [config for config in configs_before if config.key != key1] + [
+        Config(app_name=None, key=key1, value=value1)
+    ]
     assert len(expected) == len(configs_after)
-    assert configs_after[key1] == value1
-    dokku.config.unset(app_name=None, key=key1)
+    assert [config for config in configs_after if config.key == key1][0].value == value1
+    dokku.config.unset(Config(app_name=None, key=key1, value=None))
     new_configs = dokku.config.get(app_name=None)
-    del expected[key1]
+    expected = [config for config in expected if config.key != key1]
     assert len(expected) == len(new_configs)
     pairs = {
         key1: str(value1 if value1 is not None else ""),
@@ -93,10 +137,11 @@ def test_set_get():
         key3: str(value3 if value3 is not None else ""),
         key4: str(value4 if value4 is not None else ""),
     }
-    dokku.config.set_many(app_name=None, keys_values=pairs)
+    dokku.config.set_many_dict(app_name=None, keys_values=pairs)
     final_configs = dokku.config.get(app_name=None)
-    expected = configs_before.copy()
-    expected.update(pairs)
+    expected = [config for config in configs_before] + [
+        Config(app_name=None, key=key, value=value) for key, value in pairs.items()
+    ]
     assert final_configs == expected
 
 
@@ -106,19 +151,21 @@ def test_set_get_merged():
     keys_local = {"test_a": 1, "test_b": 2, "test_c": 3}
     keys_global = {"test_a": 0, "test_b": 0, "test_d": 4}
     dokku = Dokku()
-    initial_global = dokku.config.get(None)
+    initial_global = dokku.config.get(None, as_dict=True)
     dokku.apps.create(app_name)
-    assert dokku.config.get(app_name, merged=False) == {}
+    assert dokku.config.get(app_name, merged=False, as_dict=True) == {}
     expected_merged = {key: str(value) for key, value in initial_global.items()}
-    assert dokku.config.get(app_name, merged=True) == expected_merged
-    dokku.config.set_many(None, keys_global)
-    assert dokku.config.get(app_name, merged=False) == {}
+    assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
+    dokku.config.set_many_dict(None, keys_global)
+    assert dokku.config.get(app_name, merged=False, as_dict=True) == {}
     expected_merged = {key: str(value) for key, value in {**initial_global, **keys_global}.items()}
-    assert dokku.config.get(app_name, merged=True) == expected_merged
-    dokku.config.set_many(app_name, keys_local, restart=False)
-    assert dokku.config.get(app_name, merged=False) == {key: str(value) for key, value in keys_local.items()}
+    assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
+    dokku.config.set_many_dict(app_name, keys_local, restart=False)
+    assert dokku.config.get(app_name, merged=False, as_dict=True) == {
+        key: str(value) for key, value in keys_local.items()
+    }
     expected_merged = {key: str(value) for key, value in {**initial_global, **keys_global, **keys_local}.items()}
-    assert dokku.config.get(app_name, merged=True) == expected_merged
+    assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
     dokku.apps.destroy(app_name)
 
 
@@ -126,9 +173,9 @@ def test_set_get_merged():
 def test_clear():
     pairs = {"test_k1": "v1", "test_k2": "v2"}
     dokku = Dokku()
-    dokku.config.set_many(app_name=None, keys_values=pairs)
-    configs_after = dokku.config.get(app_name=None)
+    dokku.config.set_many_dict(app_name=None, keys_values=pairs)
+    configs_after = dokku.config.get(app_name=None, as_dict=True)
     assert len(configs_after) >= len(pairs)
     dokku.config.clear(app_name=None)
-    final_configs = dokku.config.get(app_name=None)
+    final_configs = dokku.config.get(app_name=None, as_dict=True)
     assert len(final_configs) == 0
