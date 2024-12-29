@@ -29,9 +29,25 @@ class Command(BaseModel):
 @dataclass
 class SSHKey(BaseModel):
     name: str
-    fingerprint: str
-    public_key: str
+    fingerprint: str | None = None
+    public_key: str | None = None
 
+    def calculate_fingerprint(self):
+        from .ssh import key_fingerprint
+
+        result = key_fingerprint(self.public_key)
+        _, self.fingerprint, _ = result.split(maxsplit=2)
+
+    @classmethod
+    def open(cls, name: str, path: str | Path, calculate_fingerprint: bool = True) -> 'SSHKey':
+        """Open a public SSH key file and create a SSHKey object"""
+        obj = cls(name=name, public_key=Path(path).expanduser().read_text(), fingerprint=None)
+        if calculate_fingerprint:
+            try:
+                obj.calculate_fingerprint()
+            except RuntimeError:
+                raise RuntimeError(f"Cannot calculate key fingerprint for: {repr(obj.public_key)}")
+        return obj
 
 @dataclass
 class App(BaseModel):

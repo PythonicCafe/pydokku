@@ -1,3 +1,4 @@
+import re
 import subprocess
 import tempfile
 from contextlib import contextmanager
@@ -5,6 +6,7 @@ from pathlib import Path
 from typing import List
 
 KEY_TYPES = "dsa ecdsa ecdsa-sk ed25519 ed25519-sk rsa".split()
+REGEXP_SSH_PUBLIC_KEY = re.compile(f"ssh-({'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+( [^@]+@[^@]+)?")
 
 
 def command(user: str, host: str, private_key: Path | str, port: int = 22, mux: bool = False,
@@ -109,11 +111,18 @@ def unlock_key(filename: Path | str, password: str):
             temp_key.unlink()
 
 
-def key_fingerprint(filename: Path | str) -> str:
+def key_fingerprint(filename_or_content: Path | str) -> str:
     """Extract a fingerprint from a public SSH key"""
-    filename = Path(filename).expanduser().absolute()
-    command = ["ssh-keygen", "-lf", str(filename)]
-    process = start_process(command)
+    if isinstance(filename_or_content, str) and REGEXP_SSH_PUBLIC_KEY.match(filename_or_content):
+        # `filename_or_content` is the key content, so we use `ssh-keygen`'s stdin
+        command = ["ssh-keygen", "-lf", "-"]
+        process = start_process(command)
+        process.stdin.write(filename_or_content)
+        process.stdin.close()
+    else:  # `filename_or_content` is the key path
+        filename = Path(filename_or_content).expanduser().absolute()
+        command = ["ssh-keygen", "-lf", str(filename)]
+        process = start_process(command)
     result = process.wait()
     if result != 0:
         stderr = process.stderr.read().strip()

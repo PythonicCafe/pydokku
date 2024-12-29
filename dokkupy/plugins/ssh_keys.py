@@ -4,11 +4,9 @@ from pathlib import Path
 from typing import List
 
 from ..models import App, Command, SSHKey
-from ..ssh import KEY_TYPES
 from ..utils import clean_stderr
 from .base import DokkuPlugin
 
-REGEXP_SSH_PUBLIC_KEY = re.compile(f"ssh-({'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+( [^@]+@[^@]+)?")
 
 
 
@@ -20,34 +18,23 @@ class SSHKeysPlugin(DokkuPlugin):
         _, stdout, stderr = self._evaluate("list", ["--format", "json"], check=False, full_return=True)
         if "No public keys found" in stderr:
             return []
-        result = []
+        keys = []
         for item in json.loads(stdout):
             name, fingerprint = item.pop("name"), item.pop("fingerprint")
-            result.append(SSHKey(name=name, fingerprint=fingerprint, options=item))
-        return result
+            keys.append(self.object_class(name=name, fingerprint=fingerprint, public_key=None))
+        return keys
 
     def add(self, name: str, key: str | Path, execute: bool = True) -> str | Command:
         """Add a SSH key to Dokku
 
-        `key` can be the public key itself or the path to the public key file
-        """
-        key_content = None
-        if isinstance(key, str):
-            if REGEXP_SSH_PUBLIC_KEY.match(key):  # key is the actual string
-                key_content = key
-            else:
-                key = Path(key)
-        if isinstance(key, Path):
-            # Key file is plain ASCII (base64-encoded), so we can read as if it were UTF-8 and have it in `str` instead
-            # of `bytes`
-            with key.open(mode="r") as fobj:
-                key_content = fobj.read()
-        if key_content is None:
-            raise ValueError(f"Unknown key type: {repr(key)}")
+    def add(self, key: SSHKey, execute: bool = True) -> str | Command:
+        """Add a SSH key to Dokku"""
+        if key.public_key is None:
+            raise ValueError(f"Cannot add an empty public key")
         result = self._evaluate(
             "add",
-            params=[name],
-            stdin=key_content + "\n",
+            params=[key.name],
+            stdin=key.public_key + "\n",
             sudo=True,
             execute=execute,
             check=False,
@@ -60,9 +47,12 @@ class SSHKeysPlugin(DokkuPlugin):
             raise ValueError(f"Cannot add SSH key: {clean_stderr(stderr)}")
         return stdout
 
-    def remove(self, name: str, is_fingerprint: bool = False, execute: bool = True) -> str | Command:
+    def remove(self, key: SSHKey, execute: bool = True) -> str | Command:
         # WARNING: Dokku won't throw an error if you try to delete an unexisting key
-        params = ["--fingerprint", name] if is_fingerprint else [name]
+        if not key.name and not key.fingerprint:
+            raise ValueError("A key name or fingerprint is needed so it can be removed")
+        is_fingerprint = key.name is None
+        params = ["--fingerprint", key.fingerprint] if is_fingerprint else [key.name]
         return self._evaluate("remove", params=params, sudo=True, execute=execute)
 
     def dump_all(self, apps: List[App]) -> List[dict]:

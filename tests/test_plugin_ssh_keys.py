@@ -1,18 +1,39 @@
 import pytest
 
 from dokkupy.dokku_cli import Dokku
-from tests.utils import requires_dokku
+from dokkupy.models import SSHKey
+from tests.utils import requires_dokku, requires_ssh_keygen
 
+
+@requires_ssh_keygen
+def test_model(temp_file):
+    key_name = "root"
+    key_content = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBH/a4e/e+/t5w7SfCUhU/2EjbgrkBLtq84BDc7rmCAJ root@localhost"
+    key_fingerprint = "SHA256:BR9rgyN7BoVhMuRcK8cQm2fHkTlDOQpa0uMYWTEkTZc"
+
+    key = SSHKey(name=key_name, public_key=key_content)
+    assert key.fingerprint is None
+    key.calculate_fingerprint()
+    assert key.fingerprint == key_fingerprint
+
+    temp_file.write_text(key_content)
+    key = SSHKey.open(key_name, temp_file)
+    assert key.public_key == key_content
+    assert key.fingerprint == key_fingerprint
+
+    invalid_key_content = "test 123"
+    temp_file.write_text(invalid_key_content)
+    with pytest.raises(RuntimeError, match="Cannot calculate key fingerprint for: 'test 123'"):
+        SSHKey.open(key_name, temp_file)
 
 def test_add_command(temp_file):
     key_name = "test-myuser"
     key_path = temp_file
     key_content = "test 123"
-    with temp_file.open(mode="w") as fobj:
-        fobj.write(key_content)
+    temp_file.write_text(key_content)
     dokku = Dokku()
 
-    command = dokku.ssh_keys.add(name=key_name, key=key_path, execute=False)
+    command = dokku.ssh_keys.add(SSHKey.open(key_name, key_path, calculate_fingerprint=False), execute=False)
     assert command.command == ["dokku", "ssh-keys:add", key_name]
     assert command.stdin == key_content + "\n"
     assert command.check is False
@@ -24,13 +45,13 @@ def test_remove_command():
     key_fingerprint = "SHA256:I/Du4ECSnSCpI3Q+CCgg+bWnR0sjwlIVwz2IRCEAwbw"
     dokku = Dokku()
 
-    command = dokku.ssh_keys.remove(key_name, is_fingerprint=False, execute=False)
+    command = dokku.ssh_keys.remove(SSHKey(name=key_name, fingerprint=None), execute=False)
     assert command.command == ["dokku", "ssh-keys:remove", key_name]
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is True
 
-    command = dokku.ssh_keys.remove(key_fingerprint, is_fingerprint=True, execute=False)
+    command = dokku.ssh_keys.remove(SSHKey(name=None, fingerprint=key_fingerprint), execute=False)
     assert command.command == ["dokku", "ssh-keys:remove", "--fingerprint", key_fingerprint]
     assert command.stdin is None
     assert command.check is True
@@ -48,24 +69,22 @@ def test_add_remove(temp_file):
         ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC9bIQ9NsZXsOVy/ho6KmRob3MPDgXdmj3XsRzUUjTgjMOPjrGkzKnKQmT+Cq05eGqYqJJChsbWrbazYsEntfYwqE2UGuYJRCs7zlXs10nXb007QkxBaiGkrJz94zayR/8qt6+geGejVl9I7l8EINRK1+SOvv62+8fc1TWQwnsboY0kMN59eS64Lvq35k3gSFn6ZC03ompqZp1OJFqMW+wT7FHGCm9Hoe0si+XU6GWqIKrjg+1GBLUxdtcmfxmUjiimHwAcof3OYl+iTl0zCykYLvamTVwjNLV9guRJ9sq68ljtmxNEZtMs3SgS1y9my/HYM8LQYeePxCuXAFFu3lh493e/mu4YrMdk4rO+3Fqlkr10im+SkEIo3EmKnCWturUrf2i3d37w2QNnX+77T313yH6FYx826ZxfoDknktVZYEmeVQNHG1903bmFNfoDY+R+PI3Pkn0NCs7uhXLFL+pDYJHw12ys32XALYQXyIQbx2H2NHFlugGTGemqYQhCm5U= debian@localhost
     """.strip()
     fingerprint = "SHA256:XiRjUCWNDCrKwSFRSqhR2kP33fEkDsUKbbwhCbnJXas"
-    dokku.ssh_keys.add(name=name, key=content)
+    dokku.ssh_keys.add(SSHKey(name=name, public_key=content))
 
     keys_after = dokku.ssh_keys.list()
     assert len(keys_before) + 1 == len(keys_after)
     keys_after_by_name = {key.name: key for key in keys_after}
     assert name in keys_after_by_name
     assert keys_after_by_name[name].fingerprint == fingerprint
-    assert "SSHCOMMAND_ALLOWED_KEYS" in keys_after_by_name[name].options
 
     with pytest.raises(ValueError, match="Duplicate ssh key name"):
-        dokku.ssh_keys.add(name=name, key=content)
+        dokku.ssh_keys.add(SSHKey(name=name, public_key=content))
 
     with pytest.raises(ValueError, match="Cannot add SSH key: Key specified in is not a valid ssh public key"):
-        with temp_file.open(mode="w") as fobj:
-            fobj.write("invalid key content")
-        dokku.ssh_keys.add(name=another_name, key=temp_file)
+        temp_file.write_text("invalid key content")
+        dokku.ssh_keys.add(SSHKey.open(another_name, temp_file, calculate_fingerprint=False))
 
-    dokku.ssh_keys.remove(name=name, is_fingerprint=False)
+    dokku.ssh_keys.remove(SSHKey(name=name))
     keys_final = dokku.ssh_keys.list()
     assert len(keys_before) == len(keys_final)
 
