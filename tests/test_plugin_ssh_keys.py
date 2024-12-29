@@ -1,7 +1,10 @@
+from textwrap import dedent
+
 import pytest
 
 from dokkupy.dokku_cli import Dokku
 from dokkupy.models import SSHKey
+from dokkupy.plugins.ssh_keys import parse_authorized_keys
 from tests.utils import requires_dokku, requires_ssh_keygen
 
 
@@ -25,6 +28,40 @@ def test_model(temp_file):
     temp_file.write_text(invalid_key_content)
     with pytest.raises(RuntimeError, match="Cannot calculate key fingerprint for: 'test 123'"):
         SSHKey.open(key_name, temp_file)
+
+
+def test_parse_authorized_keys_file():
+    regular_auth_keys = dedent(
+        """
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBH/a4e/e+/t5w7SfCUhU/2EjbgrkBLtq84BDc7rmCAJ root@localhost
+        ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzEfW+7YmD7ETaZBwOzN0GFqAlksdnpSImvKt9Vm92vXlqP/CZ7cqwA6uOThlmql91Syjpz1CcYXBHmUJCnlTwzvD+TKfgaT/upreFhRWjyUgAyrxc2LoRAvlEnif2t5adIX6b6GwHwRiphWhV601Gi+iZMeZol6yNC2fukRWzaad5u3kfhsH5WkLdDoSOCsdIWNliyBOJk7p3qsvitNEWwP/0SEn1jPXe4I8K8R/Tq5xkelQpn5aSqcU6h5zFY+PDIOuAEySkumD0UIYd6OlWw/RntwF8G8ZnCFTRjGiZ3d5WegJ0mxT31iWgTn1CavQe05rws6EFThccd7BVyCsFqMj+YxLBURFbTBUR4JM1yKLJ4/sI/xzYhoXMbx1c7gjZyZi15+hmpHh//ev36gc2jrSkkP/LhoXvnAJgNiz3voRc7WOGnZZAmvEjdonxX/NZOte8N4quYqBoqfx5vxUZo3pwbEBCyPPhzc0M6kn8fOXko6ab/ari3rNFbGsq1u8= root@localhost
+    """
+    )
+    dokku_auth_keys = dedent(
+        r"""
+        command="FINGERPRINT=SHA256:BR9rgyN7BoVhMuRcK8cQm2fHkTlDOQpa0uMYWTEkTZc NAME=\"root-1\" `cat /home/dokku/.sshcommand` $SSH_ORIGINAL_COMMAND",no-agent-forwarding,no-user-rc,no-X11-forwarding,no-port-forwarding ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBH/a4e/e+/t5w7SfCUhU/2EjbgrkBLtq84BDc7rmCAJ root@localhost
+        command="FINGERPRINT=SHA256:DhvG0hhRIcuOrs4Xe+ObprP+19wc2dr+VNdZWSUEG4A NAME=\"root-2\" `cat /home/dokku/.sshcommand` $SSH_ORIGINAL_COMMAND",no-agent-forwarding,no-user-rc,no-X11-forwarding,no-port-forwarding ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzEfW+7YmD7ETaZBwOzN0GFqAlksdnpSImvKt9Vm92vXlqP/CZ7cqwA6uOThlmql91Syjpz1CcYXBHmUJCnlTwzvD+TKfgaT/upreFhRWjyUgAyrxc2LoRAvlEnif2t5adIX6b6GwHwRiphWhV601Gi+iZMeZol6yNC2fukRWzaad5u3kfhsH5WkLdDoSOCsdIWNliyBOJk7p3qsvitNEWwP/0SEn1jPXe4I8K8R/Tq5xkelQpn5aSqcU6h5zFY+PDIOuAEySkumD0UIYd6OlWw/RntwF8G8ZnCFTRjGiZ3d5WegJ0mxT31iWgTn1CavQe05rws6EFThccd7BVyCsFqMj+YxLBURFbTBUR4JM1yKLJ4/sI/xzYhoXMbx1c7gjZyZi15+hmpHh//ev36gc2jrSkkP/LhoXvnAJgNiz3voRc7WOGnZZAmvEjdonxX/NZOte8N4quYqBoqfx5vxUZo3pwbEBCyPPhzc0M6kn8fOXko6ab/ari3rNFbGsq1u8= root@localhost
+    """
+    )
+
+    result_1 = parse_authorized_keys(regular_auth_keys)
+    assert len(result_1) == 0  # Only dokku-configured keys should be returned
+
+    result_2 = parse_authorized_keys(dokku_auth_keys)
+    assert len(result_2) == 2
+    assert result_2 == [
+        SSHKey(
+            name="root-1",
+            fingerprint="SHA256:BR9rgyN7BoVhMuRcK8cQm2fHkTlDOQpa0uMYWTEkTZc",
+            public_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBH/a4e/e+/t5w7SfCUhU/2EjbgrkBLtq84BDc7rmCAJ root@localhost",
+        ),
+        SSHKey(
+            fingerprint="SHA256:DhvG0hhRIcuOrs4Xe+ObprP+19wc2dr+VNdZWSUEG4A",
+            name="root-2",
+            public_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzEfW+7YmD7ETaZBwOzN0GFqAlksdnpSImvKt9Vm92vXlqP/CZ7cqwA6uOThlmql91Syjpz1CcYXBHmUJCnlTwzvD+TKfgaT/upreFhRWjyUgAyrxc2LoRAvlEnif2t5adIX6b6GwHwRiphWhV601Gi+iZMeZol6yNC2fukRWzaad5u3kfhsH5WkLdDoSOCsdIWNliyBOJk7p3qsvitNEWwP/0SEn1jPXe4I8K8R/Tq5xkelQpn5aSqcU6h5zFY+PDIOuAEySkumD0UIYd6OlWw/RntwF8G8ZnCFTRjGiZ3d5WegJ0mxT31iWgTn1CavQe05rws6EFThccd7BVyCsFqMj+YxLBURFbTBUR4JM1yKLJ4/sI/xzYhoXMbx1c7gjZyZi15+hmpHh//ev36gc2jrSkkP/LhoXvnAJgNiz3voRc7WOGnZZAmvEjdonxX/NZOte8N4quYqBoqfx5vxUZo3pwbEBCyPPhzc0M6kn8fOXko6ab/ari3rNFbGsq1u8= root@localhost",
+        ),
+    ]
+
 
 def test_add_command(temp_file):
     key_name = "test-myuser"
