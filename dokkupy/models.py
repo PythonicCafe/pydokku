@@ -82,3 +82,13 @@ class Storage(BaseModel):
         self.container_path = Path(self.container_path)
         self.user_id = int(self.user_id) if self.user_id else None
         self.group_id = int(self.group_id) if self.group_id else None
+
+
+@dataclass
+class Domain:
+    app_name: str
+    enabled: bool
+    domains: List[str]
+
+    def serialize(self):
+        return asdict(self)

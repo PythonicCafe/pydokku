@@ -52,3 +52,7 @@ class DokkuPlugin:
     def create_objects(self, objs: List[T], execute: bool = True) -> Iterator[str] | Iterator[Command]:
         for obj in objs:
             yield from self.create_object(obj, execute=execute)
+
+    # TODO: create CRUD methods:
+    # TODO: create list_objects
+    # TODO: create delete_object

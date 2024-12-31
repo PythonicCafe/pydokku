@@ -3,10 +3,9 @@ from pathlib import Path
 from typing import List
 
 from ..models import App, Command
-from ..utils import parse_bool, parse_timestamp
+from ..utils import REGEXP_DOKKU_HEADER, parse_bool, parse_timestamp
 from .base import DokkuPlugin
 
-REGEXP_HEADER = re.compile("^=====> ", flags=re.MULTILINE)
 REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
 
 
@@ -18,7 +17,7 @@ class AppsPlugin(DokkuPlugin):
         _, stdout, stderr = self._evaluate("report", check=False, execute=True, full_return=True)
         if not stdout and "You haven't deployed any applications yet" in stderr:
             return []
-        apps_infos = REGEXP_HEADER.split(stdout)[1:]
+        apps_infos = REGEXP_DOKKU_HEADER.split(stdout)[1:]
         result = []
         for app_info in apps_infos:
             lines = app_info.splitlines()

@@ -20,3 +20,6 @@ done
 
 # storage
 sudo rm -rf /var/lib/dokku/data/storage/test-*
+
+# domains
+dokku domains:set-global dokku.me

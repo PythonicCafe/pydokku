@@ -1,5 +1,6 @@
 from .apps import AppsPlugin  # noqa
 from .config import ConfigPlugin  # noqa
+from .domains import DomainsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
@@ -8,18 +9,6 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement checks:report [<app>] [<flag>]           Displays a checks report for one or more apps
 # TODO: implement checks:run <app> [process-type(s)]       Runs zero-downtime checks for all processes (or comma-separated process-type list)
 # TODO: implement checks:skip <app> [process-type(s)]      Skip zero-downtime checks for all processes (or comma-separated process-type list)
-
-# TODO: implement domains:add <app> <domain> [<domain> ...]       Add domains to app
-# TODO: implement domains:add-global <domain> [<domain> ...]      Add global domain names
-# TODO: implement domains:clear <app>                             Clear all domains for app
-# TODO: implement domains:clear-global                            Clear global domain names
-# TODO: implement domains:disable <app>                           Disable VHOST support
-# TODO: implement domains:enable <app>                            Enable VHOST support
-# TODO: implement domains:remove <app> <domain> [<domain> ...]    Remove domains from app
-# TODO: implement domains:remove-global <domain> [<domain> ...]   Remove global domain names
-# TODO: implement domains:report [<app>|--global] [<flag>]        Displays a domains report for one or more apps
-# TODO: implement domains:set <app> <domain> [<domain> ...]       Set domains for app
-# TODO: implement domains:set-global <domain> [<domain> ...]      Set global domain names
 
 # TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
 # TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)

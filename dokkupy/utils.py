@@ -4,6 +4,7 @@ import subprocess
 from functools import lru_cache
 
 REGEXP_ERROR_STR = re.compile(r"^\s*!\s+ (.*)$")
+REGEXP_DOKKU_HEADER = re.compile("^=====> ", flags=re.MULTILINE)
 
 
 def clean_stderr(value: str) -> str:

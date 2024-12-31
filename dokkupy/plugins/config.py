@@ -110,9 +110,11 @@ class ConfigPlugin(DokkuPlugin):
         return [self.set_many(configs=[obj], restart=False, execute=execute)]
 
     def create_objects(self, objs: List[Config], execute: bool = True) -> Iterator[str] | Iterator[Command]:
-        sort_func = lambda obj: obj.app_name
-        objs.sort(key=sort_func)
-        groups = groupby(objs, key=sort_func)
+        def get_app_name(obj):
+            return obj.app_name
+
+        objs.sort(key=get_app_name)
+        groups = groupby(objs, key=get_app_name)
         for app_name, configs in groups:
             configs = list(configs)
             if not execute:
