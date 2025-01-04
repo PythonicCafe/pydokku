@@ -1,6 +1,6 @@
 from typing import List
 
-from ..models import Command, Domain
+from ..models import App, Command, Domain
 from ..utils import REGEXP_DOKKU_HEADER, parse_bool
 from .base import DokkuPlugin
 
@@ -78,3 +78,12 @@ class DomainsPlugin(DokkuPlugin):
 
     def disable(self, app_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("disable", params=[app_name], execute=execute)
+
+    def dump_all(self, apps: List[App]) -> List[dict]:
+        apps_names = [app.name for app in apps]
+        return [obj.serialize() for obj in self.list() if obj.app_name in apps_names]
+
+    def create_object(self, obj: Domain, execute: bool = True) -> List[str] | List[Command]:
+        if not obj.enabled:
+            return [self.disable(app_name=obj.app_name, execute=execute)]
+        return [self.set(obj.app_name, domains=obj.domains, execute=execute)]
