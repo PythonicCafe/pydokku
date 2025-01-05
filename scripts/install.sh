@@ -41,6 +41,7 @@ dokku plugin:install https://github.com/dokku/dokku-maintenance.git
 dokku plugin:install https://github.com/dokku/dokku-mariadb.git
 dokku plugin:install https://github.com/dokku/dokku-mysql.git
 dokku plugin:install https://github.com/dokku/dokku-postgres.git
+dokku plugin:install https://github.com/dokku/dokku-rabbitmq.git
 dokku plugin:install https://github.com/dokku/dokku-redirect.git
 dokku plugin:install https://github.com/dokku/dokku-redis.git
 dokku plugin:install-dependencies

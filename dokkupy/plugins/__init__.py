@@ -10,15 +10,6 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement checks:run <app> [process-type(s)]       Runs zero-downtime checks for all processes (or comma-separated process-type list)
 # TODO: implement checks:skip <app> [process-type(s)]      Skip zero-downtime checks for all processes (or comma-separated process-type list)
 
-# TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
-# TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)
-# TODO: implement nginx:report [<app>] [<flag>]             Displays an nginx report for one or more apps
-# TODO: implement nginx:set <app> <property> (<value>)      Set or clear an nginx property for an app
-# TODO: implement nginx:show-config <app>                   Display app nginx config
-# TODO: implement nginx:start                               Starts the nginx server
-# TODO: implement nginx:stop                                Stops the nginx server
-# TODO: implement nginx:validate-config [<app>] [--clean]   Validates and optionally cleans up invalid nginx configurations
-
 # TODO: implement ps:inspect <app>                                                   Displays a sanitized version of docker inspect for an app
 # TODO: implement ps:rebuild [--parallel count] [--all|<app>]                        Rebuilds an app from source
 # TODO: implement ps:report [<app>] [<flag>]                                         Displays a process report for one or more apps
@@ -29,6 +20,15 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement ps:start [--parallel count] [--all|<app>]                          Start an app
 # TODO: implement ps:stop [--parallel count] [--all|<app>]                           Stop an app
 
+# TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
+# TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)
+# TODO: implement nginx:report [<app>] [<flag>]             Displays an nginx report for one or more apps
+# TODO: implement nginx:set <app> <property> (<value>)      Set or clear an nginx property for an app
+# TODO: implement nginx:show-config <app>                   Display app nginx config
+# TODO: implement nginx:start                               Starts the nginx server
+# TODO: implement nginx:stop                                Stops the nginx server
+# TODO: implement nginx:validate-config [<app>] [--clean]   Validates and optionally cleans up invalid nginx configurations
+
 # TODO: implement plugin:disable <name>                                                                               Disable an installed plugin (third-party only)
 # TODO: implement plugin:enable <name>                                                                                Enable a previously disabled plugin
 # TODO: implement plugin:install [--core|--git-url] [--committish branch|commit|commit] [--name custom-plugin-name]   Optionally download git-url (and pin to the specified branch/commit/tag) & run install trigger for active plugins (or only core ones)
@@ -38,7 +38,9 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement plugin:uninstall <name>                                                                             Uninstall a plugin (third-party only)
 # TODO: implement plugin:update [name [branch|commit|tag]]                                                            Optionally update named plugin from git (and pin to the specified branch/commit/tag) & run update trigger for active plugins
 
-# TODO: implement redirect
+# TODO: implement redirect <app>                           Display the redirects set on app
+# TODO: implement redirect:set <app> <src> <dest> [<code>] Set a redirect from <src> domain to <dest> domain
+# TODO: implement redirect:unset <app> <src>               Unset a redirect from <source>
 
 # TODO: implement maintenance:enable <app>              Enable app maintenance mode
 # TODO: implement maintenance:disable <app>             Disable app maintenance mode
@@ -56,126 +58,82 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement letsencrypt:revoke <app>                     Revoke letsencrypt certificate for app
 # TODO: implement letsencrypt:set <app> <property> (<value>)   Set or clear a letsencrypt property for an app
 
-# TODO: implement postgres:app-links <app>                                                        list all Postgres service links for a given app
-# TODO: implement postgres:backup-auth <service> <aws-access-key-id> <aws-secret-access-key>...   set up authentication for backups on the Postgres service
-# TODO: implement postgres:backup-deauth <service>                                                remove backup authentication for the Postgres service
-# TODO: implement postgres:backup-schedule-cat <service>                                          cat the contents of the configured backup cronfile for the service
-# TODO: implement postgres:backup-schedule <service> <schedule> <bucket-name>...                  schedule a backup of the Postgres service
-# TODO: implement postgres:backup <service> <bucket-name> [-u|--use-iam-optional]                 create a backup of the Postgres service to an existing s3 bucket
-# TODO: implement postgres:backup-set-encryption <service> <passphrase>                           set encryption for all future backups of Postgres service
-# TODO: implement postgres:backup-set-public-key-encryption <service> <public-key-id>             set GPG Public Key encryption for all future backups of Postgres service
-# TODO: implement postgres:backup-unschedule <service>                                            unschedule the backup of the Postgres service
-# TODO: implement postgres:backup-unset-encryption <service>                                      unset encryption for future backups of the Postgres service
-# TODO: implement postgres:backup-unset-public-key-encryption <service>                           unset GPG Public Key encryption for future backups of the Postgres service
-# TODO: implement postgres:clone <service> <new-service> [--clone-flags...]                       create container <new-name> then copy data from <name> into <new-name>
-# TODO: implement postgres:connect <service>                                                      connect to the service via the postgres connection tool
+# Service plugins - maybe add service:links (service:info is per service and costly)
+
 # TODO: implement postgres:create <service> [--create-flags...]                                   create a Postgres service
 # TODO: implement postgres:destroy <service> [-f|--force]                                         delete the Postgres service/data/container if there are no links left
-# TODO: implement postgres:enter <service>                                                        enter or run a command in a running Postgres service container
-# TODO: implement postgres:exists <service>                                                       check if the Postgres service exists
-# TODO: implement postgres:export <service>                                                       export a dump of the Postgres service database
 # TODO: implement postgres:expose <service> <ports...>                                            expose a Postgres service on custom host:port if provided (random port on the 0.0.0.0 interface if otherwise unspecified)
-# TODO: implement postgres:import <service>                                                       import a dump into the Postgres service database
-# TODO: implement postgres:info <service> [--single-info-flag]                                    print the service information
-# TODO: implement postgres:linked <service> <app>                                                 check if the Postgres service is linked to an app
+# TODO: implement postgres:unexpose <service>                                                     unexpose a previously exposed Postgres service
 # TODO: implement postgres:link <service> <app> [--link-flags...]                                 link the Postgres service to the app
-# TODO: implement postgres:links <service>                                                        list all apps linked to the Postgres service
-# TODO: implement postgres:list                                                                   list all Postgres services
+# TODO: implement postgres:unlink <service> <app>                                                 unlink the Postgres service from the app
+# TODO: implement postgres:info <service> [--single-info-flag]                                    print the service information
 # TODO: implement postgres:logs <service> [-t|--tail] [<tail-num>]                                print the most recent log(s) for this service
+# TODO: implement postgres:list                                                                   list all Postgres services
 # TODO: implement postgres:pause <service>                                                        pause a running Postgres service
-# TODO: implement postgres:promote <service> <app>                                                promote service <service> as DATABASE_URL in <app>
 # TODO: implement postgres:restart <service>                                                      graceful shutdown and restart of the Postgres service container
-# TODO: implement postgres:set <service> <key> <value>                                            set or clear a property for a service
 # TODO: implement postgres:start <service>                                                        start a previously stopped Postgres service
 # TODO: implement postgres:stop <service>                                                         stop a running Postgres service
-# TODO: implement postgres:unexpose <service>                                                     unexpose a previously exposed Postgres service
-# TODO: implement postgres:unlink <service> <app>                                                 unlink the Postgres service from the app
+# TODO: implement postgres:promote <service> <app>                                                promote service <service> as DATABASE_URL in <app>
+# TODO: implement postgres:set <service> <key> <value>                                            set or clear a property for a service
 # TODO: implement postgres:upgrade <service> [--upgrade-flags...]                                 upgrade service <service> to the specified versions
 
-# TODO: implement mariadb:app-links <app>                                                        list all MariaDB service links for a given app
-# TODO: implement mariadb:backup-auth <service> <aws-access-key-id> <aws-secret-access-key>...   set up authentication for backups on the MariaDB service
-# TODO: implement mariadb:backup-deauth <service>                                                remove backup authentication for the MariaDB service
-# TODO: implement mariadb:backup-schedule-cat <service>                                          cat the contents of the configured backup cronfile for the service
-# TODO: implement mariadb:backup-schedule <service> <schedule> <bucket-name>...                  schedule a backup of the MariaDB service
-# TODO: implement mariadb:backup <service> <bucket-name> [-u|--use-iam-optional]                 create a backup of the MariaDB service to an existing s3 bucket
-# TODO: implement mariadb:backup-set-encryption <service> <passphrase>                           set encryption for all future backups of MariaDB service
-# TODO: implement mariadb:backup-set-public-key-encryption <service> <public-key-id>             set GPG Public Key encryption for all future backups of MariaDB service
-# TODO: implement mariadb:backup-unschedule <service>                                            unschedule the backup of the MariaDB service
-# TODO: implement mariadb:backup-unset-encryption <service>                                      unset encryption for future backups of the MariaDB service
-# TODO: implement mariadb:backup-unset-public-key-encryption <service>                           unset GPG Public Key encryption for future backups of the MariaDB service
-# TODO: implement mariadb:clone <service> <new-service> [--clone-flags...]                       create container <new-name> then copy data from <name> into <new-name>
-# TODO: implement mariadb:connect <service>                                                      connect to the service via the mariadb connection tool
 # TODO: implement mariadb:create <service> [--create-flags...]                                   create a MariaDB service
 # TODO: implement mariadb:destroy <service> [-f|--force]                                         delete the MariaDB service/data/container if there are no links left
-# TODO: implement mariadb:enter <service>                                                        enter or run a command in a running MariaDB service container
-# TODO: implement mariadb:exists <service>                                                       check if the MariaDB service exists
-# TODO: implement mariadb:export <service>                                                       export a dump of the MariaDB service database
 # TODO: implement mariadb:expose <service> <ports...>                                            expose a MariaDB service on custom host:port if provided (random port on the 0.0.0.0 interface if otherwise unspecified)
-# TODO: implement mariadb:import <service>                                                       import a dump into the MariaDB service database
-# TODO: implement mariadb:info <service> [--single-info-flag]                                    print the service information
-# TODO: implement mariadb:linked <service> <app>                                                 check if the MariaDB service is linked to an app
+# TODO: implement mariadb:unexpose <service>                                                     unexpose a previously exposed MariaDB service
 # TODO: implement mariadb:link <service> <app> [--link-flags...]                                 link the MariaDB service to the app
-# TODO: implement mariadb:links <service>                                                        list all apps linked to the MariaDB service
-# TODO: implement mariadb:list                                                                   list all MariaDB services
+# TODO: implement mariadb:unlink <service> <app>                                                 unlink the MariaDB service from the app
+# TODO: implement mariadb:info <service> [--single-info-flag]                                    print the service information
 # TODO: implement mariadb:logs <service> [-t|--tail] [<tail-num>]                                print the most recent log(s) for this service
+# TODO: implement mariadb:list                                                                   list all MariaDB services
 # TODO: implement mariadb:pause <service>                                                        pause a running MariaDB service
-# TODO: implement mariadb:promote <service> <app>                                                promote service <service> as DATABASE_URL in <app>
 # TODO: implement mariadb:restart <service>                                                      graceful shutdown and restart of the MariaDB service container
-# TODO: implement mariadb:set <service> <key> <value>                                            set or clear a property for a service
 # TODO: implement mariadb:start <service>                                                        start a previously stopped MariaDB service
 # TODO: implement mariadb:stop <service>                                                         stop a running MariaDB service
-# TODO: implement mariadb:unexpose <service>                                                     unexpose a previously exposed MariaDB service
-# TODO: implement mariadb:unlink <service> <app>                                                 unlink the MariaDB service from the app
+# TODO: implement mariadb:promote <service> <app>                                                promote service <service> as DATABASE_URL in <app>
+# TODO: implement mariadb:set <service> <key> <value>                                            set or clear a property for a service
 # TODO: implement mariadb:upgrade <service> [--upgrade-flags...]                                 upgrade service <service> to the specified versions
 
-# TODO: implement redis:app-links <app>                                                        list all Redis service links for a given app
-# TODO: implement redis:backup-auth <service> <aws-access-key-id> <aws-secret-access-key>...   set up authentication for backups on the Redis service
-# TODO: implement redis:backup-deauth <service>                                                remove backup authentication for the Redis service
-# TODO: implement redis:backup-schedule-cat <service>                                          cat the contents of the configured backup cronfile for the service
-# TODO: implement redis:backup-schedule <service> <schedule> <bucket-name>...                  schedule a backup of the Redis service
-# TODO: implement redis:backup <service> <bucket-name> [-u|--use-iam-optional]                 create a backup of the Redis service to an existing s3 bucket
-# TODO: implement redis:backup-set-encryption <service> <passphrase>                           set encryption for all future backups of Redis service
-# TODO: implement redis:backup-set-public-key-encryption <service> <public-key-id>             set GPG Public Key encryption for all future backups of Redis service
-# TODO: implement redis:backup-unschedule <service>                                            unschedule the backup of the Redis service
-# TODO: implement redis:backup-unset-encryption <service>                                      unset encryption for future backups of the Redis service
-# TODO: implement redis:backup-unset-public-key-encryption <service>                           unset GPG Public Key encryption for future backups of the Redis service
-# TODO: implement redis:clone <service> <new-service> [--clone-flags...]                       create container <new-name> then copy data from <name> into <new-name>
-# TODO: implement redis:connect <service>                                                      connect to the service via the redis connection tool
+# TODO: implement mysql:create <service> [--create-flags...]         # create a mysql service
+# TODO: implement mysql:destroy <service> [-f|--force]               # delete the mysql service/data/container if there are no links left
+# TODO: implement mysql:expose <service> <ports...>                  # expose a mysql service on custom host:port if provided (random port on the 0.0.0.0 interface if otherwise unspecified)
+# TODO: implement mysql:unexpose <service>                           # unexpose a previously exposed mysql service
+# TODO: implement mysql:link <service> <app> [--link-flags...]       # link the mysql service to the app
+# TODO: implement mysql:unlink <service> <app>                       # unlink the mysql service from the app
+# TODO: implement mysql:info <service> [--single-info-flag]          # print the service information
+# TODO: implement mysql:logs <service> [-t|--tail] <tail-num-optional> # print the most recent log(s) for this service
+# TODO: implement mysql:list                                         # list all mysql services
+# TODO: implement mysql:pause <service>                              # pause a running mysql service
+# TODO: implement mysql:restart <service>                            # graceful shutdown and restart of the mysql service container
+# TODO: implement mysql:start <service>                              # start a previously stopped mysql service
+# TODO: implement mysql:stop <service>                               # stop a running mysql service
+# TODO: implement mysql:promote <service> <app>                      # promote service <service> as DATABASE_URL in <app>
+# TODO: implement mysql:set <service> <key> <value>                  # set or clear a property for a service
+# TODO: implement mysql:upgrade <service> [--upgrade-flags...]       # upgrade service <service> to the specified versions
+
 # TODO: implement redis:create <service> [--create-flags...]                                   create a Redis service
 # TODO: implement redis:destroy <service> [-f|--force]                                         delete the Redis service/data/container if there are no links left
-# TODO: implement redis:enter <service>                                                        enter or run a command in a running Redis service container
-# TODO: implement redis:exists <service>                                                       check if the Redis service exists
-# TODO: implement redis:export <service>                                                       export a dump of the Redis service database
 # TODO: implement redis:expose <service> <ports...>                                            expose a Redis service on custom host:port if provided (random port on the 0.0.0.0 interface if otherwise unspecified)
-# TODO: implement redis:import <service>                                                       import a dump into the Redis service database
-# TODO: implement redis:info <service> [--single-info-flag]                                    print the service information
-# TODO: implement redis:linked <service> <app>                                                 check if the Redis service is linked to an app
+# TODO: implement redis:unexpose <service>                                                     unexpose a previously exposed Redis service
 # TODO: implement redis:link <service> <app> [--link-flags...]                                 link the Redis service to the app
-# TODO: implement redis:links <service>                                                        list all apps linked to the Redis service
-# TODO: implement redis:list                                                                   list all Redis services
+# TODO: implement redis:unlink <service> <app>                                                 unlink the Redis service from the app
+# TODO: implement redis:info <service> [--single-info-flag]                                    print the service information
 # TODO: implement redis:logs <service> [-t|--tail] [<tail-num>]                                print the most recent log(s) for this service
+# TODO: implement redis:list                                                                   list all Redis services
 # TODO: implement redis:pause <service>                                                        pause a running Redis service
-# TODO: implement redis:promote <service> <app>                                                promote service <service> as REDIS_URL in <app>
 # TODO: implement redis:restart <service>                                                      graceful shutdown and restart of the Redis service container
-# TODO: implement redis:set <service> <key> <value>                                            set or clear a property for a service
 # TODO: implement redis:start <service>                                                        start a previously stopped Redis service
 # TODO: implement redis:stop <service>                                                         stop a running Redis service
-# TODO: implement redis:unexpose <service>                                                     unexpose a previously exposed Redis service
-# TODO: implement redis:unlink <service> <app>                                                 unlink the Redis service from the app
+# TODO: implement redis:promote <service> <app>                                                promote service <service> as REDIS_URL in <app>
+# TODO: implement redis:set <service> <key> <value>                                            set or clear a property for a service
 # TODO: implement redis:upgrade <service> [--upgrade-flags...]                                 upgrade service <service> to the specified versions
 
-# TODO: implement elasticsearch:app-links <app>                                              list all Elasticsearch service links for a given app
-# TODO: implement elasticsearch:backup-set-public-key-encryption <service> <public-key-id>   set GPG Public Key encryption for all future backups of Elasticsearch service
-# TODO: implement elasticsearch:backup-unset-public-key-encryption <service>                 unset GPG Public Key encryption for future backups of the Elasticsearch service
 # TODO: implement elasticsearch:create <service> [--create-flags...]                         create a Elasticsearch service
 # TODO: implement elasticsearch:destroy <service> [-f|--force]                               delete the Elasticsearch service/data/container if there are no links left
-# TODO: implement elasticsearch:enter <service>                                              enter or run a command in a running Elasticsearch service container
-# TODO: implement elasticsearch:exists <service>                                             check if the Elasticsearch service exists
 # TODO: implement elasticsearch:expose <service> <ports...>                                  expose a Elasticsearch service on custom host:port if provided (random port on the 0.0.0.0 interface if otherwise unspecified)
+# TODO: implement elasticsearch:unexpose <service>                                           unexpose a previously exposed Elasticsearch service
 # TODO: implement elasticsearch:info <service> [--single-info-flag]                          print the service information
-# TODO: implement elasticsearch:linked <service> <app>                                       check if the Elasticsearch service is linked to an app
 # TODO: implement elasticsearch:link <service> <app> [--link-flags...]                       link the Elasticsearch service to the app
-# TODO: implement elasticsearch:links <service>                                              list all apps linked to the Elasticsearch service
 # TODO: implement elasticsearch:list                                                         list all Elasticsearch services
 # TODO: implement elasticsearch:logs <service> [-t|--tail] [<tail-num>]                      print the most recent log(s) for this service
 # TODO: implement elasticsearch:pause <service>                                              pause a running Elasticsearch service
@@ -184,6 +142,22 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement elasticsearch:set <service> <key> <value>                                  set or clear a property for a service
 # TODO: implement elasticsearch:start <service>                                              start a previously stopped Elasticsearch service
 # TODO: implement elasticsearch:stop <service>                                               stop a running Elasticsearch service
-# TODO: implement elasticsearch:unexpose <service>                                           unexpose a previously exposed Elasticsearch service
 # TODO: implement elasticsearch:unlink <service> <app>                                       unlink the Elasticsearch service from the app
 # TODO: implement elasticsearch:upgrade <service> [--upgrade-flags...]                       upgrade service <service> to the specified versions
+
+# TODO: implement rabbitmq:create <service> [--create-flags...]      # create a rabbitmq service
+# TODO: implement rabbitmq:destroy <service> [-f|--force]            # delete the rabbitmq service/data/container if there are no links left
+# TODO: implement rabbitmq:expose <service> <ports...>               # expose a rabbitmq service on custom host:port if provided (random port on the 0.0.0.0 interface if otherwise unspecified)
+# TODO: implement rabbitmq:unexpose <service>                        # unexpose a previously exposed rabbitmq service
+# TODO: implement rabbitmq:link <service> <app> [--link-flags...]    # link the rabbitmq service to the app
+# TODO: implement rabbitmq:unlink <service> <app>                    # unlink the rabbitmq service from the app
+# TODO: implement rabbitmq:info <service> [--single-info-flag]       # print the service information
+# TODO: implement rabbitmq:logs <service> [-t|--tail] <tail-num-optional> # print the most recent log(s) for this service
+# TODO: implement rabbitmq:list                                      # list all rabbitmq services
+# TODO: implement rabbitmq:pause <service>                           # pause a running rabbitmq service
+# TODO: implement rabbitmq:restart <service>                         # graceful shutdown and restart of the rabbitmq service container
+# TODO: implement rabbitmq:start <service>                           # start a previously stopped rabbitmq service
+# TODO: implement rabbitmq:stop <service>                            # stop a running rabbitmq service
+# TODO: implement rabbitmq:promote <service> <app>                   # promote service <service> as RABBITMQ_URL in <app>
+# TODO: implement rabbitmq:set <service> <key> <value>               # set or clear a property for a service
+# TODO: implement rabbitmq:upgrade <service> [--upgrade-flags...]    # upgrade service <service> to the specified versions
