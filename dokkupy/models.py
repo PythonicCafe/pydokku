@@ -3,7 +3,7 @@ import datetime
 import shlex
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Literal
 
 
 class BaseModel:
@@ -89,6 +89,22 @@ class Domain:
     app_name: str
     enabled: bool
     domains: List[str]
+
+    def serialize(self):
+        return asdict(self)
+
+
+@dataclass
+class Check:
+    app_name: str
+    process: str
+    status: Literal["enabled"] | Literal["disabled"] | Literal["skipped"]
+    app_wait_to_retire: int | None
+    global_wait_to_retire: int | None
+
+    @property
+    def wait_to_retire(self) -> int | None:
+        return self.app_wait_to_retire or self.global_wait_to_retire
 
     def serialize(self):
         return asdict(self)

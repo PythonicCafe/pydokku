@@ -23,3 +23,10 @@ sudo rm -rf /var/lib/dokku/data/storage/test-*
 
 # domains
 dokku domains:set-global dokku.me
+
+# checks
+dokku checks:set --global wait-to-retire 60
+
+# Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
+# destroyed. More info: <https://github.com/dokku/dokku/issues/7443>
+find /var/lib/dokku/config/*/ -name 'test-*' | sudo xargs rm -rf

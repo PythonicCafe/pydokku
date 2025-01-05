@@ -1,14 +1,9 @@
 from .apps import AppsPlugin  # noqa
+from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
-
-# TODO: implement checks:disable <app> [process-type(s)]   Disable zero-downtime deployment for all processes (or comma-separated process-type list) ***WARNING: this will cause downtime during deployments***
-# TODO: implement checks:enable <app> [process-type(s)]    Enable zero-downtime deployment for all processes (or comma-separated process-type list)
-# TODO: implement checks:report [<app>] [<flag>]           Displays a checks report for one or more apps
-# TODO: implement checks:run <app> [process-type(s)]       Runs zero-downtime checks for all processes (or comma-separated process-type list)
-# TODO: implement checks:skip <app> [process-type(s)]      Skip zero-downtime checks for all processes (or comma-separated process-type list)
 
 # TODO: implement ps:inspect <app>                                                   Displays a sanitized version of docker inspect for an app
 # TODO: implement ps:rebuild [--parallel count] [--all|<app>]                        Rebuilds an app from source
