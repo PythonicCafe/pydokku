@@ -17,4 +17,22 @@ test-v:					# Execute `pytest` with verbose option and coverage report
 	PYTHONPATH=. coverage run --include="dokkupy/*" -m pytest -xvvvs
 	coverage report
 
-.PHONY: help lint test test-v
+vm-create:				# Create a virtual machine using libvirt/virsh to make isolated tests easier (requires sudo)
+	@sudo ./scripts/vm.sh create
+
+vm-delete:				# Delete the virtual machine, its disk and shared folder (requires sudo)
+	@sudo ./scripts/vm.sh delete
+
+vm-ip:					# Prints the virtual machine local IP address
+	@./scripts/vm.sh ip
+
+vm-ssh:					# Executes command to log-in into the virtual machine using SSH
+	@./scripts/vm.sh ssh
+
+vm-start:				# Starts the virtual machine and waits for it to be turned on
+	@./scripts/vm.sh start
+
+vm-stop:				# Sends the shutdown signal to the virtual machine and wait for it to be turned off
+	@./scripts/vm.sh stop
+
+.PHONY: help lint test test-v vm-create vm-delete vm-ip vm-ssh vm-start vm-stop

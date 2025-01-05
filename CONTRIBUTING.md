@@ -49,8 +49,7 @@ state if the tests make the disk dirty:
 VM_NAME="debian12-dokkupy"
 OVERLAY_QCOW2="/var/lib/libvirt/images/dokkupy.qcow2"
 
-sudo virsh shutdown "$VM_NAME"
-while [[ $(sudo virsh -q domstate "$VM_NAME") != "shut off" ]]; then sleep 1; done  # wait for the VM to shutdown
+make vm-stop
 sudo qemu-img snapshot -c "Docker and Dokku installed" "$OVERLAY_QCOW2"
 sudo virsh start "$VM_NAME"
 ```
@@ -58,8 +57,7 @@ sudo virsh start "$VM_NAME"
 And to return to a specific snapshot:
 
 ```shell
-sudo virsh shutdown "$VM_NAME"
-while [[ $(sudo virsh -q domstate "$VM_NAME") != "shut off" ]]; then sleep 1; done  # wait for the VM to shutdown
+make vm-stop
 sudo qemu-img snapshot -a "Docker and Dokku installed" "$OVERLAY_QCOW2"
 sudo virsh start "$VM_NAME"
 ```

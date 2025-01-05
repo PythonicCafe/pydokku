@@ -48,7 +48,7 @@ dokku plugin:install-dependencies
 log "Installing Python tools"
 apt install -y python3-venv
 sudo -u debian bash -c 'python3 -m venv /home/debian/venv'
-sudo -u debian bash -c 'cd /home/debian && source venv/bin/activate && pip install ipython pytest'
+sudo -u debian bash -c 'cd /home/debian && source venv/bin/activate && pip install coverage ipython pytest'
 
 sudo bash -c 'echo "host_shared /shared virtiofs defaults 0 0" >> /etc/fstab'
 sudo systemctl daemon-reload
