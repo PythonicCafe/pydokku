@@ -7,6 +7,11 @@ from dokkupy.models import Storage
 from tests.utils import requires_dokku
 
 
+def test_object_class():
+    dokku = Dokku()
+    assert dokku.storage.object_class is Storage
+
+
 def test_ensure_directory_command():
     dir_name = "test-app-data"
     chown = "heroku"

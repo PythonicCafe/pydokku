@@ -7,6 +7,11 @@ from dokkupy.models import Config
 from tests.utils import random_value, requires_dokku
 
 
+def test_object_class():
+    dokku = Dokku()
+    assert dokku.config.object_class is Config
+
+
 def test_set_many_command():
     app_name = "test-app"
     app_name_2 = "test-app-2"

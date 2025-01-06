@@ -2,12 +2,18 @@ import random
 import string
 
 from dokkupy.dokku_cli import Dokku
+from dokkupy.models import Domain
 from tests.utils import random_value, requires_dokku
 
 
 def random_domains():
     possible_chars = string.ascii_lowercase + string.digits + "-"
     return [f"test-{random_value(10, possible_chars=possible_chars)}.net" for _ in range(random.randint(3, 5))]
+
+
+def test_object_class():
+    dokku = Dokku()
+    assert dokku.domains.object_class is Domain
 
 
 def test_add_command():

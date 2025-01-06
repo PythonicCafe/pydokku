@@ -6,6 +6,11 @@ from dokkupy.models import App
 from tests.utils import requires_dokku
 
 
+def test_object_class():
+    dokku = Dokku()
+    assert dokku.apps.object_class is App
+
+
 def test_create_command():
     app_name = "test-app"
     dokku = Dokku()

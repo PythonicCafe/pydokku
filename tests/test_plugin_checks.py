@@ -1,5 +1,11 @@
 from dokkupy.dokku_cli import Dokku
+from dokkupy.models import Check
 from tests.utils import requires_dokku
+
+
+def test_object_class():
+    dokku = Dokku()
+    assert dokku.checks.object_class is Check
 
 
 def test_set_wait_to_retire_command():
