@@ -93,7 +93,7 @@ class StoragePlugin(DokkuPlugin):
             raise RuntimeError(f"Cannot unmount storage for {storage.app_name}: {clean_stderr(stderr)}")
         return stdout
 
-    def dump_all(self, apps: List[App]) -> List[dict]:
+    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
         return [obj.serialize() for app in apps for obj in self.list(app.name)]
 
     def create_object(self, obj: Storage, execute: bool = True) -> List[str] | List[Command]:

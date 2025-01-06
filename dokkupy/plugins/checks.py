@@ -111,8 +111,10 @@ class ChecksPlugin(DokkuPlugin):
     def run(self, app_name: str, execute: bool = True):
         return self._evaluate("run", params=[app_name], execute=execute)
 
-    def dump_all(self, apps: List[App]) -> List[dict]:
+    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
         apps_names = [app.name for app in apps]
+        if system:
+            apps_names = [None] + apps_names
         return [obj.serialize() for obj in self.list() if obj.app_name in apps_names]
 
     def create_object(self, obj: Check, execute: bool = True) -> List[str] | List[Command]:

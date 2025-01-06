@@ -79,8 +79,10 @@ class DomainsPlugin(DokkuPlugin):
     def disable(self, app_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("disable", params=[app_name], execute=execute)
 
-    def dump_all(self, apps: List[App]) -> List[dict]:
+    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
         apps_names = [app.name for app in apps]
+        if system:
+            apps_names = [None] + apps_names
         return [obj.serialize() for obj in self.list() if obj.app_name in apps_names]
 
     def create_object(self, obj: Domain, execute: bool = True) -> List[str] | List[Command]:

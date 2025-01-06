@@ -32,10 +32,11 @@ def dokku_dump(args):
     print("Finding apps...", file=sys.stderr, end="", flush=True)
     apps = dokku.apps.list()
     print(f" {len(apps)} found.", file=sys.stderr, flush=True)
+    # TODO: add option to filter by app name and/or global
     for name, plugin in dokku.plugins.items():
         print(f"Dumping {name}...", file=sys.stderr, end="", flush=True)
         try:
-            data[name] = plugin.dump_all(apps)
+            data[name] = plugin.dump_all(apps, system=True)
         except NotImplementedError:
             if not args.quiet:
                 print(

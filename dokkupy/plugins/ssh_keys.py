@@ -93,7 +93,7 @@ class SSHKeysPlugin(DokkuPlugin):
         params = ["--fingerprint", key.fingerprint] if is_fingerprint else [key.name]
         return self._evaluate("remove", params=params, sudo=True, execute=execute)
 
-    def dump_all(self, apps: List[App]) -> List[dict]:
+    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
         return [obj.serialize() for obj in self.list()]
 
     def create_object(self, obj: SSHKey, execute: bool = True) -> List[str] | List[Command]:

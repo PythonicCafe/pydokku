@@ -98,11 +98,13 @@ class ConfigPlugin(DokkuPlugin):
         params.append("--global" if system else app_name)
         return self._evaluate("clear", params=params, execute=execute)
 
-    def dump_all(self, apps: List[App]) -> List[Config]:
+    def dump_all(self, apps: List[App], system: bool = True) -> List[Config]:
         # TODO: this method will also export internal configs like `DOKKU_CHECKS_DISABLED` and `NO_VHOST`, which will
         # impact other plugins (like `checks` and `domains`). Need to decide whether to export/expose or not these
         # plugin-internal configs or just via the plugins.
-        app_names = [None] + [app.name for app in apps]
+        app_names = [app.name for app in apps]
+        if system:
+            app_names = [None] + app_names
         result = []
         for app_name in app_names:
             objs = self.get(app_name=app_name)
