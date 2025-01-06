@@ -1,3 +1,5 @@
+import random
+import string
 from typing import List
 
 from ..models import App, Command, Domain
@@ -86,6 +88,24 @@ class DomainsPlugin(DokkuPlugin):
         return [obj.serialize() for obj in self.list() if obj.app_name in apps_names]
 
     def create_object(self, obj: Domain, execute: bool = True) -> List[str] | List[Command]:
+        app_name = obj.app_name
+        result = []
+        if not obj.domains:
+            # XXX: To guarantee there will be no domain in this app, we set it to a random domain, then remove it. This
+            # is the only way to really clean domains of an app without parsing the result of `domains:report` (which
+            # is required for this command) as of Dokku version 0.35.13. Future versions of Dokku will implement a
+            # fixed `domains:clean` command that will make this approach obsolete - but for older versions this is
+            # the only way to do it. More info at: <https://github.com/dokku/dokku/issues/7438>
+            random_subdomain = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(32))
+            temp_domain = f"{random_subdomain}.tmp.example.net"
+            result.extend(
+                [
+                    self.set(app_name=app_name, domains=[temp_domain], execute=execute),
+                    self.remove(app_name=app_name, domains=[temp_domain], execute=execute),
+                ]
+            )
         if not obj.enabled:
-            return [self.disable(app_name=obj.app_name, execute=execute)]
-        return [self.set(obj.app_name, domains=obj.domains, execute=execute)]
+            result.append(self.disable(app_name=obj.app_name, execute=execute))
+        elif obj.domains:
+            result.append(self.set(obj.app_name, domains=obj.domains, execute=execute))
+        return result
