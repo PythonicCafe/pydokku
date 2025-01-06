@@ -11,7 +11,9 @@ class ConfigPlugin(DokkuPlugin):
     name = "config"
     object_class = Config
 
-    def get(self, app_name: str, merged: bool = False, as_dict: bool = False) -> List[Config] | dict:
+    def get(
+        self, app_name: str, merged: bool = False, hide_internal: bool = True, as_dict: bool = False
+    ) -> List[Config] | dict:
         """Get all configurations set for an app, with the option to merge them with the global ones"""
         # `dokku config <--global|app_name>` does not encode values, so we can't parse correctly if values have
         # newlines or other special chars. We use `config:export --format=json` instead.
@@ -22,6 +24,8 @@ class ConfigPlugin(DokkuPlugin):
         params.append("--global" if system else app_name)
         stdout = self._evaluate("export", params=params)
         data = json.loads(stdout)
+        if hide_internal:
+            data = {key: value for key, value in data.items() if not key.startswith("DOKKU_")}
         if as_dict:
             return data
         return [Config(app_name=app_name, key=key, value=value) for key, value in data.items()]
@@ -107,7 +111,7 @@ class ConfigPlugin(DokkuPlugin):
             app_names = [None] + app_names
         result = []
         for app_name in app_names:
-            objs = self.get(app_name=app_name)
+            objs = self.get(app_name=app_name, hide_internal=True)
             result.extend([obj.serialize() for obj in objs])
         return result
 
