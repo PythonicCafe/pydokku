@@ -1,9 +1,9 @@
 import re
-from pathlib import Path
+from functools import lru_cache
 from typing import List
 
 from ..models import App, Command
-from ..utils import REGEXP_DOKKU_HEADER, parse_bool, parse_timestamp
+from ..utils import get_stdout_rows_parser, parse_bool, parse_path, parse_timestamp
 from .base import DokkuPlugin
 
 REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
@@ -13,28 +13,33 @@ class AppsPlugin(DokkuPlugin):
     name = "apps"
     object_class = App
 
+    @lru_cache
+    def _get_rows_parser(self):
+        return get_stdout_rows_parser(
+            normalize_keys=True,
+            renames={
+                "app_name": "name",
+                "app_created_at": "created_at",
+                "app_deploy_source": "deploy_source",
+                "app_deploy_source_metadata": "deploy_source_metadata",
+                "app_dir": "path",
+                "app_locked": "locked",
+            },
+            parsers={
+                "path": parse_path,
+                "locked": parse_bool,
+                "created_at": parse_timestamp,
+            },
+        )
+
     def list(self) -> List[App]:
         _, stdout, stderr = self._evaluate("report", check=False, execute=True, full_return=True)
         if not stdout and "You haven't deployed any applications yet" in stderr:
             return []
-        apps_infos = REGEXP_DOKKU_HEADER.split(stdout)[1:]
-        result = []
-        for app_info in apps_infos:
-            lines = app_info.splitlines()
-            keys_values = [REGEXP_APP_METADATA.findall(line.strip())[0] for line in lines[1:]]
-            row = {key.replace(" ", "_"): value or None for key, value in keys_values}
-            row["locked"] = parse_bool(row["locked"])
-            result.append(
-                self.object_class(
-                    name=lines[0].split()[0],
-                    path=Path(row["dir"]),
-                    locked=parse_bool(row["locked"]),
-                    created_at=parse_timestamp(row["created_at"]) if row["created_at"] else None,
-                    deploy_source=row.get("deploy_source"),
-                    deploy_source_metadata=row.get("deploy_source_metadata"),
-                )
-            )
-        return result
+        elif stderr:
+            raise RuntimeError(f"Error executing apps:report: {stderr}")
+        rows_parser = self._get_rows_parser()
+        return [self.object_class(**row) for row in rows_parser(stdout)]
 
     def create(self, name: str, execute: bool = True) -> str | Command:
         return self._evaluate("create", params=[name], execute=execute)

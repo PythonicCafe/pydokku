@@ -61,6 +61,135 @@ def test_run_command():
     assert command.command == ["dokku", "checks:run", app_name]
 
 
+def test_parse_report():
+    stdout = """
+        =====> test-app-7 checks information
+            Checks disabled list:          none
+            Checks skipped list:           none
+            Checks computed wait to retire: 60
+            Checks global wait to retire:  60
+            Checks wait to retire:
+        =====> test-app-8 checks information
+            Checks disabled list:          none
+            Checks skipped list:           none
+            Checks computed wait to retire: 30
+            Checks global wait to retire:  60
+            Checks wait to retire:         30
+        =====> test-app-9 checks information
+            Checks disabled list:          web,worker
+            Checks skipped list:           another-worker
+            Checks computed wait to retire: 60
+            Checks global wait to retire:  60
+            Checks wait to retire:
+    """
+    expected = [
+        {
+            "app_name": "test-app-7",
+            "app_wait_to_retire": None,
+            "global_wait_to_retire": 60,
+            "disabled": [],
+            "skipped": [],
+        },
+        {
+            "app_name": "test-app-8",
+            "app_wait_to_retire": 30,
+            "global_wait_to_retire": 60,
+            "disabled": [],
+            "skipped": [],
+        },
+        {
+            "app_name": "test-app-9",
+            "app_wait_to_retire": None,
+            "global_wait_to_retire": 60,
+            "disabled": ["web", "worker"],
+            "skipped": ["another-worker"],
+        },
+    ]
+    dokku = Dokku()
+    rows_parser = dokku.checks._get_rows_parser()
+    result = rows_parser(stdout)
+    assert result == expected
+
+
+def test_convert_rows():
+    input_rows = [
+        {
+            "app_name": "test-app-7",
+            "app_wait_to_retire": None,
+            "global_wait_to_retire": 60,
+            "disabled": [],
+            "skipped": [],
+        },
+        {
+            "app_name": "test-app-8",
+            "app_wait_to_retire": 30,
+            "global_wait_to_retire": 60,
+            "disabled": [],
+            "skipped": [],
+        },
+        {
+            "app_name": "test-app-9",
+            "app_wait_to_retire": None,
+            "global_wait_to_retire": 60,
+            "disabled": ["web", "worker"],
+            "skipped": ["another-worker"],
+        },
+    ]
+    all_checks = [
+        Check(
+            app_name=None,
+            process="_all_",
+            status=None,
+            global_wait_to_retire=60,
+            app_wait_to_retire=None,
+        ),
+        Check(
+            app_name="test-app-7",
+            process="_all_",
+            status="enabled",
+            global_wait_to_retire=60,
+            app_wait_to_retire=None,
+        ),
+        Check(
+            app_name="test-app-8",
+            process="_all_",
+            status="enabled",
+            global_wait_to_retire=60,
+            app_wait_to_retire=30,
+        ),
+        Check(
+            app_name="test-app-9",
+            process="web",
+            status="disabled",
+            global_wait_to_retire=60,
+            app_wait_to_retire=None,
+        ),
+        Check(
+            app_name="test-app-9",
+            process="worker",
+            status="disabled",
+            global_wait_to_retire=60,
+            app_wait_to_retire=None,
+        ),
+        Check(
+            app_name="test-app-9",
+            process="another-worker",
+            status="skipped",
+            global_wait_to_retire=60,
+            app_wait_to_retire=None,
+        ),
+    ]
+    dokku = Dokku()
+    result = dokku.checks._convert_rows([input_rows[0]], app_name="test-app-7")  # app 7 and no global
+    assert result == [all_checks[1]]
+    result = dokku.checks._convert_rows([input_rows[0]], app_name=None)  # app 7 + global
+    assert result == all_checks[:2]
+    result = dokku.checks._convert_rows([input_rows[2]], app_name="test-app-9")  # app 9 (more than one Check returned)
+    assert result == all_checks[-3:]
+    result = dokku.checks._convert_rows(input_rows, app_name=None)  # Everyting
+    assert result == all_checks
+
+
 @requires_dokku
 def test_list_set_enable_disable_skip_run():
     dokku = Dokku()

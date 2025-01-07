@@ -1,25 +1,80 @@
+from functools import lru_cache
 from typing import List
 
 from ..models import App, Check, Command
-from ..utils import REGEXP_DOKKU_HEADER, clean_stderr
+from ..utils import clean_stderr, get_stdout_rows_parser, parse_comma_separated_list, parse_int
 from .base import DokkuPlugin
-
-
-def parse_checks_list(text):
-    if text == "none":
-        return []
-    return text.split(",")
 
 
 class ChecksPlugin(DokkuPlugin):
     """dokku checks plugin
 
+    It returns one global check and for each app more one check *per process type*.
     Since the only option to `checks:set` is `wait-to-retire` (and it didn't change for the last years), it was decided
     to add this as a method `set_wait_to_retire` instead of a generic `checks:set` method.
     """
 
     name = "checks"
     object_class = Check
+
+    @lru_cache
+    def _get_rows_parser(self):
+        return get_stdout_rows_parser(
+            normalize_keys=True,
+            renames={
+                "checks_disabled_list": "disabled",
+                "checks_skipped_list": "skipped",
+                "checks_global_wait_to_retire": "global_wait_to_retire",
+                "checks_wait_to_retire": "app_wait_to_retire",
+            },
+            discards=[
+                "checks_computed_wait_to_retire",
+            ],
+            parsers={
+                "global_wait_to_retire": parse_int,
+                "app_wait_to_retire": parse_int,
+                "disabled": parse_comma_separated_list,
+                "skipped": parse_comma_separated_list,
+            },
+        )
+
+    def _convert_rows(self, parsed_rows: List[dict], app_name: str | None) -> List[Check]:
+        result = []
+        for row in parsed_rows:
+            if not result and app_name is None:
+                # No object was added to the list, so we add the global one
+                result.append(
+                    self.object_class(
+                        app_name=None,
+                        process="_all_",
+                        status=None,
+                        global_wait_to_retire=row["global_wait_to_retire"],
+                        app_wait_to_retire=None,
+                    )
+                )
+            if not row["disabled"] and not row["skipped"]:
+                result.append(
+                    self.object_class(
+                        app_name=row["app_name"],
+                        process="_all_",
+                        status="enabled",
+                        app_wait_to_retire=row["app_wait_to_retire"],
+                        global_wait_to_retire=row["global_wait_to_retire"],
+                    )
+                )
+            else:
+                for status in ("disabled", "skipped"):
+                    for process in row[status]:
+                        result.append(
+                            self.object_class(
+                                app_name=row["app_name"],
+                                process=process,
+                                status=status,
+                                app_wait_to_retire=row["app_wait_to_retire"],
+                                global_wait_to_retire=row["global_wait_to_retire"],
+                            )
+                        )
+        return result
 
     def list(self, app_name: str | None = None) -> List[Check]:
         """List disabled and skipped checks for an app
@@ -32,63 +87,11 @@ class ChecksPlugin(DokkuPlugin):
         _, stdout, stderr = self._evaluate("report", params=[] if app_name is None else [app_name], full_return=True)
         if "You haven't deployed any applications yet" in clean_stderr(stderr):
             return []
-        result = []
-        for app_checks in REGEXP_DOKKU_HEADER.split(stdout.strip())[1:]:
-            lines = app_checks.strip().splitlines()
-            row_app_name, _ = lines[0].split(maxsplit=1)
-            row = {}
-            for line in lines[1:]:
-                key, value = line.strip().split(":", maxsplit=1)
-                row[key.lower()] = value.strip()
-            app_wait_to_retire = int(row["checks wait to retire"]) if row["checks wait to retire"] else None
-            global_wait_to_retire = (
-                int(row["checks global wait to retire"]) if row["checks global wait to retire"] else None
-            )
-            if not result and app_name is None:
-                # No object was added to the list, so we add the global one
-                result.append(
-                    self.object_class(
-                        app_name=None,
-                        process="_all_",
-                        status=None,
-                        global_wait_to_retire=global_wait_to_retire,
-                        app_wait_to_retire=None,
-                    )
-                )
-            disabled = parse_checks_list(row["checks disabled list"])
-            skipped = parse_checks_list(row["checks skipped list"])
-            if not disabled and not skipped:
-                result.append(
-                    self.object_class(
-                        app_name=row_app_name,
-                        process="_all_",
-                        status="enabled",
-                        app_wait_to_retire=app_wait_to_retire,
-                        global_wait_to_retire=global_wait_to_retire,
-                    )
-                )
-            else:
-                for process in disabled:
-                    result.append(
-                        self.object_class(
-                            app_name=row_app_name,
-                            process=process,
-                            status="disabled",
-                            app_wait_to_retire=app_wait_to_retire,
-                            global_wait_to_retire=global_wait_to_retire,
-                        )
-                    )
-                for process in skipped:
-                    result.append(
-                        self.object_class(
-                            app_name=row_app_name,
-                            process=process,
-                            status="skipped",
-                            app_wait_to_retire=app_wait_to_retire,
-                            global_wait_to_retire=global_wait_to_retire,
-                        )
-                    )
-        return result
+        elif stderr:
+            raise RuntimeError(f"Error executing checks:report: {stderr}")
+        rows_parser = self._get_rows_parser()
+        parsed_rows = rows_parser(stdout)
+        return self._convert_rows(parsed_rows, app_name)
 
     def set_wait_to_retire(self, app_name: str | None, value: int, execute: bool = True):
         """Set app's wait to retire time"""

@@ -1,15 +1,55 @@
 import random
 import string
+from functools import lru_cache
 from typing import List
 
 from ..models import App, Command, Domain
-from ..utils import REGEXP_DOKKU_HEADER, parse_bool
+from ..utils import get_stdout_rows_parser, parse_bool, parse_space_separated_list
 from .base import DokkuPlugin
 
 
 class DomainsPlugin(DokkuPlugin):
     name = "domains"
     object_class = Domain
+
+    @lru_cache
+    def _get_rows_parser(self):
+        return get_stdout_rows_parser(
+            normalize_keys=True,
+            renames={
+                "domains_app_enabled": "app_enabled",
+                "domains_app_vhosts": "app_domains",
+                "domains_global_enabled": "global_enabled",
+                "domains_global_vhosts": "global_domains",
+            },
+            parsers={
+                "app_enabled": parse_bool,
+                "app_domains": parse_space_separated_list,
+                "global_enabled": parse_bool,
+                "global_domains": parse_space_separated_list,
+            },
+        )
+
+    def _convert_rows(self, parsed_rows: List[dict]) -> List[Domain]:
+        result = []
+        for row in parsed_rows:
+            if row["app_name"] == "Global":
+                result.append(
+                    self.object_class(
+                        app_name=None,
+                        enabled=row["global_enabled"],
+                        domains=row["global_domains"],
+                    )
+                )
+            else:
+                result.append(
+                    self.object_class(
+                        app_name=row["app_name"],
+                        enabled=row["app_enabled"],
+                        domains=row["app_domains"],
+                    )
+                )
+        return result
 
     def list(self, app_name: str | None = None) -> List[Domain]:
         if app_name is None:
@@ -18,30 +58,9 @@ class DomainsPlugin(DokkuPlugin):
             stdout = f"{stdout_global}\n{stdout_apps}"
         else:
             stdout = self._evaluate("report", [app_name], execute=True)
-        result = []
-        for index, app_domains in enumerate(REGEXP_DOKKU_HEADER.split(stdout.strip())[1:]):
-            lines = app_domains.strip().splitlines()
-            row_app_name, _ = lines[0].split(maxsplit=1)
-            if app_name is None and index == 0:
-                assert (
-                    row_app_name == "Global"
-                ), f"Expected the first domin report to be 'Global', got '{repr(row_app_name)}'"
-                row_app_name = None
-                key_str = "global"
-            else:
-                key_str = "app"
-            row = {}
-            for line in lines[1:]:
-                key, value = line.strip().split(":", maxsplit=1)
-                row[key.lower()] = value.strip()
-            result.append(
-                self.object_class(
-                    app_name=row_app_name,
-                    enabled=parse_bool(row[f"domains {key_str} enabled"]),
-                    domains=row[f"domains {key_str} vhosts"].split(),
-                )
-            )
-        return result
+        rows_parser = self._get_rows_parser()
+        parsed_rows = rows_parser(stdout)
+        return self._convert_rows(parsed_rows)
 
     def add(self, app_name: str, domains: List[str], execute: bool = True) -> str | Command:
         system = app_name is None

@@ -3,6 +3,7 @@ from pathlib import Path
 
 from dokkupy.dokku_cli import Dokku
 from dokkupy.models import App
+from dokkupy.utils import get_system_tzinfo
 from tests.utils import requires_dokku
 
 
@@ -83,6 +84,59 @@ def test_create_object_command():
 
     assert dokku.apps.create_object(obj=unlocked_app, execute=False) == [command1]
     assert dokku.apps.create_object(obj=locked_app, execute=False) == [command1, command2]
+
+
+def test_parse_report():
+    stdout = """
+        =====> test-app-7 app information
+            App created at:                1736287254
+            App deploy source:
+            App deploy source metadata:
+            App dir:                       /home/dokku/test-app-7
+            App locked:                    false
+        =====> test-app-8 app information
+            App created at:                1736287254
+            App deploy source:
+            App deploy source metadata:
+            App dir:                       /home/dokku/test-app-8
+            App locked:                    false
+        =====> test-app-9 app information
+            App created at:                1736287254
+            App deploy source:
+            App deploy source metadata:
+            App dir:                       /home/dokku/test-app-9
+            App locked:                    false
+    """
+    expected = [
+        {
+            "name": "test-app-7",
+            "created_at": datetime.datetime(2025, 1, 7, 19, 0, 54, tzinfo=get_system_tzinfo()),
+            "deploy_source": None,
+            "deploy_source_metadata": None,
+            "path": Path("/home/dokku/test-app-7"),
+            "locked": False,
+        },
+        {
+            "name": "test-app-8",
+            "created_at": datetime.datetime(2025, 1, 7, 19, 0, 54, tzinfo=get_system_tzinfo()),
+            "deploy_source": None,
+            "deploy_source_metadata": None,
+            "path": Path("/home/dokku/test-app-8"),
+            "locked": False,
+        },
+        {
+            "name": "test-app-9",
+            "created_at": datetime.datetime(2025, 1, 7, 19, 0, 54, tzinfo=get_system_tzinfo()),
+            "deploy_source": None,
+            "deploy_source_metadata": None,
+            "path": Path("/home/dokku/test-app-9"),
+            "locked": False,
+        },
+    ]
+    dokku = Dokku()
+    rows_parser = dokku.apps._get_rows_parser()
+    result = rows_parser(stdout)
+    assert result == expected
 
 
 @requires_dokku

@@ -94,6 +94,121 @@ def test_disable_command():
     assert command.sudo is False
 
 
+def test_parse_report():
+    stdout = """
+        =====> Global domains information
+            Domains global enabled:        true
+            Domains global vhosts:         dokku.example.net
+        =====> test-app-7 domains information
+            Domains app enabled:           true
+            Domains app vhosts:
+            Domains global enabled:        true
+            Domains global vhosts:         dokku.example.net
+        =====> test-app-8 domains information
+            Domains app enabled:           true
+            Domains app vhosts:            test-app-8.dokku.example.net
+            Domains global enabled:        true
+            Domains global vhosts:         dokku.example.net
+        =====> test-app-9 domains information
+            Domains app enabled:           true
+            Domains app vhosts:            app9.example.com app9.example.net
+            Domains global enabled:        true
+            Domains global vhosts:         dokku.example.net
+    """
+    expected = [
+        {
+            "app_name": "Global",
+            "app_enabled": None,
+            "app_domains": None,
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+        {
+            "app_name": "test-app-7",
+            "app_enabled": True,
+            "app_domains": [],
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+        {
+            "app_name": "test-app-8",
+            "app_enabled": True,
+            "app_domains": ["test-app-8.dokku.example.net"],
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+        {
+            "app_name": "test-app-9",
+            "app_enabled": True,
+            "app_domains": ["app9.example.com", "app9.example.net"],
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+    ]
+    dokku = Dokku()
+    rows_parser = dokku.domains._get_rows_parser()
+    result = rows_parser(stdout)
+    assert result == expected
+
+
+def test_convert_rows():
+    input_rows = [
+        {
+            "app_name": "Global",
+            "app_enabled": None,
+            "app_domains": None,
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+        {
+            "app_name": "test-app-7",
+            "app_enabled": True,
+            "app_domains": [],
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+        {
+            "app_name": "test-app-8",
+            "app_enabled": True,
+            "app_domains": ["test-app-8.dokku.example.net"],
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+        {
+            "app_name": "test-app-9",
+            "app_enabled": True,
+            "app_domains": ["app9.example.com", "app9.example.net"],
+            "global_enabled": True,
+            "global_domains": ["dokku.example.net"],
+        },
+    ]
+    all_domains = [
+        Domain(
+            app_name=None,
+            enabled=True,
+            domains=["dokku.example.net"],
+        ),
+        Domain(
+            app_name="test-app-7",
+            enabled=True,
+            domains=[],
+        ),
+        Domain(
+            app_name="test-app-8",
+            enabled=True,
+            domains=["test-app-8.dokku.example.net"],
+        ),
+        Domain(
+            app_name="test-app-9",
+            enabled=True,
+            domains=["app9.example.com", "app9.example.net"],
+        ),
+    ]
+    dokku = Dokku()
+    result = dokku.domains._convert_rows(input_rows)
+    assert result == all_domains
+
+
 @requires_dokku
 def test_add_list_remove():
     dokku = Dokku()
