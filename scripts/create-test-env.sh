@@ -38,3 +38,6 @@ dokku storage:ensure-directory test-app-7-data
 dokku storage:mount test-app-7 /var/lib/dokku/data/storage/test-app-7-data:/data
 dokku storage:ensure-directory --chown heroku test-app-9-data
 dokku storage:mount test-app-9 /var/lib/dokku/data/storage/test-app-9-data:/data
+
+# ps
+dokku ps:scale test-app-9 web=2 worker=3

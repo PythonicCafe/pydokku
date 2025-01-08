@@ -57,13 +57,22 @@ class Dokku:
 
         # Instantiate default plugins
         # TODO: autodiscover based on `DokkuPlugin` subclasses?
-        from .plugins import AppsPlugin, ChecksPlugin, ConfigPlugin, DomainsPlugin, SSHKeysPlugin, StoragePlugin  # noqa
+        from .plugins import (  # noqa
+            AppsPlugin,
+            ChecksPlugin,
+            ConfigPlugin,
+            DomainsPlugin,
+            PsPlugin,
+            SSHKeysPlugin,
+            StoragePlugin,
+        )
 
         available_plugins = {
             "apps": AppsPlugin,
             "checks": ChecksPlugin,
             "config": ConfigPlugin,
             "domains": DomainsPlugin,
+            "ps": PsPlugin,
             "ssh_keys": SSHKeysPlugin,
             "storage": StoragePlugin,
         }

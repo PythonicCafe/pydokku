@@ -108,3 +108,35 @@ class Check:
 
     def serialize(self):
         return asdict(self)
+
+
+@dataclass
+class Process:
+    type: str
+    id: int
+    status: Literal["running"] | Literal["exited"] | None
+    container_id: str | None = None
+
+
+@dataclass
+class ProcessInfo:
+    app_name: str
+    deployed: bool
+    processes: List[Process]
+    can_scale: bool
+    restart_policy: str
+    restore: bool
+    running: bool
+    global_procfile_path: Path | None = None
+    app_procfile_path: Path | None = None
+
+    def __post_init__(self):
+        if self.processes and not isinstance(self.processes[0], Process):
+            self.processes = [Process(**row) for row in self.processes]
+
+    def serialize(self):
+        return asdict(self)
+
+    @property
+    def procfile_path(self):
+        return self.app_procfile_path or self.global_procfile_path

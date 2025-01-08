@@ -2,18 +2,18 @@ from .apps import AppsPlugin  # noqa
 from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
+from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-# TODO: implement ps:inspect <app>                                                   Displays a sanitized version of docker inspect for an app
-# TODO: implement ps:rebuild [--parallel count] [--all|<app>]                        Rebuilds an app from source
-# TODO: implement ps:report [<app>] [<flag>]                                         Displays a process report for one or more apps
-# TODO: implement ps:restart [--parallel count] [--all|<app>] [<process-name>]       Restart an app
-# TODO: implement ps:restore [<app>]                                                 Start previously running apps e.g. after reboot
-# TODO: implement ps:scale [--skip-deploy] <app> <proc>=<count> [<proc>=<count>...]  Get/Set how many instances of a given process to run
-# TODO: implement ps:set <app> <key> <value>                                         Set or clear a ps property for an app
-# TODO: implement ps:start [--parallel count] [--all|<app>]                          Start an app
-# TODO: implement ps:stop [--parallel count] [--all|<app>]                           Stop an app
+# TODO: implement plugin:disable <name>                                                                               Disable an installed plugin (third-party only)
+# TODO: implement plugin:enable <name>                                                                                Enable a previously disabled plugin
+# TODO: implement plugin:install [--core|--git-url] [--committish branch|commit|commit] [--name custom-plugin-name]   Optionally download git-url (and pin to the specified branch/commit/tag) & run install trigger for active plugins (or only core ones)
+# TODO: implement plugin:install-dependencies [--core]                                                                Run install-dependencies trigger for active plugins (or only core ones)
+# TODO: implement plugin:list                                                                                         Print active plugins
+# TODO: implement plugin:trigger <args...>                                                                            Trigger an arbitrary plugin hook
+# TODO: implement plugin:uninstall <name>                                                                             Uninstall a plugin (third-party only)
+# TODO: implement plugin:update [name [branch|commit|tag]]                                                            Optionally update named plugin from git (and pin to the specified branch/commit/tag) & run update trigger for active plugins
 
 # TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
 # TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)
@@ -24,14 +24,18 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement nginx:stop                                Stops the nginx server
 # TODO: implement nginx:validate-config [<app>] [--clean]   Validates and optionally cleans up invalid nginx configurations
 
-# TODO: implement plugin:disable <name>                                                                               Disable an installed plugin (third-party only)
-# TODO: implement plugin:enable <name>                                                                                Enable a previously disabled plugin
-# TODO: implement plugin:install [--core|--git-url] [--committish branch|commit|commit] [--name custom-plugin-name]   Optionally download git-url (and pin to the specified branch/commit/tag) & run install trigger for active plugins (or only core ones)
-# TODO: implement plugin:install-dependencies [--core]                                                                Run install-dependencies trigger for active plugins (or only core ones)
-# TODO: implement plugin:list                                                                                         Print active plugins
-# TODO: implement plugin:trigger <args...>                                                                            Trigger an arbitrary plugin hook
-# TODO: implement plugin:uninstall <name>                                                                             Uninstall a plugin (third-party only)
-# TODO: implement plugin:update [name [branch|commit|tag]]                                                            Optionally update named plugin from git (and pin to the specified branch/commit/tag) & run update trigger for active plugins
+# TODO: implement git:allow-host <host>                                               Adds a host to known_hosts
+# TODO: implement git:auth <host> [<username> <password>]                             Configures netrc authentication for a given git server
+# TODO: implement git:from-archive <app> <archive-url> [<git-username> <git-email>]   Updates an app's git repository with a given archive file
+# TODO: implement git:from-image <app> <docker-image> [<git-username> <git-email>]    Updates an app's git repository with a given docker image
+# TODO: implement git:generate-deploy-key                                             Generates a deploy ssh key
+# TODO: implement git:initialize <app>                                                Initialize a git repository for an app
+# TODO: implement git:load-image <app> <docker-image> [<git-username> <git-email>]    Updates an app's git repository with a docker image loaded from stdin
+# TODO: implement git:public-key                                                      Outputs the dokku public deploy key
+# TODO: implement git:report [<app>] [<flag>]                                         Displays a git report for one or more apps
+# TODO: implement git:set <app> <property> (<value>)                                  Set or clear a git property for an app
+# TODO: implement git:status <app>                                                    show the working tree status for an app
+# TODO: implement git:sync [--build] <app> <repository> [<git-ref>]                   Clone or fetch an app from remote git repo
 
 # TODO: implement redirect <app>                           Display the redirects set on app
 # TODO: implement redirect:set <app> <src> <dest> [<code>] Set a redirect from <src> domain to <dest> domain
