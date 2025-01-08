@@ -93,25 +93,30 @@ class ChecksPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows, app_name)
 
-    def set_wait_to_retire(self, app_name: str | None, value: int, execute: bool = True):
+    def set_wait_to_retire(self, app_name: str | None, value: int, execute: bool = True) -> str | Command:
         """Set app's wait to retire time"""
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, "wait-to-retire", str(value)], execute=execute)
 
-    def disable(self, app_name: str, process_names: List[str] = None, execute: bool = True):
+    def unset_wait_to_retire(self, app_name: str | None, execute: bool = True) -> str | Command:
+        system = app_name is None
+        app_parameter = app_name if not system else "--global"
+        return self._evaluate("set", params=[app_parameter, "wait-to-retire"], execute=execute)
+
+    def disable(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> str | Command:
         ps = [",".join(process_names)] if process_names is not None else []
         return self._evaluate("disable", params=[app_name] + ps, execute=execute)
 
-    def enable(self, app_name: str, process_names: List[str] = None, execute: bool = True):
+    def enable(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> str | Command:
         ps = [",".join(process_names)] if process_names is not None else []
         return self._evaluate("enable", params=[app_name] + ps, execute=execute)
 
-    def skip(self, app_name: str, process_names: List[str] = None, execute: bool = True):
+    def skip(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> str | Command:
         ps = [",".join(process_names)] if process_names is not None else []
         return self._evaluate("skip", params=[app_name] + ps, execute=execute)
 
-    def run(self, app_name: str, execute: bool = True):
+    def run(self, app_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("run", params=[app_name], execute=execute)
 
     def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:

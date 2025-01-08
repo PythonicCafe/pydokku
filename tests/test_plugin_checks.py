@@ -12,9 +12,15 @@ def test_set_wait_to_retire_command():
     dokku = Dokku()
     app_name = "test-app-1"
     wait = 30
-
     command = dokku.checks.set_wait_to_retire(app_name, wait, execute=False)
     assert command.command == ["dokku", "checks:set", app_name, "wait-to-retire", str(wait)]
+
+
+def test_unset_wait_to_retire_command():
+    dokku = Dokku()
+    app_name = "test-app-1"
+    command = dokku.checks.unset_wait_to_retire(app_name, execute=False)
+    assert command.command == ["dokku", "checks:set", app_name, "wait-to-retire"]
 
 
 def test_enable_command():
