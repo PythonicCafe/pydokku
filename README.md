@@ -12,3 +12,7 @@ from dokkupy import Dokku
 dokku = Dokku()
 ...
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).

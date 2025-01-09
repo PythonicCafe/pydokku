@@ -1,11 +1,40 @@
 # Contributing
 
-
-
 ## Testing
 
-We provide a script to help running a virtual machine so you can test Dokku easily. This script is meant to be run on a
-Debian GNU/Linux machine and will:
+You can run tests in two different environments: without dokku installed locally (majority of them) and with dokku
+installed.
+
+
+### Without Dokku installed
+
+This method won't run all tests but will run the majority of them. It requires Python and
+`requirements-development.txt` packages installed. You may want to use a virtualenv for this.
+
+On the first time, execute:
+
+```shell
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements-development.txt
+```
+
+Then:
+
+```shell
+make test  # Use `make test-v` for the verbose option
+```
+
+
+### With Dokku installed
+
+The "real" tests executes Dokku commands. To make it easier to run we provide a script to help running a virtual
+machine so you can test Dokku easily.
+
+
+#### Creating the VM
+
+The `make vm-create` script is meant to be run on a Debian GNU/Linux machine, requires `sudo` and will:
 
 1. Install required system packages to manage virtual machines with libvirt
 2. Configure user permissions and the default libvirt network
@@ -32,14 +61,14 @@ iptables -I FORWARD -i enp0s31f6 -o virbr0 -m state --state RELATED,ESTABLISHED 
 After having libvirt configured and running, create the virtual machine by executing:
 
 ```shell
-sudo ./scripts/create-vm.sh  # ~2min with a good Internet connection
+make vm-create # ~2min with a good Internet connection
 ```
 
 The VM's IP address will be shown. After that you can ssh into the machine and install Docker, Dokku and some Dokku
 plugins, so we can run the tests:
 
 ```shell
-ssh debian@<ip-address> sudo /root/install.sh  # ~4min
+ssh debian@$(make vm-ip) sudo /root/install.sh  # ~4min
 ```
 
 After that, you may want to create a snapshot of the current disk, so you can easily go back to this fresh install
@@ -57,9 +86,53 @@ sudo virsh start "$VM_NAME"
 And to return to a specific snapshot:
 
 ```shell
+VM_NAME="debian12-dokkupy"
+OVERLAY_QCOW2="/var/lib/libvirt/images/dokkupy.qcow2"
+
 make vm-stop
 sudo qemu-img snapshot -a "Docker and Dokku installed" "$OVERLAY_QCOW2"
 sudo virsh start "$VM_NAME"
 ```
 
 You can list all snapshots by running `sudo qemu-img snapshot -l $OVERLAY_QCOW2`.
+
+
+#### Running tests inside the VM
+
+By now, the only way to run tests inside the VM is:
+- Use the shared folder to create a Git bare repository
+- From your host machine, push the current repository to the shared one
+- From the VM, clone the repository, install dependencies and run `make test`
+
+To execute these steps, first run on your host machine:
+
+```shell
+HOST_SHARED="/var/lib/libvirt/shared/debian12-dokkupy"
+REPO_PATH="${HOST_SHARED}/repo.git/"
+
+sudo mkdir -p "$REPO_PATH"
+sudo chown -R ${SUDO_USER:-$USER}:libvirt "$HOST_SHARED"
+git init --bare --initial-branch=develop "$REPO_PATH"
+git remote add shared "$REPO_PATH"
+git push shared develop
+```
+
+Connect to the VM using `make vm-ssh` and run inside the VM as the user `debian`:
+
+```shell
+cd
+source venv/bin/activate
+git clone /shared/repo.git dokkupy
+cd dokkupy
+make test
+```
+
+If you make changes to the repository on the host machine, push them by running `git push shared` and then, inside the
+VM:
+
+```shell
+cd ~/dokkupy
+git fetch origin
+git reset --hard origin/develop # WARNING: this will REMOVE all changes made in the VM repository!
+make test
+```
