@@ -130,25 +130,15 @@ class PsPlugin(DokkuPlugin):
         params.append(app_name if not system else "--all")
         return self._evaluate("restore", params=params, execute=execute)
 
-    def set_procfile_path(self, app_name: str | None, value: str, execute: bool = True) -> str | Command:
+    def set(self, app_name: str | None, key: str, value: str, execute: bool = True) -> str | Command:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
-        return self._evaluate("set", params=[app_parameter, "procfile-path", str(value)], execute=execute)
+        return self._evaluate("set", params=[app_parameter, key, str(value)], execute=execute)
 
-    def unset_procfile_path(self, app_name: str | None, execute: bool = True) -> str | Command:
+    def unset(self, app_name: str | None, key: str, execute: bool = True) -> str | Command:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
-        return self._evaluate("set", params=[app_parameter, "procfile-path"], execute=execute)
-
-    def set_restart_policy(self, app_name: str | None, value: str, execute: bool = True) -> str | Command:
-        system = app_name is None
-        app_parameter = app_name if not system else "--global"
-        return self._evaluate("set", params=[app_parameter, "restart-policy", str(value)], execute=execute)
-
-    def unset_restart_policy(self, app_name: str | None, execute: bool = True) -> str | Command:
-        system = app_name is None
-        app_parameter = app_name if not system else "--global"
-        return self._evaluate("set", params=[app_parameter, "restart-policy"], execute=execute)
+        return self._evaluate("set", params=[app_parameter, key], execute=execute)
 
     def _parse_scale(self, stdout: str) -> dict[str, int]:
         lines = stdout.split("proctype: qty", maxsplit=1)[1].strip().splitlines()
@@ -203,10 +193,12 @@ class PsPlugin(DokkuPlugin):
         app_name = obj.app_name
         result = []
         if not skip_global:
-            result.append(self.set_procfile_path(app_name=None, value=obj.global_procfile_path, execute=execute))
+            result.append(self.set(app_name=None, key="procfile-path", value=obj.global_procfile_path, execute=execute))
         if obj.app_procfile_path is not None:
-            result.append(self.set_procfile_path(app_name=app_name, value=obj.app_procfile_path, execute=execute))
-        result.append(self.set_restart_policy(app_name=app_name, value=obj.restart_policy, execute=execute))
+            result.append(
+                self.set(app_name=app_name, key="procfile-path", value=obj.app_procfile_path, execute=execute)
+            )
+        result.append(self.set(app_name=app_name, key="restart-policy", value=obj.restart_policy, execute=execute))
         process_counter = Counter([process.type for process in obj.processes])
         result.append(self.set_scale(app_name=app_name, process_counts=dict(process_counter), execute=execute))
         return result
@@ -218,6 +210,8 @@ class PsPlugin(DokkuPlugin):
         # The difference between this and calling `self.create_object` for each object is that this one yields only
         # one global command
         if objs:
-            yield self.set_procfile_path(app_name=None, value=objs[0].global_procfile_path, execute=execute)  # Global
+            yield self.set(
+                app_name=None, key="procfile-path", value=objs[0].global_procfile_path, execute=execute
+            )  # Global
             for obj in objs:
                 yield from self._create_object(obj=obj, execute=execute, skip_global=True)

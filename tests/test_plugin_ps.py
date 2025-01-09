@@ -130,33 +130,23 @@ def test_restore_command():
     assert command.sudo is False
 
 
-def test_set_procfile_path_command():
+def test_set_command():
     dokku = Dokku()
     app_name = "test-app-1"
     new_path = "Procfile.dokku"
-    command = dokku.ps.set_procfile_path(app_name, new_path, execute=False)
+    new_restart_policy = "unless-stopped"
+    command = dokku.ps.set(app_name, key="procfile-path", value=new_path, execute=False)
     assert command.command == ["dokku", "ps:set", app_name, "procfile-path", new_path]
+    command = dokku.ps.set(app_name, key="restart-policy", value=new_restart_policy, execute=False)
+    assert command.command == ["dokku", "ps:set", app_name, "restart-policy", new_restart_policy]
 
 
-def test_unset_procfile_path_command():
+def test_unset_command():
     dokku = Dokku()
     app_name = "test-app-1"
-    command = dokku.ps.unset_procfile_path(app_name, execute=False)
+    command = dokku.ps.unset(app_name, key="procfile-path", execute=False)
     assert command.command == ["dokku", "ps:set", app_name, "procfile-path"]
-
-
-def test_set_restart_policy_command():
-    dokku = Dokku()
-    app_name = "test-app-1"
-    new_policy = "unless-stopped"
-    command = dokku.ps.set_restart_policy(app_name, new_policy, execute=False)
-    assert command.command == ["dokku", "ps:set", app_name, "restart-policy", new_policy]
-
-
-def test_unset_restart_policy_command():
-    dokku = Dokku()
-    app_name = "test-app-1"
-    command = dokku.ps.unset_restart_policy(app_name, execute=False)
+    command = dokku.ps.unset(app_name, key="restart-policy", execute=False)
     assert command.command == ["dokku", "ps:set", app_name, "restart-policy"]
 
 

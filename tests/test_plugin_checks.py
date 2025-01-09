@@ -8,18 +8,18 @@ def test_object_class():
     assert dokku.checks.object_class is Check
 
 
-def test_set_wait_to_retire_command():
+def test_set_command():
     dokku = Dokku()
     app_name = "test-app-1"
     wait = 30
-    command = dokku.checks.set_wait_to_retire(app_name, wait, execute=False)
+    command = dokku.checks.set(app_name, key="wait-to-retire", value=wait, execute=False)
     assert command.command == ["dokku", "checks:set", app_name, "wait-to-retire", str(wait)]
 
 
-def test_unset_wait_to_retire_command():
+def test_unset_command():
     dokku = Dokku()
     app_name = "test-app-1"
-    command = dokku.checks.unset_wait_to_retire(app_name, execute=False)
+    command = dokku.checks.unset(app_name, key="wait-to-retire", execute=False)
     assert command.command == ["dokku", "checks:set", app_name, "wait-to-retire"]
 
 

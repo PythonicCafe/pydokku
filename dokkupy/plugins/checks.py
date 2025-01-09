@@ -10,8 +10,6 @@ class ChecksPlugin(DokkuPlugin):
     """dokku checks plugin
 
     It returns one global check and for each app more one check *per process type*.
-    Since the only option to `checks:set` is `wait-to-retire` (and it didn't change for the last years), it was decided
-    to add this as a method `set_wait_to_retire` instead of a generic `checks:set` method.
     """
 
     name = "checks"
@@ -93,16 +91,16 @@ class ChecksPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows, app_name)
 
-    def set_wait_to_retire(self, app_name: str | None, value: int, execute: bool = True) -> str | Command:
-        """Set app's wait to retire time"""
+    def set(self, app_name: str | None, key: str, value: int, execute: bool = True) -> str | Command:
+        """Set app's property"""
         system = app_name is None
         app_parameter = app_name if not system else "--global"
-        return self._evaluate("set", params=[app_parameter, "wait-to-retire", str(value)], execute=execute)
+        return self._evaluate("set", params=[app_parameter, key, str(value)], execute=execute)
 
-    def unset_wait_to_retire(self, app_name: str | None, execute: bool = True) -> str | Command:
+    def unset(self, app_name: str | None, key: str, execute: bool = True) -> str | Command:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
-        return self._evaluate("set", params=[app_parameter, "wait-to-retire"], execute=execute)
+        return self._evaluate("set", params=[app_parameter, key], execute=execute)
 
     def disable(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> str | Command:
         ps = [",".join(process_names)] if process_names is not None else []
@@ -131,9 +129,13 @@ class ChecksPlugin(DokkuPlugin):
         result = []
         # First, set wait to retire
         if system:
-            result.append(self.set_wait_to_retire(app_name=None, value=obj.global_wait_to_retire, execute=execute))
+            result.append(
+                self.set(app_name=None, key="wait-to-retire", value=obj.global_wait_to_retire, execute=execute)
+            )
         elif obj.app_wait_to_retire is not None:
-            result.append(self.set_wait_to_retire(app_name=app_name, value=obj.app_wait_to_retire, execute=execute))
+            result.append(
+                self.set(app_name=app_name, key="wait-to-retire", value=obj.app_wait_to_retire, execute=execute)
+            )
         if not system:  # Set process status (only if not global)
             if obj.status == "enabled":
                 result.append(self.enable(app_name=obj.app_name, process_names=[obj.process], execute=execute))
