@@ -3,7 +3,6 @@ from pathlib import Path
 
 from pydokku.dokku_cli import Dokku
 from pydokku.models import App
-from pydokku.utils import get_system_tzinfo
 from tests.utils import requires_dokku
 
 
@@ -110,7 +109,7 @@ def test_parse_report():
     expected = [
         {
             "name": "test-app-7",
-            "created_at": datetime.datetime(2025, 1, 7, 19, 0, 54, tzinfo=get_system_tzinfo()),
+            "created_at": datetime.datetime(2025, 1, 7, 22, 0, 54).utctimetuple(),
             "deploy_source": None,
             "deploy_source_metadata": None,
             "path": Path("/home/dokku/test-app-7"),
@@ -118,7 +117,7 @@ def test_parse_report():
         },
         {
             "name": "test-app-8",
-            "created_at": datetime.datetime(2025, 1, 7, 19, 0, 54, tzinfo=get_system_tzinfo()),
+            "created_at": datetime.datetime(2025, 1, 7, 22, 0, 54).utctimetuple(),
             "deploy_source": None,
             "deploy_source_metadata": None,
             "path": Path("/home/dokku/test-app-8"),
@@ -126,7 +125,7 @@ def test_parse_report():
         },
         {
             "name": "test-app-9",
-            "created_at": datetime.datetime(2025, 1, 7, 19, 0, 54, tzinfo=get_system_tzinfo()),
+            "created_at": datetime.datetime(2025, 1, 7, 22, 0, 54).utctimetuple(),
             "deploy_source": None,
             "deploy_source_metadata": None,
             "path": Path("/home/dokku/test-app-9"),
@@ -136,6 +135,9 @@ def test_parse_report():
     dokku = Dokku()
     rows_parser = dokku.apps._get_rows_parser()
     result = rows_parser(stdout)
+    for row in result:
+        # Converts to UTC so we don't have failing tests depending on the machine's timezone
+        row["created_at"] = row["created_at"].utctimetuple()
     assert result == expected
 
 

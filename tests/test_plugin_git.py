@@ -150,12 +150,16 @@ def test_parse_report():
             "rev_env_var": "GIT_REV",
             "sha": "75a174dfa0aa1af0dc13cbb7490946588e8242fc",
             "source_image": "nginx:1.27",
-            "last_updated_at": datetime.datetime(2025, 1, 9, 0, 57, 33, tzinfo=get_system_tzinfo()),
+            "last_updated_at": datetime.datetime(2025, 1, 9, 3, 57, 33).utctimetuple(),
         },
     ]
     dokku = Dokku()
     rows_parser = dokku.git._get_rows_parser()
     result = rows_parser(stdout)
+    for row in result:
+        # Converts to UTC so we don't have failing tests depending on the machine's timezone
+        if row["last_updated_at"]:
+            row["last_updated_at"] = row["last_updated_at"].utctimetuple()
     assert result == expected
 
 
