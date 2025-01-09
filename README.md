@@ -1,6 +1,6 @@
-# dokkupy
+# pydokku
 
-dokkupy is a Python library and command-line tool to interface with Dokku. It makes it pretty easy to get structured
+pydokku is a Python library and command-line tool to interface with Dokku. It makes it pretty easy to get structured
 data regarding a Dokku server and also to easily setup apps and its configurations. It supports interfacing with a
 local Dokku command or via SSH (using a multiplexed connection for speed).
 
@@ -19,17 +19,17 @@ huge amount of data into the command's standard input (like `git:load-image`).
 As a command-line tool:
 
 ```shell
-dokkupy dump mydokku.json
+pydokku dump mydokku.json
 # Will create the `mydokku.json` file with all information regarding this dokku installation
 
-dokkupy apply mydokku.json
+pydokku apply mydokku.json
 # Will execute all specs from the JSON file (create apps, configure plugins etc.)
 ```
 
 As a Python library:
 
 ```python
-from dokkupy import Dokku
+from pydokku import Dokku
 
 dokku = Dokku()
 

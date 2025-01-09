@@ -2,12 +2,12 @@ import subprocess
 from copy import deepcopy
 from pathlib import Path
 
-from dokkupy import Dokku
+from pydokku import Dokku
 from tests.utils import requires_dokku
 
 
 def dokku_dump():
-    # TODO: unify with dokkupy/cli.py (without the logging)
+    # TODO: unify with pydokku/cli.py (without the logging)
     dokku = Dokku()
     data = {
         "dokku": {"version": dokku.version()},
@@ -19,7 +19,7 @@ def dokku_dump():
 
 
 def dokku_load(data):
-    # TODO: unify with dokkupy/cli.py (without the logging)
+    # TODO: unify with pydokku/cli.py (without the logging)
     dokku = Dokku()
     for key, values in sorted(data.items()):
         if key == "dokku":

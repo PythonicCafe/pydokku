@@ -125,7 +125,7 @@ def main():
         action="store_true",
         help="Print the commands to be executed instead of actually executing them",
     )
-    load_parser.add_argument("json_filename", type=Path, help="Filename created by `dokkupy dump` command")
+    load_parser.add_argument("json_filename", type=Path, help="Filename created by `pydokku dump` command")
 
     args = parser.parse_args()
 

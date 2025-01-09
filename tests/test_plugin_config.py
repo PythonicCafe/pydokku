@@ -2,8 +2,8 @@ import random
 
 import pytest
 
-from dokkupy.dokku_cli import Dokku
-from dokkupy.models import Config
+from pydokku.dokku_cli import Dokku
+from pydokku.models import Config
 from tests.utils import random_value, requires_dokku
 
 

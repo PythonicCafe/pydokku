@@ -2,9 +2,9 @@ import re
 
 import pytest
 
-from dokkupy import ssh
-from dokkupy.dokku_cli import Dokku
-from dokkupy.models import Command
+from pydokku import ssh
+from pydokku.dokku_cli import Dokku
+from pydokku.models import Command
 from tests.utils import requires_dokku, requires_ssh_keygen
 
 

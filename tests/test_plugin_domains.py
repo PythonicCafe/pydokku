@@ -1,8 +1,8 @@
 import random
 import string
 
-from dokkupy.dokku_cli import Dokku
-from dokkupy.models import Domain
+from pydokku.dokku_cli import Dokku
+from pydokku.models import Domain
 from tests.utils import random_value, requires_dokku
 
 

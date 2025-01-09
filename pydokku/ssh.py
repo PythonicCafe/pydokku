@@ -94,7 +94,7 @@ def key_create(filename: Path | str, key_type: str, password: str | None = None)
 def key_unlock(filename: Path | str, password: str) -> Path:
     """Copy the SSH key to a temp file and uses `ssh-keygen` to unlock and overwrite the newly created file"""
     filename = Path(filename).expanduser().absolute()
-    temp = tempfile.NamedTemporaryFile(delete=False, prefix="dokkupy-")
+    temp = tempfile.NamedTemporaryFile(delete=False, prefix="pydokku-")
     temp_filename = Path(temp.name)
     temp_filename.chmod(0o600)
     with filename.open(mode="rb") as in_fobj, temp_filename.open(mode="wb") as out_fobj:

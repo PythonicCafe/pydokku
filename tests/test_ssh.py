@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from dokkupy import ssh
+from pydokku import ssh
 from tests.utils import requires_ssh_keygen
 
 

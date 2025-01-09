@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from dokkupy.dokku_cli import Dokku
-from dokkupy.models import Storage
+from pydokku.dokku_cli import Dokku
+from pydokku.models import Storage
 from tests.utils import requires_dokku
 
 

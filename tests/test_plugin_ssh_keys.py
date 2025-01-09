@@ -2,9 +2,9 @@ from textwrap import dedent
 
 import pytest
 
-from dokkupy.dokku_cli import Dokku
-from dokkupy.models import SSHKey
-from dokkupy.plugins.ssh_keys import parse_authorized_keys
+from pydokku.dokku_cli import Dokku
+from pydokku.models import SSHKey
+from pydokku.plugins.ssh_keys import parse_authorized_keys
 from tests.utils import requires_dokku, requires_ssh_keygen
 
 

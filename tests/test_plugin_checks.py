@@ -1,5 +1,5 @@
-from dokkupy.dokku_cli import Dokku
-from dokkupy.models import Check
+from pydokku.dokku_cli import Dokku
+from pydokku.models import Check
 from tests.utils import requires_dokku
 
 

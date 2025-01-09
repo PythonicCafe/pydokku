@@ -1,9 +1,9 @@
 import datetime
 from pathlib import Path
 
-from dokkupy.dokku_cli import Dokku
-from dokkupy.models import App
-from dokkupy.utils import get_system_tzinfo
+from pydokku.dokku_cli import Dokku
+from pydokku.models import App
+from pydokku.utils import get_system_tzinfo
 from tests.utils import requires_dokku
 
 

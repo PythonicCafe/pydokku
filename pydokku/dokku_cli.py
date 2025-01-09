@@ -44,7 +44,7 @@ class Dokku:
                 # TODO: create temp file hash (ssh host, ssh port, ssh user, ssh key path) and add to _files_to_delete
                 hash_key = [self.ssh_host, str(self.ssh_port), self.ssh_user, str(self.ssh_private_key)]
                 mux_hash = hashlib.sha1("|".join(hash_key).encode("utf-8")).hexdigest()
-                mux_filename = Path(tempfile.NamedTemporaryFile(delete=False, prefix=f"dokkupy-ssh-{mux_hash}-").name)
+                mux_filename = Path(tempfile.NamedTemporaryFile(delete=False, prefix=f"pydokku-ssh-{mux_hash}-").name)
                 self.__files_to_delete.append(mux_filename)
             self._ssh_prefix = ssh.command(
                 user=self.ssh_user,

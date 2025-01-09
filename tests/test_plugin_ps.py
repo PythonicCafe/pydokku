@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from dokkupy import Dokku
-from dokkupy.models import Process, ProcessInfo
+from pydokku import Dokku
+from pydokku.models import Process, ProcessInfo
 
 
 def test_object_class():

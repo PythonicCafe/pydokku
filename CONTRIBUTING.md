@@ -75,8 +75,8 @@ After that, you may want to create a snapshot of the current disk, so you can ea
 state if the tests make the disk dirty:
 
 ```shell
-VM_NAME="debian12-dokkupy"
-OVERLAY_QCOW2="/var/lib/libvirt/images/dokkupy.qcow2"
+VM_NAME="debian12-pydokku"
+OVERLAY_QCOW2="/var/lib/libvirt/images/pydokku.qcow2"
 
 make vm-stop
 sudo qemu-img snapshot -c "Docker and Dokku installed" "$OVERLAY_QCOW2"
@@ -86,8 +86,8 @@ sudo virsh start "$VM_NAME"
 And to return to a specific snapshot:
 
 ```shell
-VM_NAME="debian12-dokkupy"
-OVERLAY_QCOW2="/var/lib/libvirt/images/dokkupy.qcow2"
+VM_NAME="debian12-pydokku"
+OVERLAY_QCOW2="/var/lib/libvirt/images/pydokku.qcow2"
 
 make vm-stop
 sudo qemu-img snapshot -a "Docker and Dokku installed" "$OVERLAY_QCOW2"
@@ -107,7 +107,7 @@ By now, the only way to run tests inside the VM is:
 To execute these steps, first run on your host machine:
 
 ```shell
-HOST_SHARED="/var/lib/libvirt/shared/debian12-dokkupy"
+HOST_SHARED="/var/lib/libvirt/shared/debian12-pydokku"
 REPO_PATH="${HOST_SHARED}/repo.git/"
 
 sudo mkdir -p "$REPO_PATH"
@@ -122,8 +122,8 @@ Connect to the VM using `make vm-ssh` and run inside the VM as the user `debian`
 ```shell
 cd
 source venv/bin/activate
-git clone /shared/repo.git dokkupy
-cd dokkupy
+git clone /shared/repo.git pydokku
+cd pydokku
 make test
 ```
 
@@ -131,7 +131,7 @@ If you make changes to the repository on the host machine, push them by running 
 VM:
 
 ```shell
-cd ~/dokkupy
+cd ~/pydokku
 git fetch origin
 git reset --hard origin/develop # WARNING: this will REMOVE all changes made in the VM repository!
 make test

@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_NAME="dokkupy"
+PROJECT_NAME="pydokku"
 DEBIAN_QCOW2_URL="https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
 DEBIAN_QCOW2="/var/lib/libvirt/images/$(basename $DEBIAN_QCOW2_URL)"
 OVERLAY_QCOW2="/var/lib/libvirt/images/${PROJECT_NAME}.qcow2"
