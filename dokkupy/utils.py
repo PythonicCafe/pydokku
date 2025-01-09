@@ -25,6 +25,9 @@ def get_system_tzinfo():
 
 
 def parse_timestamp(value):
+    value = str(value if value is not None else "").lower()
+    if not value:
+        return None
     return datetime.datetime.fromtimestamp(int(value)).replace(tzinfo=get_system_tzinfo())
 
 

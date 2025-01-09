@@ -2,6 +2,7 @@ from .apps import AppsPlugin  # noqa
 from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
+from .git import GitPlugin  # noqa
 from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
@@ -23,19 +24,6 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement nginx:start                               Starts the nginx server
 # TODO: implement nginx:stop                                Stops the nginx server
 # TODO: implement nginx:validate-config [<app>] [--clean]   Validates and optionally cleans up invalid nginx configurations
-
-# TODO: implement git:allow-host <host>                                               Adds a host to known_hosts
-# TODO: implement git:auth <host> [<username> <password>]                             Configures netrc authentication for a given git server
-# TODO: implement git:from-archive <app> <archive-url> [<git-username> <git-email>]   Updates an app's git repository with a given archive file
-# TODO: implement git:from-image <app> <docker-image> [<git-username> <git-email>]    Updates an app's git repository with a given docker image
-# TODO: implement git:generate-deploy-key                                             Generates a deploy ssh key
-# TODO: implement git:initialize <app>                                                Initialize a git repository for an app
-# TODO: implement git:load-image <app> <docker-image> [<git-username> <git-email>]    Updates an app's git repository with a docker image loaded from stdin
-# TODO: implement git:public-key                                                      Outputs the dokku public deploy key
-# TODO: implement git:report [<app>] [<flag>]                                         Displays a git report for one or more apps
-# TODO: implement git:set <app> <property> (<value>)                                  Set or clear a git property for an app
-# TODO: implement git:status <app>                                                    show the working tree status for an app
-# TODO: implement git:sync [--build] <app> <repository> [<git-ref>]                   Clone or fetch an app from remote git repo
 
 # TODO: implement redirect <app>                           Display the redirects set on app
 # TODO: implement redirect:set <app> <src> <dest> [<code>] Set a redirect from <src> domain to <dest> domain

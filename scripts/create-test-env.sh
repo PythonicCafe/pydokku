@@ -41,3 +41,7 @@ dokku storage:mount test-app-9 /var/lib/dokku/data/storage/test-app-9-data:/data
 
 # ps
 dokku ps:scale test-app-9 web=2 worker=3
+
+# git
+dokku git:generate-deploy-key
+dokku git:from-image test-app-9 nginx:1.27

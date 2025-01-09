@@ -140,3 +140,18 @@ class ProcessInfo:
     @property
     def procfile_path(self):
         return self.app_procfile_path or self.global_procfile_path
+
+
+@dataclass
+class Git:
+    app_name: str
+    global_deploy_branch: str
+    keep_git_path: bool
+    deploy_branch: str
+    rev_env_var: str
+    sha: str
+    source_image: str | None = None
+    last_updated_at: datetime.datetime | None = None
+
+    def serialize(self):
+        return asdict(self)
