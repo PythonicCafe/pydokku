@@ -76,7 +76,7 @@ class PsPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows)
 
-    def start(self, app_name: str = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def start(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
         system = app_name is None
         params = []
         if parallel is not None:
@@ -84,7 +84,7 @@ class PsPlugin(DokkuPlugin):
         params.append(app_name if not system else "--all")
         return self._evaluate("start", params=params, execute=execute)
 
-    def stop(self, app_name: str = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def stop(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
         system = app_name is None
         params = []
         if parallel is not None:
@@ -93,7 +93,7 @@ class PsPlugin(DokkuPlugin):
         return self._evaluate("stop", params=params, execute=execute)
 
     def restart(
-        self, app_name: str = None, parallel: int = None, process: str = None, execute: bool = True
+        self, app_name: str | None = None, parallel: int = None, process: str = None, execute: bool = True
     ) -> str | Command:
         """
         Restart an app with process-type granularity
@@ -114,7 +114,7 @@ class PsPlugin(DokkuPlugin):
             params.append(process)
         return self._evaluate("restart", params=params, execute=execute)
 
-    def rebuild(self, app_name: str = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def rebuild(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
         system = app_name is None
         params = []
         if parallel is not None:
@@ -122,7 +122,7 @@ class PsPlugin(DokkuPlugin):
         params.append(app_name if not system else "--all")
         return self._evaluate("rebuild", params=params, execute=execute)
 
-    def restore(self, app_name: str = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def restore(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
         system = app_name is None
         params = []
         if parallel is not None:

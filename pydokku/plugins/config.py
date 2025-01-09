@@ -12,7 +12,7 @@ class ConfigPlugin(DokkuPlugin):
     object_class = Config
 
     def get(
-        self, app_name: str, merged: bool = False, hide_internal: bool = True, as_dict: bool = False
+        self, app_name: str | None, merged: bool = False, hide_internal: bool = True, as_dict: bool = False
     ) -> List[Config] | dict:
         """Get all configurations set for an app, with the option to merge them with the global ones"""
         # `dokku config <--global|app_name>` does not encode values, so we can't parse correctly if values have
@@ -92,7 +92,7 @@ class ConfigPlugin(DokkuPlugin):
     def unset(self, config: Config, restart: bool = False, execute: bool = True) -> str | Command:
         return self.unset_many(configs=[config], restart=restart, execute=execute)
 
-    def clear(self, app_name: str, restart: bool = False, execute: bool = True) -> str | Command:
+    def clear(self, app_name: str | None, restart: bool = False, execute: bool = True) -> str | Command:
         system = app_name is None
         if system and restart:
             raise ValueError("Cannot restart when clearing global config")

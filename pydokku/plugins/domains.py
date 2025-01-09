@@ -62,7 +62,7 @@ class DomainsPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows)
 
-    def add(self, app_name: str, domains: List[str], execute: bool = True) -> str | Command:
+    def add(self, app_name: str | None, domains: List[str], execute: bool = True) -> str | Command:
         system = app_name is None
         if not system:
             command, params = "add", [app_name] + domains
@@ -70,7 +70,7 @@ class DomainsPlugin(DokkuPlugin):
             command, params = "add-global", domains
         return self._evaluate(command, params=params, execute=execute)
 
-    def set(self, app_name: str, domains: List[str], execute: bool = True) -> str | Command:
+    def set(self, app_name: str | None, domains: List[str], execute: bool = True) -> str | Command:
         system = app_name is None
         if not system:
             command, params = "set", [app_name] + domains
@@ -78,7 +78,7 @@ class DomainsPlugin(DokkuPlugin):
             command, params = "set-global", domains
         return self._evaluate(command, params=params, execute=execute)
 
-    def clear(self, app_name: str, execute: bool = True) -> str | Command:
+    def clear(self, app_name: str | None, execute: bool = True) -> str | Command:
         system = app_name is None
         if not system:
             command, params = "clear", [app_name]
@@ -86,7 +86,7 @@ class DomainsPlugin(DokkuPlugin):
             command, params = "clear-global", []
         return self._evaluate(command, params=params, execute=execute)
 
-    def remove(self, app_name: str, domains: List[str], execute: bool = True) -> str | Command:
+    def remove(self, app_name: str | None, domains: List[str], execute: bool = True) -> str | Command:
         system = app_name is None
         if not system:
             command, params = "remove", [app_name] + domains
