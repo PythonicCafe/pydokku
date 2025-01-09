@@ -77,6 +77,7 @@ Currently implemented plugins:
 - (core) `storage`
 
 Plugins to be implemented soon:
+- (core) `proxy`
 - (core) `plugin`
 - (core) `nginx`
 - (official) `redirect`
