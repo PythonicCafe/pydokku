@@ -85,17 +85,14 @@ class Storage(BaseModel):
 
 
 @dataclass
-class Domain:
+class Domain(BaseModel):
     app_name: str
     enabled: bool
     domains: List[str]
 
-    def serialize(self):
-        return asdict(self)
-
 
 @dataclass
-class Check:
+class Check(BaseModel):
     app_name: str
     process: str
     status: Literal["enabled"] | Literal["disabled"] | Literal["skipped"]
@@ -106,12 +103,9 @@ class Check:
     def wait_to_retire(self) -> int | None:
         return self.app_wait_to_retire or self.global_wait_to_retire
 
-    def serialize(self):
-        return asdict(self)
-
 
 @dataclass
-class Process:
+class Process(BaseModel):
     type: str
     id: int
     status: Literal["running"] | Literal["exited"] | None
@@ -119,7 +113,7 @@ class Process:
 
 
 @dataclass
-class ProcessInfo:
+class ProcessInfo(BaseModel):
     app_name: str
     deployed: bool
     processes: List[Process]
