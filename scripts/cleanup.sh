@@ -28,7 +28,7 @@ dokku domains:set-global dokku.me
 dokku checks:set --global wait-to-retire 60
 
 # git
-rm /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts
+sudo rm -f /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts
 
 # Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
 # destroyed. More info: <https://github.com/dokku/dokku/issues/7443>
