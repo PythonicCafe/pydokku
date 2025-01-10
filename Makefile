@@ -9,12 +9,12 @@ lint:					# Run linter commands
 
 test:					# Execute `pytest` and coverage report
 	./scripts/cleanup.sh
-	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest -vvvs
+	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest -vvvs $(TEST_ARGS)
 	coverage report
 
 test-x:					# Execute `pytest` with `-x` option and coverage report
 	./scripts/cleanup.sh
-	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest -vvvsx
+	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest -vvvsx $(TEST_ARGS)
 	coverage report
 
 vm-create:				# Create a virtual machine using libvirt/virsh to make isolated tests easier (requires sudo)
