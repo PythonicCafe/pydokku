@@ -16,6 +16,7 @@ dokku checks:disable test-app-9 web,worker
 dokku checks:skip test-app-9 another-worker
 
 # config
+dokku config:set --global DOKKU_RM_CONTAINER=1  # don't keep `run` containers around
 dokku config:set --no-restart test-app-8 a=123 b=456 c=789
 dokku config:set --no-restart test-app-9 DEBUG=True
 
