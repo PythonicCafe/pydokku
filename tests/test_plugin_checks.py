@@ -220,8 +220,8 @@ def test_list_set_enable_disable_skip_run():
     # Change global wait to retire
     new_global_wait = global_wait * 2
     wait_app_1 = global_wait * 3
-    dokku.checks.set_wait_to_retire(app_name=None, value=new_global_wait)
-    dokku.checks.set_wait_to_retire(app_name=app_name_1, value=wait_app_1)
+    dokku.checks.set(app_name=None, key="wait-to-retire", value=new_global_wait)
+    dokku.checks.set(app_name=app_name_1, key="wait-to-retire", value=wait_app_1)
     checks = {check.app_name: check for check in dokku.checks.list()}
     assert checks[None].global_wait_to_retire == new_global_wait
     assert checks[app_name_1].app_wait_to_retire == wait_app_1
