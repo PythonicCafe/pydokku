@@ -122,12 +122,15 @@ class GitPlugin(DokkuPlugin):
         return fingerprint, pubkey_path
 
     def generate_deploy_key(self, execute: bool = True) -> SSHKey | Command:
-        result = self._evaluate("generate-deploy-key", params=[], execute=execute, full_return=True)
+        result = self._evaluate("generate-deploy-key", execute=execute, full_return=True)
         if not execute:
             return result
         _, stdout, stderr = result
-        if stderr:
-            raise RuntimeError(f"Error while running git:generate-deploy-key: {clean_stderr(stderr)}")
+        error_str = "A deploy key already exists for this host"
+        if error_str in stdout or stderr:
+            # YES, Dokku prints this error in stdout, not stderr. No consistency with other commands.
+            error = clean_stderr(stderr or stdout)
+            raise RuntimeError(f"Error while running git:generate-deploy-key: {error}")
         fingerprint, pubkey_path = self._parse_generate_deploy_key(stdout)
         public_key = None
         if self.dokku.can_execute_regular_commands:

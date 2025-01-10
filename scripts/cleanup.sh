@@ -19,7 +19,7 @@ dokku ssh-keys:list 2> /dev/null | grep -E --color=no 'NAME="test-' | sed 's/.*N
 done
 
 # storage
-sudo rm -rf /var/lib/dokku/data/storage/test-*
+sudo bash -c 'rm -rf /var/lib/dokku/data/storage/test-*'
 
 # domains
 dokku domains:set-global dokku.me
@@ -28,7 +28,7 @@ dokku domains:set-global dokku.me
 dokku checks:set --global wait-to-retire 60
 
 # git
-sudo rm -f /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts
+sudo bash -c 'rm -f /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts'
 
 # Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
 # destroyed. More info: <https://github.com/dokku/dokku/issues/7443>
