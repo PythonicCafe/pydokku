@@ -75,10 +75,12 @@ Currently implemented plugins:
 - (core) `ps`
 - (core) `ssh-keys`
 - (core) `storage`
+- (core) `proxy`
 
 Plugins to be implemented soon:
-- (core) `proxy`
+- (core) `ports`
 - (core) `nginx`
+- (core) `network`
 - (core) `plugin`
 - (official) `redirect`
 - (official) `maintenance`

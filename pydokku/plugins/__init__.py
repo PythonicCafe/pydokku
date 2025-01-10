@@ -3,16 +3,11 @@ from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
 from .git import GitPlugin  # noqa
+from .proxy import ProxyPlugin  # noqa
 from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-# TODO: implement proxy:build-config [--parallel count] [--all|<app>]  (Re)builds config for a given app
-# TODO: implement proxy:clear-config [--all|<app>]                     Clears config for a given app
-# TODO: implement proxy:disable <app>                                  Disable proxy for app
-# TODO: implement proxy:enable <app>                                   Enable proxy for app
-# TODO: implement proxy:report [<app>] [<flag>]                        Displays a proxy report for one or more apps
-# TODO: implement proxy:set <app> <proxy-type>                         Set proxy type for app
 
 # TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
 # TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)

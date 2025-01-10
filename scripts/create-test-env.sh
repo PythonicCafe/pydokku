@@ -52,3 +52,8 @@ dokku git:set test-app-7 keep-git-dir false
 dokku git:allow-host github.com
 dokku git:auth github.com user8 pass8
 dokku git:auth github.com user9 pass9
+
+# proxy
+dokku proxy:set --global caddy
+dokku proxy:set test-app-8 nginx
+dokku proxy:disable test-app-7

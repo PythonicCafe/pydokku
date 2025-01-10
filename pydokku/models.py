@@ -150,3 +150,15 @@ class Auth(BaseModel):
     hostname: str
     username: str | None = None
     password: str | None = None
+
+
+@dataclass
+class Proxy(BaseModel):
+    app_name: str
+    enabled: bool
+    global_type: str | None = None
+    app_type: str | None = None
+
+    @property
+    def type(self) -> str | None:
+        return self.app_type or self.global_type

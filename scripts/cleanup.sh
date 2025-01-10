@@ -30,6 +30,9 @@ dokku checks:set --global wait-to-retire 60
 # git
 sudo bash -c 'rm -f /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts'
 
+# proxy
+dokku proxy:set --global nginx
+
 # Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
 # destroyed. More info: <https://github.com/dokku/dokku/issues/7443>
 find /var/lib/dokku/config/*/ -name 'test-*' | sudo xargs rm -rf
