@@ -7,14 +7,12 @@ from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-# TODO: implement plugin:disable <name>                                                                               Disable an installed plugin (third-party only)
-# TODO: implement plugin:enable <name>                                                                                Enable a previously disabled plugin
-# TODO: implement plugin:install [--core|--git-url] [--committish branch|commit|commit] [--name custom-plugin-name]   Optionally download git-url (and pin to the specified branch/commit/tag) & run install trigger for active plugins (or only core ones)
-# TODO: implement plugin:install-dependencies [--core]                                                                Run install-dependencies trigger for active plugins (or only core ones)
-# TODO: implement plugin:list                                                                                         Print active plugins
-# TODO: implement plugin:trigger <args...>                                                                            Trigger an arbitrary plugin hook
-# TODO: implement plugin:uninstall <name>                                                                             Uninstall a plugin (third-party only)
-# TODO: implement plugin:update [name [branch|commit|tag]]                                                            Optionally update named plugin from git (and pin to the specified branch/commit/tag) & run update trigger for active plugins
+# TODO: implement proxy:build-config [--parallel count] [--all|<app>]  (Re)builds config for a given app
+# TODO: implement proxy:clear-config [--all|<app>]                     Clears config for a given app
+# TODO: implement proxy:disable <app>                                  Disable proxy for app
+# TODO: implement proxy:enable <app>                                   Enable proxy for app
+# TODO: implement proxy:report [<app>] [<flag>]                        Displays a proxy report for one or more apps
+# TODO: implement proxy:set <app> <proxy-type>                         Set proxy type for app
 
 # TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
 # TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)
@@ -24,6 +22,15 @@ from .storage import StoragePlugin  # noqa
 # TODO: implement nginx:start                               Starts the nginx server
 # TODO: implement nginx:stop                                Stops the nginx server
 # TODO: implement nginx:validate-config [<app>] [--clean]   Validates and optionally cleans up invalid nginx configurations
+
+# TODO: implement plugin:disable <name>                                                                               Disable an installed plugin (third-party only)
+# TODO: implement plugin:enable <name>                                                                                Enable a previously disabled plugin
+# TODO: implement plugin:install [--core|--git-url] [--committish branch|commit|commit] [--name custom-plugin-name]   Optionally download git-url (and pin to the specified branch/commit/tag) & run install trigger for active plugins (or only core ones)
+# TODO: implement plugin:install-dependencies [--core]                                                                Run install-dependencies trigger for active plugins (or only core ones)
+# TODO: implement plugin:list                                                                                         Print active plugins
+# TODO: implement plugin:trigger <args...>                                                                            Trigger an arbitrary plugin hook
+# TODO: implement plugin:uninstall <name>                                                                             Uninstall a plugin (third-party only)
+# TODO: implement plugin:update [name [branch|commit|tag]]                                                            Optionally update named plugin from git (and pin to the specified branch/commit/tag) & run update trigger for active plugins
 
 # TODO: implement redirect <app>                           Display the redirects set on app
 # TODO: implement redirect:set <app> <src> <dest> [<code>] Set a redirect from <src> domain to <dest> domain

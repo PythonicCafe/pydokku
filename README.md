@@ -78,8 +78,8 @@ Currently implemented plugins:
 
 Plugins to be implemented soon:
 - (core) `proxy`
-- (core) `plugin`
 - (core) `nginx`
+- (core) `plugin`
 - (official) `redirect`
 - (official) `maintenance`
 - (official) `letsencrypt`
