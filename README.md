@@ -90,6 +90,21 @@ Plugins to be implemented soon:
 - (official, service) `elasticsearch`
 - (official, service) `rabbitmq`
 
+
+## Next steps
+
+After implementing a comprehensive set of plugins in order to be useful, the focus will be:
+
+- Implement type-checking tools to enforce the declared types are correct
+- Implement "real" tests for all missing plugin commands
+- List all data that only will be exported if running locally or via SSH with an user different of `dokku`
+- Create an API to `object_ensure` method (similar to `object_create`, but won't raise an error if the object already
+  exists)
+- Define the concept of a "recipe", with variables for the context (similar to cookiecutter), the template itself and a
+  "render" method. The CLI commands would be: `recipe-load`, `recipe-render`, `recipe-ensure`.
+- May rename CLI's `load` to `execute`
+
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
