@@ -1,16 +1,17 @@
 import datetime
+from textwrap import dedent
 
 import pytest
 
 from pydokku import Dokku
-from pydokku.models import Git
-from pydokku.utils import get_system_tzinfo
+from pydokku.models import Auth, Git, SSHKey
+from pydokku.plugins.git import parse_netrc_file
 from tests.utils import requires_dokku
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.git.object_class is Git
+    assert dokku.git.object_classes == (Git, SSHKey, Auth)
 
 
 def test_set_command():
@@ -43,8 +44,28 @@ def test_unset_command():
 def test_allow_host_command():
     dokku = Dokku()
     host = "example.net"
-    command = dokku.git.allow_host(host, execute=False)
+    command = dokku.git.host_add(host, execute=False)
     assert command.command == ["dokku", "git:allow-host", host]
+
+
+def test_parse_netrc_file():
+    contents = dedent(
+        """
+        machine github.com
+        login user1
+        password pass1
+
+        machine gitlab.com
+        login user2
+        password pass2
+        """
+    )
+    expected = [
+        Auth(hostname="github.com", username="user1", password="pass1"),
+        Auth(hostname="gitlab.com", username="user2", password="pass2"),
+    ]
+    result = parse_netrc_file(contents)
+    assert result == expected
 
 
 def test_parse_deploy_key():
@@ -69,7 +90,7 @@ def test_parse_deploy_key():
     """
     dokku = Dokku()
     expected = (
-        "SHA256:tGfI8g97+PZA2avezez0qBKKoGtvtgMcqUzOfKD46c0 dokku@localhost",
+        "SHA256:tGfI8g97+PZA2avezez0qBKKoGtvtgMcqUzOfKD46c0",
         "/home/dokku/.ssh/id_ed25519.pub",
     )
     result = dokku.git._parse_generate_deploy_key(stdout)
@@ -203,9 +224,86 @@ def test_from_image_command():
         dokku.git.from_image(app_name=app_name, image=image, git_username=None, git_email=git_email, execute=False)
 
 
+def test_from_archive_command():
+    app_name = "test-app-9"
+    archive_url = "https://example.com/archives/nginx-1.27.tar.gz"
+    git_username, git_email = "turicas", "admin@example.net"
+    dokku = Dokku()
+    command = dokku.git.from_archive(app_name=app_name, archive_url=archive_url, execute=False)
+    assert command.command == ["dokku", "git:from-archive", app_name, archive_url]
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    command = dokku.git.from_archive(
+        app_name=app_name, archive_url=archive_url, git_username=git_username, git_email=git_email, execute=False
+    )
+    assert command.command == ["dokku", "git:from-archive", app_name, archive_url, git_username, git_email]
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    with pytest.raises(ValueError, match="`git_username` is required for using `git_email`"):
+        dokku.git.from_archive(
+            app_name=app_name,
+            archive_url=archive_url,
+            git_username=None,
+            git_email=git_email,
+            execute=False,
+        )
+
+
+def test_sync_command():
+    app_name = "test-app-9"
+    repository_url = "https://github.com/PythonicCafe/some-repository.git"
+    git_ref = "57d85d743220e197fcb4612733ba6a201aa65b7c"
+    dokku = Dokku()
+
+    command = dokku.git.sync(app_name=app_name, repository_url=repository_url, execute=False)
+    assert command.command == ["dokku", "git:sync", app_name, repository_url]
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    command = dokku.git.sync(app_name=app_name, repository_url=repository_url, build=True, execute=False)
+    assert command.command == ["dokku", "git:sync", "--build", app_name, repository_url]
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    command = dokku.git.sync(app_name=app_name, repository_url=repository_url, build_if_changes=True, execute=False)
+    assert command.command == ["dokku", "git:sync", "--build-if-changes", app_name, repository_url]
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    command = dokku.git.sync(
+        app_name=app_name, repository_url=repository_url, build=True, build_if_changes=True, execute=False
+    )
+    assert command.command == ["dokku", "git:sync", "--build-if-changes", app_name, repository_url]
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+    command = dokku.git.sync(app_name=app_name, repository_url=repository_url, git_ref=git_ref, execute=False)
+    assert command.command == ["dokku", "git:sync", app_name, repository_url, git_ref]
+    assert command.stdin is None
+    assert command.check is True
+    assert command.sudo is False
+
+
 @requires_dokku
 def test_deploy_key():
     dokku = Dokku()
-    ssh_key = dokku.git.generate_deploy_key()
-    result = dokku.git.public_key()
-    assert ssh_key == result
+    no_key = dokku.git.public_key()
+    assert no_key is None  # No deploy key created
+    created_key = dokku.git.generate_deploy_key()
+    read_key = dokku.git.public_key()
+    assert created_key == read_key
+
+
+# TODO: implement real test (@requires_dokku) for from_archive
+# TODO: implement real test (@requires_dokku) for from_image
+# TODO: implement real test (@requires_dokku) for sync
+# TODO: implement real test (@requires_dokku) for auth_list, auth_add, auth_remove
+# TODO: implement real test (@requires_dokku) for host_list, host_add

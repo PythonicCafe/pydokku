@@ -71,7 +71,7 @@ Currently implemented plugins:
 - (core) `checks`
 - (core) `config`
 - (core) `domains`
-- (core) `git` (partial)
+- (core) `git`
 - (core) `ps`
 - (core) `ssh-keys`
 - (core) `storage`

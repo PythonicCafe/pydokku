@@ -6,7 +6,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, List
 
-REGEXP_ERROR_STR = re.compile(r"^\s*!\s+ (.*)$")
 REGEXP_DOKKU_HEADER = re.compile(r"^\s*=====> ", flags=re.MULTILINE)
 
 
@@ -16,13 +15,20 @@ def dataclass_field_set(DataClass):
 
 
 def clean_stderr(value: str) -> str:
+    """
+    >>> clean_stderr('')
+    ''
+    >>> clean_stderr('Some text')
+    'Some text'
+    >>> clean_stderr('!     Key specified in is not a valid ssh public key')
+    'Key specified in is not a valid ssh public key'
+    """
     text = str(value or "").strip()
     if not text:
         return ""
-    result = REGEXP_ERROR_STR.findall(text)
-    if not result:
-        raise ValueError(f"Cannot parse stderr message: {repr(value)}")
-    return result[0]
+    if text[0] == "!":
+        text = text[1:].strip()
+    return text
 
 
 @lru_cache

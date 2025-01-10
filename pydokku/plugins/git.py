@@ -1,10 +1,25 @@
+import netrc
+import tempfile
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Tuple
+from typing import Iterator, List, Tuple
 
-from ..models import App, Command, Git, SSHKey
+from ..models import App, Auth, Command, Git, SSHKey
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_timestamp
 from .base import DokkuPlugin
+
+
+def parse_netrc_file(contents: str) -> List[Auth]:
+    """Parse contents of a `~/.netrc` file and return the important data to Dokku (hostname, username and password)"""
+    # netrc Python library requires a filename to parse, so we need to create a file and put the contents there
+    with tempfile.NamedTemporaryFile() as temp:
+        with open(temp.name, mode="w") as fobj:
+            fobj.write(contents)
+        data = netrc.netrc(temp.name)
+    return [
+        Auth(hostname=hostname, username=host_data[0], password=host_data[2])
+        for hostname, host_data in data.hosts.items()
+    ]
 
 
 class GitPlugin(DokkuPlugin):
@@ -12,14 +27,16 @@ class GitPlugin(DokkuPlugin):
     dokku git plugin
 
     EXTRA features:
-    - `known_hosts` method: read known hosts file (which is populated by `git:allow-host` subcommand)
+    - `host_list` method: read known hosts file (which is populated by `git:allow-host` subcommand)
+    - `auth_list` method: read netrc file (which is populated by `git:auth` subcommand)
 
     NOT implemented subcommands:
     - `git:status`: it always return "fatal: this operation must be run in a work tree", so not useful
+    - `git:load-image`: huge stdin input is currently not a priority
     """
 
     name = "git"
-    object_class = Git
+    object_classes = (Git, SSHKey, Auth)
 
     @lru_cache
     def _get_rows_parser(self):
@@ -48,7 +65,19 @@ class GitPlugin(DokkuPlugin):
         elif stderr:
             raise RuntimeError(f"Error executing git:report: {stderr}")
         rows_parser = self._get_rows_parser()
-        return [self.object_class(**row) for row in rows_parser(stdout)]
+        return [Git(**row) for row in rows_parser(stdout)]
+
+    def from_archive(
+        self, app_name: str, archive_url: str, git_username: str = None, git_email: str = None, execute: bool = True
+    ) -> str | Command:
+        params = [app_name, archive_url]
+        if git_username is not None:
+            params.append(git_username)
+            if git_email is not None:
+                params.append(git_email)
+        elif git_email is not None:
+            raise ValueError("`git_username` is required for using `git_email`")
+        return self._evaluate("from-archive", params=params, execute=execute)
 
     def from_image(
         self,
@@ -74,8 +103,10 @@ class GitPlugin(DokkuPlugin):
     def initialize(self, app_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("initialize", params=[app_name], execute=execute)
 
-    def public_key(self) -> SSHKey:
-        stdout = self._evaluate("public-key", execute=True)
+    def public_key(self) -> SSHKey | None:
+        _, stdout, stderr = self._evaluate("public-key", execute=True, check=False, full_return=True)
+        if "There is no deploy key associated" in stderr:
+            return None
         key = SSHKey(name="dokku-public-key", public_key=stdout.strip())
         key.calculate_fingerprint()
         return key
@@ -94,19 +125,34 @@ class GitPlugin(DokkuPlugin):
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key], execute=execute)
 
-    def allow_host(self, host: str, execute: bool = True) -> str | Command:
-        return self._evaluate("allow-host", params=[host], execute=execute)
+    def host_add(self, hostname: str, execute: bool = True) -> str | Command:
+        """Add `hostname` to dokku's user known hosts (calls `dokku git:allow-host`, but with a better name)"""
+        return self._evaluate("allow-host", params=[hostname], execute=execute)
 
-    def known_hosts(self) -> str:
-        """Read dokku's user SSH known hosts file"""
+    def host_list(self) -> List[SSHKey]:
+        """Read dokku's user SSH known hosts file and parse it so we have all host's public keys
+
+        The actual hostname will be in SSHKey's name field
+        """
         if not self.dokku.can_execute_regular_commands:
             raise RuntimeError("Cannot execute regular commands")
         known_hosts_path = "/home/dokku/.ssh/known_hosts"
         command = Command(["touch", known_hosts_path], sudo=self.dokku.requires_sudo)  # ensure it exists
         self.dokku._execute(command)  # will execute using SSH connection, if configured to
+        command = Command(["chmod", "600", known_hosts_path], sudo=self.dokku.requires_sudo)  # fix permissions
+        self.dokku._execute(command)  # will execute using SSH connection, if configured to
         command = Command(["cat", known_hosts_path], sudo=self.dokku.requires_sudo)
         _, stdout, _ = self.dokku._execute(command)  # will execute using SSH connection, if configured to
-        return stdout.strip()
+        result = []
+        for line in stdout.strip().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            hostname, public_key = line.split(" ", maxsplit=1)
+            key = SSHKey(name=hostname, public_key=public_key)
+            key.calculate_fingerprint()
+            result.append(key)
+        return result
 
     def _parse_generate_deploy_key(self, stdout: str) -> Tuple[str | None, str | None]:
         pubkey_str = "Your public key has been saved in "
@@ -117,7 +163,7 @@ class GitPlugin(DokkuPlugin):
             if line.startswith(pubkey_str):
                 pubkey_path = line[len(pubkey_str) :]
             elif last_line == fingerprint_str:
-                fingerprint = line
+                fingerprint = line.split()[0]
             last_line = line
         return fingerprint, pubkey_path
 
@@ -143,16 +189,98 @@ class GitPlugin(DokkuPlugin):
             public_key=public_key,
         )
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
-        # TODO: implement (how?)
-        return []
+    def auth_add(self, hostname: str, username: str, password: str, execute: bool = True) -> str | Command:
+        return self._evaluate("auth", params=[hostname, username, password], execute=execute)
 
-    def create_object(self, obj: Git, execute: bool = True) -> List[str] | List[Command]:
-        # TODO: implement
-        return []
+    def auth_remove(self, hostname: str, execute: bool = True) -> str | Command:
+        return self._evaluate("auth", params=[hostname], execute=execute)
 
+    def auth_list(self) -> List[Auth]:
+        if not self.dokku.can_execute_regular_commands:
+            raise RuntimeError("Cannot read auth list (cannot execute regular commands)")
+        netrc_path = "/home/dokku/.netrc"
+        command = Command(["touch", netrc_path], sudo=self.dokku.requires_sudo)  # ensure it exists
+        self.dokku._execute(command)  # will execute using SSH connection, if configured to
+        command = Command(["chmod", "600", netrc_path], sudo=self.dokku.requires_sudo)  # fix permissions
+        self.dokku._execute(command)  # will execute using SSH connection, if configured to
+        command = Command(["cat", netrc_path], sudo=self.dokku.requires_sudo)
+        _, stdout, _ = self.dokku._execute(command)  # will execute using SSH connection, if configured to
+        if not stdout.strip():
+            return []
+        return parse_netrc_file(stdout)
 
-# TODO: implement git:auth <host> [<username> <password>]           # Configures netrc authentication for a given git server
-# TODO: implement git:from-archive [--archive-type ARCHIVE_TYPE] <app> <archive-url> [<git-username> <git-email>] # Updates an app's git repository with a given archive file
-# TODO: implement git:load-image [--build-dir DIRECTORY] <app> <docker-image> [<git-username> <git-email>] # Updates an app's git repository with a docker image loaded from stdin
-# TODO: implement git:sync [--build|build-if-changes] <app> <repository> [<git-ref>] # Clone or fetch an app from remote git repo
+    def sync(
+        self,
+        app_name: str,
+        repository_url: str,
+        git_ref: str | None = None,
+        build: bool = False,
+        build_if_changes: bool = False,
+        execute: bool = True,
+    ) -> str | Command:
+        if build and build_if_changes:
+            build = False
+        params = []
+        if build:
+            params.append("--build")
+        elif build_if_changes:
+            params.append("--build-if-changes")
+        params.extend([app_name, repository_url])
+        if git_ref is not None:
+            params.append(git_ref)
+        return self._evaluate("sync", params=params, execute=execute)
+
+    def object_list(self, apps: List[App], system: bool = True) -> List[Git | SSHKey | Auth]:
+        # TODO: the current dokku user public key (as in `self.public_key`) is not exported!
+        result = []
+        if self.dokku.can_execute_regular_commands:
+            result.extend(self.host_list())
+            result.extend(self.auth_list())
+        result.extend(self.report())
+        return result
+
+    def _create_object(
+        self, obj: Git | SSHKey | Auth, skip_system: bool = False, execute: bool = True
+    ) -> List[str] | List[Command]:
+        result = []
+        if isinstance(obj, Auth):
+            result.append(
+                self.auth_add(hostname=obj.hostname, username=obj.username, password=obj.password, execute=execute)
+            )
+        elif isinstance(obj, SSHKey):
+            for host_or_ip in obj.name.split(","):
+                result.append(self.host_add(hostname=host_or_ip, execute=execute))
+        elif isinstance(obj, Git):
+            if obj.global_deploy_branch and not skip_system:
+                result.append(
+                    self.set(app_name=None, key="deploy-branch", value=obj.global_deploy_branch, execute=execute)
+                )
+            if obj.source_image:
+                # TODO: should trigger deploy after or call `from_image` instead?
+                result.append(
+                    self.set(app_name=obj.app_name, key="source-image", value=obj.source_image, execute=execute)
+                )
+            if obj.deploy_branch:
+                result.append(
+                    self.set(app_name=obj.app_name, key="deploy-branch", value=obj.deploy_branch, execute=execute)
+                )
+            if obj.keep_git_path:
+                result.append(
+                    self.set(app_name=obj.app_name, key="keep-git-dir", value=obj.keep_git_path, execute=execute)
+                )
+            if obj.rev_env_var:
+                result.append(
+                    self.set(app_name=obj.app_name, key="rev-env-var", value=obj.rev_env_var, execute=execute)
+                )
+        return result
+
+    def object_create(self, obj: Git | SSHKey | Auth, execute: bool = True) -> List[str] | List[Command]:
+        return self._create_object(obj=obj, skip_system=False, execute=execute)
+
+    def object_create_many(
+        self, objs: List[Git | SSHKey | Auth], execute: bool = True
+    ) -> Iterator[str] | Iterator[Command]:
+        # The difference between this and calling `self.object_create` for each object is that this one yields only one
+        # global command, so it's faster.
+        for index, obj in enumerate(objs):
+            yield from self._create_object(obj=obj, skip_system=index > 0, execute=execute)

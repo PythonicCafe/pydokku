@@ -37,7 +37,7 @@ class SSHKey(BaseModel):
         from .ssh import key_fingerprint
 
         result = key_fingerprint(self.public_key)
-        _, self.fingerprint, _ = result.split(maxsplit=2)
+        self.fingerprint = result.split()[1]
 
     @classmethod
     def open(cls, name: str, path: str | Path, calculate_fingerprint: bool = True) -> "SSHKey":
@@ -128,16 +128,13 @@ class ProcessInfo(BaseModel):
         if self.processes and not isinstance(self.processes[0], Process):
             self.processes = [Process(**row) for row in self.processes]
 
-    def serialize(self):
-        return asdict(self)
-
     @property
     def procfile_path(self):
         return self.app_procfile_path or self.global_procfile_path
 
 
 @dataclass
-class Git:
+class Git(BaseModel):
     app_name: str
     global_deploy_branch: str
     keep_git_path: bool
@@ -147,5 +144,9 @@ class Git:
     source_image: str | None = None
     last_updated_at: datetime.datetime | None = None
 
-    def serialize(self):
-        return asdict(self)
+
+@dataclass
+class Auth(BaseModel):
+    hostname: str
+    username: str | None = None
+    password: str | None = None

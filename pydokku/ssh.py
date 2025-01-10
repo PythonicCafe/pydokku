@@ -123,7 +123,7 @@ def unlock_key(filename: Path | str, password: str):
 
 def key_fingerprint(filename_or_content: Path | str) -> str:
     """Extract a fingerprint from a public SSH key"""
-    if isinstance(filename_or_content, str) and REGEXP_SSH_PUBLIC_KEY.match(filename_or_content):
+    if isinstance(filename_or_content, str) and REGEXP_SSH_PUBLIC_KEY.findall(filename_or_content):
         # `filename_or_content` is the key content, so we use `ssh-keygen`'s stdin
         command = ["ssh-keygen", "-lf", "-"]
         process = start_process(command)

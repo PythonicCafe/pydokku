@@ -44,4 +44,10 @@ dokku ps:scale test-app-9 web=2 worker=3
 
 # git
 dokku git:generate-deploy-key
-dokku git:from-image test-app-9 nginx:1.27
+dokku git:from-image test-app-8 1.27.3-alpine-perl
+dokku git:set --global deploy-branch stable
+dokku git:set test-app-7 deploy-branch develop
+dokku git:set test-app-7 keep-git-dir false
+dokku git:allow-host github.com
+dokku git:auth github.com user8 pass8
+dokku git:auth github.com user9 pass9
