@@ -7,9 +7,9 @@ from pydokku.models import Config
 from tests.utils import random_value, requires_dokku
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.config.object_class is Config
+    assert dokku.config.object_classes == (Config,)
 
 
 def test_set_many_command():
@@ -187,5 +187,5 @@ def test_clear():
 
 
 # TODO: test dump
-# TODO: test create_object
-# TODO: test create_objects
+# TODO: test object_create
+# TODO: test object_create_many

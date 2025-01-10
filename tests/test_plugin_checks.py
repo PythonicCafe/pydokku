@@ -3,9 +3,9 @@ from pydokku.models import Check
 from tests.utils import requires_dokku
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.checks.object_class is Check
+    assert dokku.checks.object_classes == (Check,)
 
 
 def test_set_command():

@@ -13,7 +13,7 @@ class ChecksPlugin(DokkuPlugin):
     """
 
     name = "checks"
-    object_class = Check
+    object_classes = (Check,)
 
     @lru_cache
     def _get_rows_parser(self):
@@ -42,7 +42,7 @@ class ChecksPlugin(DokkuPlugin):
             if not result and app_name is None:
                 # No object was added to the list, so we add the global one
                 result.append(
-                    self.object_class(
+                    Check(
                         app_name=None,
                         process="_all_",
                         status=None,
@@ -52,7 +52,7 @@ class ChecksPlugin(DokkuPlugin):
                 )
             if not row["disabled"] and not row["skipped"]:
                 result.append(
-                    self.object_class(
+                    Check(
                         app_name=row["app_name"],
                         process="_all_",
                         status="enabled",
@@ -64,7 +64,7 @@ class ChecksPlugin(DokkuPlugin):
                 for status in ("disabled", "skipped"):
                     for process in row[status]:
                         result.append(
-                            self.object_class(
+                            Check(
                                 app_name=row["app_name"],
                                 process=process,
                                 status=status,
@@ -117,13 +117,13 @@ class ChecksPlugin(DokkuPlugin):
     def run(self, app_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("run", params=[app_name], execute=execute)
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
+    def object_list(self, apps: List[App], system: bool = True) -> List[Check]:
         apps_names = [app.name for app in apps]
         if system:
             apps_names = [None] + apps_names
-        return [obj.serialize() for obj in self.list() if obj.app_name in apps_names]
+        return [obj for obj in self.list() if obj.app_name in apps_names]
 
-    def create_object(self, obj: Check, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Check, execute: bool = True) -> List[str] | List[Command]:
         app_name = obj.app_name
         system = app_name is None
         result = []
@@ -145,4 +145,4 @@ class ChecksPlugin(DokkuPlugin):
                 result.append(self.skip(app_name=obj.app_name, process_names=[obj.process], execute=execute))
         return result
 
-    # TODO: implement create_objects and execute one operation per group of status
+    # TODO: implement object_create_many and execute one operation per group of status

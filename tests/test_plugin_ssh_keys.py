@@ -8,9 +8,9 @@ from pydokku.plugins.ssh_keys import parse_authorized_keys
 from tests.utils import requires_dokku, requires_ssh_keygen
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.ssh_keys.object_class is SSHKey
+    assert dokku.ssh_keys.object_classes == (SSHKey,)
 
 
 @requires_ssh_keygen
@@ -132,4 +132,4 @@ def test_add_remove(temp_file):
 
 
 # TODO: test dump
-# TODO: test create_object
+# TODO: test object_create

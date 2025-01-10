@@ -1,12 +1,18 @@
 import datetime
 import re
 import subprocess
+from dataclasses import fields
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, List
 
 REGEXP_ERROR_STR = re.compile(r"^\s*!\s+ (.*)$")
 REGEXP_DOKKU_HEADER = re.compile(r"^\s*=====> ", flags=re.MULTILINE)
+
+
+@lru_cache
+def dataclass_field_set(DataClass):
+    return set([field.name for field in fields(DataClass)])
 
 
 def clean_stderr(value: str) -> str:

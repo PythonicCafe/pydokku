@@ -6,9 +6,9 @@ from pydokku.models import App
 from tests.utils import requires_dokku
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.apps.object_class is App
+    assert dokku.apps.object_classes == (App,)
 
 
 def test_create_command():
@@ -81,8 +81,8 @@ def test_create_object_command():
     command1 = dokku.apps.create(app_name, execute=False)
     command2 = dokku.apps.lock(app_name, execute=False)
 
-    assert dokku.apps.create_object(obj=unlocked_app, execute=False) == [command1]
-    assert dokku.apps.create_object(obj=locked_app, execute=False) == [command1, command2]
+    assert dokku.apps.object_create(obj=unlocked_app, execute=False) == [command1]
+    assert dokku.apps.object_create(obj=locked_app, execute=False) == [command1, command2]
 
 
 def test_parse_report():
@@ -208,4 +208,4 @@ def test_create_rename():
 
 
 # TODO: test dump
-# TODO: test create_object
+# TODO: test object_create

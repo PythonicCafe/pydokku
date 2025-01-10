@@ -28,7 +28,7 @@ def parse_authorized_keys(contents: str) -> List[dict]:
 
 class SSHKeysPlugin(DokkuPlugin):
     name = "ssh-keys"
-    object_class = SSHKey
+    object_classes = (SSHKey,)
 
     def _read_authorized_keys(self):
         """
@@ -49,7 +49,7 @@ class SSHKeysPlugin(DokkuPlugin):
         keys = []
         for item in json.loads(stdout):
             name, fingerprint = item.pop("name"), item.pop("fingerprint")
-            keys.append(self.object_class(name=name, fingerprint=fingerprint, public_key=None))
+            keys.append(SSHKey(name=name, fingerprint=fingerprint, public_key=None))
 
         if self.dokku.can_execute_regular_commands:
             # Read the actual `authorized_keys` file (populated by `sshcommand`) to get the public keys
@@ -93,8 +93,8 @@ class SSHKeysPlugin(DokkuPlugin):
         params = ["--fingerprint", key.fingerprint] if is_fingerprint else [key.name]
         return self._evaluate("remove", params=params, sudo=True, execute=execute)
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
-        return [obj.serialize() for obj in self.list()]
+    def object_list(self, apps: List[App], system: bool = True) -> List[SSHKey]:
+        return [obj for obj in self.list()]
 
-    def create_object(self, obj: SSHKey, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: SSHKey, execute: bool = True) -> List[str] | List[Command]:
         return [self.add(obj, execute=execute)]

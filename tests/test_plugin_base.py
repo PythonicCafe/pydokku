@@ -14,7 +14,7 @@ def dokku_dump():
     }
     apps = dokku.apps.list()
     for name, plugin in dokku.plugins.items():
-        data[name] = plugin.dump_all(apps, system=True)
+        data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
     return data
 
 
@@ -26,7 +26,7 @@ def dokku_load(data):
             continue
         plugin = getattr(dokku, key)
         objects = [plugin.object_class(**row) for row in values]
-        for result in plugin.create_objects(objects, execute=True):
+        for result in plugin.object_create_many(objects, execute=True):
             continue
 
 

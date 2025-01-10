@@ -1,13 +1,14 @@
 from typing import Iterator, List, Type, TypeVar
 
 from ..models import App, Command
+from ..utils import dataclass_field_set
 
 T = TypeVar("T")
 
 
 class DokkuPlugin:
     name: str = None
-    object_class: Type[T] = None
+    object_classes: list[Type[T]] = []
 
     def __init__(self, dokku):
         self.dokku = dokku
@@ -36,26 +37,27 @@ class DokkuPlugin:
     def _execute(self, command: Command) -> tuple[int, str, str]:
         return self.dokku._execute(command)
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
-        """Dump all objects for this specific plugin
+    def object_list(self, apps: List[App], system: bool = True) -> List[dict]:
+        """List all objects for this specific plugin"""
+        raise NotImplementedError(f"Method `object_list` not implemented for {self.__class__.__name__}")
 
-        The result must always be a list of dictionaries. Each dict must be enough to reconstruct an object for this
-        class with `self.object_class(**dict)`.
-        """
-        raise NotImplementedError(f"Method `dump_all` not implemented for {self.__class__.__name__}")
+    def object_deserialize(self, obj: dict) -> T:
+        obj_keys = set(obj.keys())
+        for DataClass in self.object_classes:
+            if obj_keys == dataclass_field_set(DataClass):
+                return DataClass(**obj)
+        raise ValueError(f"Cannot deserialize object in {self.name}: {repr(obj)}")
 
-    def create_object(self, obj: T, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: T, execute: bool = True) -> List[str] | List[Command]:
         """Create an object for this specific plugin or return list of commands to do it"""
         # XXX: this command MUST NOT run some commands and use the output of those commands to then execute new
         # commands. All actions executed by this method must rely solely on `obj` data provided so the actions can be
         # exported as commands correctly.
         # TODO: add option to not raise exception if object already exists
-        raise NotImplementedError(f"Class {self.__class__.__name__} does not implement `create_object`")
+        raise NotImplementedError(f"Class {self.__class__.__name__} does not implement `object_create`")
 
-    def create_objects(self, objs: List[T], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+    def object_create_many(self, objs: List[T], execute: bool = True) -> Iterator[str] | Iterator[Command]:
         for obj in objs:
-            yield from self.create_object(obj, execute=execute)
+            yield from self.object_create(obj, execute=execute)
 
-    # TODO: create CRUD methods:
-    # TODO: create list_objects
-    # TODO: create delete_object
+    # TODO: should implement object_delete?

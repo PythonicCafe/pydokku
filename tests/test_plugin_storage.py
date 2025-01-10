@@ -7,9 +7,9 @@ from pydokku.models import Storage
 from tests.utils import requires_dokku
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.storage.object_class is Storage
+    assert dokku.storage.object_classes == (Storage,)
 
 
 def test_ensure_directory_command():
@@ -94,4 +94,4 @@ def test_ensure_mount_list_unmount():
 
 
 # TODO: test dump
-# TODO: test create_object
+# TODO: test object_create

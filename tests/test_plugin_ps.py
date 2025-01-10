@@ -6,9 +6,9 @@ from pydokku import Dokku
 from pydokku.models import Process, ProcessInfo
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.ps.object_class is ProcessInfo
+    assert dokku.ps.object_classes == (ProcessInfo,)
 
 
 def test_start_command():

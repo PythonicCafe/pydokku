@@ -11,9 +11,9 @@ def random_domains():
     return [f"test-{random_value(10, possible_chars=possible_chars)}.net" for _ in range(random.randint(3, 5))]
 
 
-def test_object_class():
+def test_object_classes():
     dokku = Dokku()
-    assert dokku.domains.object_class is Domain
+    assert dokku.domains.object_classes == (Domain,)
 
 
 def test_add_command():

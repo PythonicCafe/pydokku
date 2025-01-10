@@ -23,14 +23,14 @@ USER_GROUP_ID_CHOWN = {value: key for key, value in CHOWN_OPTIONS.items()}
 
 class StoragePlugin(DokkuPlugin):
     name = "storage"
-    object_class = Storage
+    object_classes = (Storage,)
 
     # TODO: create helper method to get a storage's size
 
     def list(self, app_name: str) -> List[Storage]:
         stdout = self._evaluate("list", [app_name, "--format", "json"], check=False)
         result = [
-            self.object_class(app_name=app_name, host_path=item["host_path"], container_path=item["container_path"])
+            Storage(app_name=app_name, host_path=item["host_path"], container_path=item["container_path"])
             for item in json.loads(stdout)
         ]
         # XXX: if it's running over SSH and the user is `dokku`, we won't be able to execute `stat` to get permission
@@ -93,10 +93,10 @@ class StoragePlugin(DokkuPlugin):
             raise RuntimeError(f"Cannot unmount storage for {storage.app_name}: {clean_stderr(stderr)}")
         return stdout
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
-        return [obj.serialize() for app in apps for obj in self.list(app.name)]
+    def object_list(self, apps: List[App], system: bool = True) -> List[Storage]:
+        return [obj for app in apps for obj in self.list(app.name)]
 
-    def create_object(self, obj: Storage, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Storage, execute: bool = True) -> List[str] | List[Command]:
         # XXX: if storage's user and group ID can't be found in USER_GROUP_ID_CHOWN, won't apply any chown
         chown = USER_GROUP_ID_CHOWN.get((obj.user_id, obj.group_id))
         return [

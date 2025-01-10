@@ -9,12 +9,16 @@ from .base import DokkuPlugin
 
 class ConfigPlugin(DokkuPlugin):
     name = "config"
-    object_class = Config
+    object_classes = (Config,)
 
     def get(
         self, app_name: str | None, merged: bool = False, hide_internal: bool = True, as_dict: bool = False
     ) -> List[Config] | dict:
         """Get all configurations set for an app, with the option to merge them with the global ones"""
+        # TODO: even if `hide_internal` is `True`, this method will also export internal configs like `NO_VHOST` and
+        # `GIT_REV`, which will impact other plugins (like `domains` and `git`). Need to decide whether to
+        # export/expose or not these plugin-internal configs or just via the plugins. Since these don't start with
+        # `DOKKU_`, a list of "skip vars" must be made manually.
         # `dokku config <--global|app_name>` does not encode values, so we can't parse correctly if values have
         # newlines or other special chars. We use `config:export --format=json` instead.
         system = app_name is None
@@ -102,23 +106,19 @@ class ConfigPlugin(DokkuPlugin):
         params.append("--global" if system else app_name)
         return self._evaluate("clear", params=params, execute=execute)
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[Config]:
-        # TODO: this method will also export internal configs like `DOKKU_CHECKS_DISABLED` and `NO_VHOST`, which will
-        # impact other plugins (like `checks` and `domains`). Need to decide whether to export/expose or not these
-        # plugin-internal configs or just via the plugins.
+    def object_list(self, apps: List[App], system: bool = True) -> List[Config]:
         app_names = [app.name for app in apps]
         if system:
             app_names = [None] + app_names
         result = []
         for app_name in app_names:
-            objs = self.get(app_name=app_name, hide_internal=True)
-            result.extend([obj.serialize() for obj in objs])
+            result.extend(self.get(app_name=app_name, hide_internal=True))
         return result
 
-    def create_object(self, obj: Config, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Config, execute: bool = True) -> List[str] | List[Command]:
         return [self.set_many(configs=[obj], restart=False, execute=execute)]
 
-    def create_objects(self, objs: List[Config], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+    def object_create_many(self, objs: List[Config], execute: bool = True) -> Iterator[str] | Iterator[Command]:
         def get_app_name(obj):
             return obj.app_name
 
@@ -126,9 +126,4 @@ class ConfigPlugin(DokkuPlugin):
         groups = groupby(objs, key=get_app_name)
         for app_name, configs in groups:
             configs = list(configs)
-            if not execute:
-                yield self.set_many(configs=list(configs), restart=False, execute=execute)
-            else:
-                # We're using a bulk operation that returns only one string (not a list of them) for a list of objects,
-                # so we can't use `yield from`
-                yield self.set_many(configs=list(configs), restart=False, execute=execute)
+            yield self.set_many(configs=list(configs), restart=False, execute=execute)

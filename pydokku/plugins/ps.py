@@ -13,7 +13,7 @@ REGEXP_PROCESS_STATUS = re.compile(r"^([^(]+) \(CID: ([^)]+)\)")
 
 class PsPlugin(DokkuPlugin):
     name = "ps"
-    object_class = ProcessInfo
+    object_classes = (ProcessInfo,)
 
     def inspect(self, app_name: str, execute: bool = True) -> List[dict]:
         result = self._evaluate("inspect", [app_name], execute=execute)
@@ -45,7 +45,7 @@ class PsPlugin(DokkuPlugin):
             },
         )
 
-    def _convert_rows(self, parsed_rows: List[dict]) -> List[Process]:
+    def _convert_rows(self, parsed_rows: List[dict]) -> List[ProcessInfo]:
         result = []
         for row in parsed_rows:
             row["processes"] = []
@@ -57,7 +57,7 @@ class PsPlugin(DokkuPlugin):
                 regexp_result = REGEXP_PROCESS_STATUS.findall(value)
                 status, cid = regexp_result[0]
                 row["processes"].append(Process(id=int(process_id), type=name, status=status, container_id=cid))
-            result.append(self.object_class(**row))
+            result.append(ProcessInfo(**row))
         return result
 
     def report(self, app_name: str = None) -> List[ProcessInfo] | ProcessInfo:
@@ -168,7 +168,7 @@ class PsPlugin(DokkuPlugin):
         params.extend([f"{proc_type}={number}" for proc_type, number in process_counts.items()])
         return self._evaluate("scale", params=params, execute=execute)
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
+    def object_list(self, apps: List[App], system: bool = True) -> List[ProcessInfo]:
         apps_names = [app.name for app in apps]
         result = []
         for app_name in apps_names:
@@ -184,15 +184,15 @@ class PsPlugin(DokkuPlugin):
                                 container_id=None,
                             )
                         )
-            result.append(process_info.serialize())
+            result.append(process_info)
         return result
 
     def _create_object(
-        self, obj: Process, skip_global: bool = False, execute: bool = True
+        self, obj: Process, skip_system: bool = False, execute: bool = True
     ) -> List[str] | List[Command]:
         app_name = obj.app_name
         result = []
-        if not skip_global:
+        if not skip_system:
             result.append(self.set(app_name=None, key="procfile-path", value=obj.global_procfile_path, execute=execute))
         if obj.app_procfile_path is not None:
             result.append(
@@ -203,15 +203,11 @@ class PsPlugin(DokkuPlugin):
         result.append(self.set_scale(app_name=app_name, process_counts=dict(process_counter), execute=execute))
         return result
 
-    def create_object(self, obj: Process, execute: bool = True) -> List[str] | List[Command]:
-        return self._create_object(obj=obj, execute=execute, skip_global=False)
+    def object_create(self, obj: Process, execute: bool = True) -> List[str] | List[Command]:
+        return self._create_object(obj=obj, execute=execute, skip_system=False)
 
-    def create_objects(self, objs: List[ProcessInfo], execute: bool = True) -> Iterator[str] | Iterator[Command]:
-        # The difference between this and calling `self.create_object` for each object is that this one yields only
-        # one global command
-        if objs:
-            yield self.set(
-                app_name=None, key="procfile-path", value=objs[0].global_procfile_path, execute=execute
-            )  # Global
-            for obj in objs:
-                yield from self._create_object(obj=obj, execute=execute, skip_global=True)
+    def object_create_many(self, objs: List[ProcessInfo], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+        # The difference between this and calling `self.object_create` for each object is that this one yields only one
+        # global command, so it's faster.
+        for index, obj in enumerate(objs):
+            yield from self._create_object(obj=obj, skip_system=index > 0, execute=execute)

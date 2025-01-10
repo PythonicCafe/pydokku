@@ -11,7 +11,7 @@ REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
 
 class AppsPlugin(DokkuPlugin):
     name = "apps"
-    object_class = App
+    object_classes = (App,)
 
     @lru_cache
     def _get_rows_parser(self):
@@ -39,7 +39,7 @@ class AppsPlugin(DokkuPlugin):
         elif stderr:
             raise RuntimeError(f"Error executing apps:report: {stderr}")
         rows_parser = self._get_rows_parser()
-        return [self.object_class(**row) for row in rows_parser(stdout)]
+        return [App(**row) for row in rows_parser(stdout)]
 
     def create(self, name: str, execute: bool = True) -> str | Command:
         return self._evaluate("create", params=[name], execute=execute)
@@ -63,10 +63,10 @@ class AppsPlugin(DokkuPlugin):
     def rename(self, old_name: str, new_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("rename", params=[old_name, new_name], execute=execute)
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
-        return [obj.serialize() for obj in apps]
+    def object_list(self, apps: List[App], system: bool = True) -> List[App]:
+        return apps
 
-    def create_object(self, obj: App, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: App, execute: bool = True) -> List[str] | List[Command]:
         result = [self.create(name=obj.name, execute=execute)]
         if obj.locked:
             result.append(self.lock(name=obj.name, execute=execute))

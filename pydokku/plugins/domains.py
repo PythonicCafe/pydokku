@@ -10,7 +10,7 @@ from .base import DokkuPlugin
 
 class DomainsPlugin(DokkuPlugin):
     name = "domains"
-    object_class = Domain
+    object_classes = (Domain,)
 
     @lru_cache
     def _get_rows_parser(self):
@@ -35,7 +35,7 @@ class DomainsPlugin(DokkuPlugin):
         for row in parsed_rows:
             if row["app_name"] == "Global":
                 result.append(
-                    self.object_class(
+                    Domain(
                         app_name=None,
                         enabled=row["global_enabled"],
                         domains=row["global_domains"],
@@ -43,7 +43,7 @@ class DomainsPlugin(DokkuPlugin):
                 )
             else:
                 result.append(
-                    self.object_class(
+                    Domain(
                         app_name=row["app_name"],
                         enabled=row["app_enabled"],
                         domains=row["app_domains"],
@@ -100,13 +100,13 @@ class DomainsPlugin(DokkuPlugin):
     def disable(self, app_name: str, execute: bool = True) -> str | Command:
         return self._evaluate("disable", params=[app_name], execute=execute)
 
-    def dump_all(self, apps: List[App], system: bool = True) -> List[dict]:
+    def object_list(self, apps: List[App], system: bool = True) -> List[Domain]:
         apps_names = [app.name for app in apps]
         if system:
             apps_names = [None] + apps_names
-        return [obj.serialize() for obj in self.list() if obj.app_name in apps_names]
+        return [obj for obj in self.list() if obj.app_name in apps_names]
 
-    def create_object(self, obj: Domain, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Domain, execute: bool = True) -> List[str] | List[Command]:
         app_name = obj.app_name
         result = []
         if not obj.domains:

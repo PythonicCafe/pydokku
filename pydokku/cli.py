@@ -34,9 +34,9 @@ def dokku_dump(args):
     print(f" {len(apps)} found.", file=sys.stderr, flush=True)
     # TODO: add option to filter by app name and/or global
     for name, plugin in dokku.plugins.items():
-        print(f"Dumping {name}...", file=sys.stderr, end="", flush=True)
+        print(f"Listing and serializing objects for plugin {name}...", file=sys.stderr, end="", flush=True)
         try:
-            data[name] = plugin.dump_all(apps, system=True)
+            data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
         except NotImplementedError:
             if not args.quiet:
                 print(
@@ -85,10 +85,10 @@ def dokku_load(args):
             continue
         print(f"{prefix}Reading objects...", flush=True, end="")
         plugin = getattr(dokku, key)
-        objects = [plugin.object_class(**row) for row in values]
+        objects = [plugin.object_deserialize(row) for row in values]
         print(f" {len(objects)} loaded.")
         print(f"{prefix}Creating objects")
-        for result in plugin.create_objects(objects, execute=execute):
+        for result in plugin.object_create_many(objects, execute=execute):
             # `result` will be command's stdout (if execute) or Command object (if not execute)
             output = str(result).strip()
             if execute:
