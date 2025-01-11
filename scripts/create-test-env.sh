@@ -1,12 +1,14 @@
 #!/bin/bash
 # Creates apps and set configurations for each plugin so we have an environment to easily test things on
 
+set -e
+
 # domains - part 1
 dokku domains:set-global dokku.example.net
 
 # apps
 for appName in test-app-7 test-app-8 test-app-9; do
-	echo "$appName" | dokku apps:destroy "$appName"
+	echo "$appName" | dokku apps:destroy "$appName" 2> /dev/null || echo
 	dokku apps:create "$appName"
 done
 
@@ -27,10 +29,12 @@ dokku domains:remove test-app-7 test-app-7.dokku.example.net
 
 # ssh-keys
 for keyNumber in 1 2 3; do
+	keyName="test-key-${keyNumber}"
 	keyFilename=$(mktemp)
 	rm -f "$keyFilename"
 	ssh-keygen -t ed25519 -f "$keyFilename" -N "" -q
-	cat "${keyFilename}.pub" | sudo dokku ssh-keys:add "test-key-${keyNumber}"
+	sudo dokku ssh-keys:remove "$keyName" 2> /dev/null || echo
+	cat "${keyFilename}.pub" | sudo dokku ssh-keys:add "$keyName"
 	rm -rf "$keyFilename" "${keyFilename}.pub"
 done
 
@@ -45,13 +49,13 @@ dokku ps:scale test-app-9 web=2 worker=3
 
 # git
 dokku git:generate-deploy-key
-dokku git:from-image test-app-8 1.27.3-alpine-perl
+dokku git:from-image test-app-8 nginx:1.27.3-alpine-perl
 dokku git:set --global deploy-branch stable
 dokku git:set test-app-7 deploy-branch develop
 dokku git:set test-app-7 keep-git-dir false
 dokku git:allow-host github.com
 dokku git:auth github.com user8 pass8
-dokku git:auth github.com user9 pass9
+dokku git:auth gitlab.com user9 pass9
 
 # proxy
 dokku proxy:set --global caddy
