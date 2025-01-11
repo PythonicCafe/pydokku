@@ -7,9 +7,14 @@ from .base import DokkuPlugin
 
 
 class ChecksPlugin(DokkuPlugin):
-    """dokku checks plugin
+    """dokku core checks plugin
 
     It returns one global check and for each app more one check *per process type*.
+
+    Subcommands NOT implemented: none.
+
+    Extra features:
+    - `checks:set`: was split in `set()` and `unset()` methods
     """
 
     name = "checks"

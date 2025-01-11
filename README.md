@@ -107,6 +107,47 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
 - May rename CLI's `load` to `execute`
 
 
+## Terminology and compatibility
+
+- The command and attribute names are more or less the same as in Dokku, except for:
+  - `system` is used instead of `global`, since `global` is a Python reserved keyword
+  - `path` is used instead of `dir` to maintain consistency with Python standard library (`pathlib` module)
+  - Some standardization to make actions more clear, like:
+    - `dokku.git.host_add` for executing `git:allow-host` (the command adds a host to the list of SSH known hosts for
+      the Dokku user)
+    - `dokku.git.auth_add` for executing `git:auth` (the command adds the host/user/password to the netrc
+      authentication database)
+- Use `app_name=None` for meaning `--global` or `--all`
+- Commands that have the exact same behavior are merged together, like `domains:set` and `domains:set-global` (for
+  "global", call `dokku.domains.set` with `app_name=None`)
+- Commands that can have different behaviors depending on the parameters were split in two methods, like `checks:set`
+  (both `dokku.checks.set` and `dokku.checks.unset` were implemented)
+- Extra features were add to address some of Dokku's weaknesses and enable `pydokku` to provide a comprehensive view of
+  all Dokku-related settings (this helps exporting all settings from a server and apply to another), like:
+  - `dokku.ssh_keys.list` will add the actual public key by reading the Dokku SSH authorized keys file (if the user has
+    the permission to do so)
+  - `dokku.storage.list` will add the storage permissions (created using `storage:ensure-directory --chown=xxx`) for
+    each storage (if the user has the permission to do so)
+  - `dokku.git.host_list` will list all known SSH hosts by reading the file (if the user has the permission to do so)
+  - `dokku.git.auth_list` will list all authentication hosts/users/passwords added via `git:auth`
+
+The extra features require certain permissions to execute, as the information is not directly provided by any Dokku
+command. In these cases, `pydokku` will need to run non-Dokku commands. There are six different scenarios you may run
+`pydokku`, but only one of them will prevent these extra features from being executed:
+- Executing `pydokku` on a local Dokku installation:
+  - ✓ Using the `dokku` user
+  - ✓ Using the `root` user
+  - ✓ Using another user (requires sudo with no password)
+- Running `pydokku` locally to control another host via SSH:
+  - ✗ Using the `dokku` user (this user can't execute regular shell commands, only Dokku commands)
+  - ✓ Using the `root` user
+  - ✓ Using another user (requires sudo with no password)
+
+> **WARNING**: if you export your Dokku settings using `pydokku` via SSH with the `dokku` user, you WON'T have all the
+> Dokku settings required to reproduce the same environment on another server! Any information provided by the "extra
+> features" will not be extracted.
+
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).

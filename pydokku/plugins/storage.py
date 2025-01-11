@@ -22,6 +22,14 @@ USER_GROUP_ID_CHOWN = {value: key for key, value in CHOWN_OPTIONS.items()}
 
 
 class StoragePlugin(DokkuPlugin):
+    """
+    dokku store core plugin
+
+    EXTRA features:
+
+    - `list` will add the storage permissions (created using `storage:ensure-directory --chown=xxx`) for each storage
+      (if the user has the permission to do so)
+    """
     name = "storage"
     object_classes = (Storage,)
 

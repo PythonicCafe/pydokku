@@ -8,6 +8,18 @@ from .base import DokkuPlugin
 
 
 class ConfigPlugin(DokkuPlugin):
+    """
+    dokku core config plugin
+
+    Subcommands NOT implemented:
+    - `config <app>` or `config:show <app>`: `export` is used instead (equivalent data, better format)
+    - `config:get`: can be extracted by `get(app_name, as_dict=True)[key]`
+    - `config:keys`: list of config keys can be extracted by `get(app_name, as_dict=True).keys()`
+    - `config:bundle`: `export` already provides similar feature
+
+    Extra features:
+    - `get()`: hide internal Dokku env vars (keys starting with `DOKKU_`)
+    """
     name = "config"
     object_classes = (Config,)
 

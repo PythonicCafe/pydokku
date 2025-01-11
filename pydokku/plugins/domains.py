@@ -9,6 +9,18 @@ from .base import DokkuPlugin
 
 
 class DomainsPlugin(DokkuPlugin):
+    """
+    dokku core apps plugin
+
+    Subcommands NOT implemented: none.
+
+    Extra features:
+    - `domains:add` and `domains:add-global` were merged into `add()`
+    - `domains:clear` and `domains:clear-global` were merged into `clear()`
+    - `domains:remove` and `domains:remove-global` were merged into `remove()`
+    - `domains:set` and `domains:set-global` were merged into `set()`
+    - `list()`: will execute `domains:report` both for global and for all apps
+    """
     name = "domains"
     object_classes = (Domain,)
 

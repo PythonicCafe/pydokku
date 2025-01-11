@@ -12,6 +12,15 @@ REGEXP_PROCESS_STATUS = re.compile(r"^([^(]+) \(CID: ([^)]+)\)")
 
 
 class PsPlugin(DokkuPlugin):
+    """
+    dokku core ps plugin
+
+    Subcommands NOT implemented: none.
+
+    Extra features:
+    - `ps:set`: was split in `set()` and `unset()` methods
+    - `ps:scale`: was split in `get_scale()` and `set_scale()` methods
+    """
     name = "ps"
     object_classes = (ProcessInfo,)
 

@@ -10,6 +10,16 @@ REGEXP_APP_METADATA = re.compile(r"App\s+([^:]+):\s*(.*)")
 
 
 class AppsPlugin(DokkuPlugin):
+    """
+    dokku core apps plugin
+
+    Subcommands NOT implemented:
+    - `apps:exists`: can check if app exists by calling `list()` and checking `app.name` for the objects returned
+    - `apps:report`: is actually run in `list()` method
+    - `apps:list`: is not run at all (redundant with `report`, but `report` exposes more information)
+
+    Extra features: none.
+    """
     name = "apps"
     object_classes = (App,)
 

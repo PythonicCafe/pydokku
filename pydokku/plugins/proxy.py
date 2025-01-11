@@ -10,6 +10,13 @@ from .base import DokkuPlugin
 
 
 class ProxyPlugin(DokkuPlugin):
+    """
+    dokku core proxy plugin
+
+    Subcommands NOT implemented: none.
+
+    Extra features: none.
+    """
     name = "proxy"
     object_classes = (Proxy,)
 

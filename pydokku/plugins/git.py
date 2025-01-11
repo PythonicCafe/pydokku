@@ -24,15 +24,16 @@ def parse_netrc_file(contents: str) -> List[Auth]:
 
 class GitPlugin(DokkuPlugin):
     """
-    dokku git plugin
+    dokku core git plugin
 
     EXTRA features:
     - `host_list` method: read known hosts file (which is populated by `git:allow-host` subcommand)
     - `auth_list` method: read netrc file (which is populated by `git:auth` subcommand)
 
-    NOT implemented subcommands:
+    Subcommands NOT implemented:
     - `git:status`: it always return "fatal: this operation must be run in a work tree", so not useful
     - `git:load-image`: huge stdin input is currently not a priority
+    - `git:set`: was split in `set()` and `unset()` methods
     """
 
     name = "git"
