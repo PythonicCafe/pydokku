@@ -109,6 +109,11 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
 
 ## Terminology and compatibility
 
+- Each plugin has its own associated dataclasses, representing the objects managed by that plugin. These objects
+  correspond to Dokku settings but do not directly map to the "rows" displayed in `dokku <plugin>:report|list`
+  commands. In some plugins, a deliberate choice was made to represent the "global" object separately (e.g., in the
+  `domains` plugin). In others, there may be multiple dataclasses, as they represent entirely different entities (e.g.,
+  in the `git` plugin).
 - The command and attribute names are more or less the same as in Dokku, except for:
   - `system` is used instead of `global`, since `global` is a Python reserved keyword
   - `path` is used instead of `dir` to maintain consistency with Python standard library (`pathlib` module)

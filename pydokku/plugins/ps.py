@@ -33,7 +33,7 @@ class PsPlugin(DokkuPlugin):
     @lru_cache
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
-            normalize_keys=False,
+            normalize_keys=False,  # So we get original "Status" string for each process
             discards=["Processes", "Ps computed procfile path"],
             renames={
                 "Ps can scale": "can_scale",

@@ -89,6 +89,7 @@ class ChecksPlugin(DokkuPlugin):
         """
         _, stdout, stderr = self._evaluate("report", params=[] if app_name is None else [app_name], full_return=True)
         if "You haven't deployed any applications yet" in clean_stderr(stderr):
+            # TODO: create temp app so we can get global wait to retire?
             return []
         elif stderr:
             raise RuntimeError(f"Error executing checks:report: {stderr}")

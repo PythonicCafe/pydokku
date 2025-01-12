@@ -97,6 +97,8 @@ def dokku_load(args):
 
 
 def main():
+    # TODO: deal with `DOKKU_HOST` and git remotes on the current working directory, as Dokku does
+    # <https://dokku.com/docs/deployment/remote-commands/>
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--ssh-host", "-H", type=str)
@@ -108,12 +110,14 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    dump_parser = subparsers.add_parser("dump", help="")
+    # TODO: rename `dump` to `export`
+    dump_parser = subparsers.add_parser("dump", help="Export all metadata collected by plugins to JSON")
     dump_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
     dump_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
     dump_parser.add_argument("json_filename", type=Path, help="JSON filename to save data")
     # TODO: add options for filters
 
+    # TODO: rename `load` to `apply`
     load_parser = subparsers.add_parser(
         "load", help="Load a JSON specification and execute all needed operations in a Dokku installation"
     )
