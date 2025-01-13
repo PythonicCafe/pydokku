@@ -105,7 +105,7 @@ class StoragePlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[Storage]:
         return [obj for app in apps for obj in self.list(app.name)]
 
-    def object_create(self, obj: Storage, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Storage, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         # XXX: if storage's user and group ID can't be found in USER_GROUP_ID_CHOWN, won't apply any chown
         chown = USER_GROUP_ID_CHOWN.get((obj.user_id, obj.group_id))
         return [

@@ -104,5 +104,5 @@ class SSHKeysPlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[SSHKey]:
         return [obj for obj in self.list()]
 
-    def object_create(self, obj: SSHKey, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: SSHKey, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         return [self.add(obj, execute=execute)]

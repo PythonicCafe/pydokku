@@ -197,7 +197,7 @@ class PsPlugin(DokkuPlugin):
             result.append(process_info)
         return result
 
-    def _create_object(
+    def object_create(
         self, obj: ProcessInfo, skip_system: bool = False, execute: bool = True
     ) -> List[str] | List[Command]:
         app_name = obj.app_name
@@ -212,12 +212,3 @@ class PsPlugin(DokkuPlugin):
         process_counter = Counter([process.type for process in obj.processes])
         result.append(self.set_scale(app_name=app_name, process_counts=dict(process_counter), execute=execute))
         return result
-
-    def object_create(self, obj: ProcessInfo, execute: bool = True) -> List[str] | List[Command]:
-        return self._create_object(obj=obj, execute=execute, skip_system=False)
-
-    def object_create_many(self, objs: List[ProcessInfo], execute: bool = True) -> Iterator[str] | Iterator[Command]:
-        # The difference between this and calling `self.object_create` for each object is that this one yields only one
-        # global command, so it's faster.
-        for index, obj in enumerate(objs):
-            yield from self._create_object(obj=obj, skip_system=index > 0, execute=execute)

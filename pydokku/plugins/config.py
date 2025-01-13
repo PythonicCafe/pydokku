@@ -128,7 +128,7 @@ class ConfigPlugin(DokkuPlugin):
             result.extend(self.get(app_name=app_name, hide_internal=True))
         return result
 
-    def object_create(self, obj: Config, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Config, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         return [self.set_many(configs=[obj], restart=False, execute=execute)]
 
     def object_create_many(self, objs: List[Config], execute: bool = True) -> Iterator[str] | Iterator[Command]:
@@ -138,5 +138,4 @@ class ConfigPlugin(DokkuPlugin):
         objs.sort(key=get_app_name)
         groups = groupby(objs, key=get_app_name)
         for app_name, configs in groups:
-            configs = list(configs)
             yield self.set_many(configs=list(configs), restart=False, execute=execute)

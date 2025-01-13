@@ -77,7 +77,7 @@ class AppsPlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[App]:
         return apps
 
-    def object_create(self, obj: App, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: App, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         result = [self.create(name=obj.name, execute=execute)]
         if obj.locked:
             result.append(self.lock(name=obj.name, execute=execute))

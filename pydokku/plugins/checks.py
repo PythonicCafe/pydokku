@@ -129,12 +129,14 @@ class ChecksPlugin(DokkuPlugin):
             apps_names = [None] + apps_names
         return [obj for obj in self.list() if obj.app_name in apps_names]
 
-    def object_create(self, obj: Check, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Check, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         app_name = obj.app_name
         system = app_name is None
         result = []
         # First, set wait to retire
         if system:
+            # Since there's a specific object for "system" (having `app_name=None`), `skip_system` is ignored here
+            # (it's different from other plugins like `proxy`, where the system object is "hidden" in another object).
             result.append(
                 self.set(app_name=None, key="wait-to-retire", value=obj.global_wait_to_retire, execute=execute)
             )

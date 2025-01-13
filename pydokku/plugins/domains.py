@@ -119,7 +119,9 @@ class DomainsPlugin(DokkuPlugin):
             apps_names = [None] + apps_names
         return [obj for obj in self.list() if obj.app_name in apps_names]
 
-    def object_create(self, obj: Domain, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Domain, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+        # Since there's a specific object for "system" (having `app_name=None`), `skip_system` is ignored here (it's
+        # different from other plugins like `proxy`, where the system object is "hidden" in another object).
         app_name = obj.app_name
         result = []
         if not obj.domains:

@@ -74,7 +74,7 @@ class ProxyPlugin(DokkuPlugin):
         apps_names = [app.name for app in apps]
         return [self.report(app_name)[0] for app_name in apps_names]
 
-    def _create_object(self, obj: Proxy, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: Proxy, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         app_name = obj.app_name
         result = []
         if not skip_system:
@@ -87,12 +87,3 @@ class ProxyPlugin(DokkuPlugin):
             result.append(self.disable(app_name=app_name, execute=execute))
         result.append(self.build_config(app_name=app_name, execute=execute))
         return result
-
-    def object_create(self, obj: Proxy, execute: bool = True) -> List[str] | List[Command]:
-        return self._create_object(obj=obj, execute=execute, skip_system=False)
-
-    def object_create_many(self, objs: List[Proxy], execute: bool = True) -> Iterator[str] | Iterator[Command]:
-        # The difference between this and calling `self.object_create` for each object is that this one yields only one
-        # global command, so it's faster.
-        for index, obj in enumerate(objs):
-            yield from self._create_object(obj=obj, skip_system=index > 0, execute=execute)

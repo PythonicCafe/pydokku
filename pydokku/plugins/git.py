@@ -245,7 +245,7 @@ class GitPlugin(DokkuPlugin):
         result.extend(self.report())
         return result
 
-    def _create_object(
+    def object_create(
         self, obj: Git | SSHKey | Auth, skip_system: bool = False, execute: bool = True
     ) -> List[str] | List[Command]:
         result = []
@@ -262,7 +262,6 @@ class GitPlugin(DokkuPlugin):
                     self.set(app_name=None, key="deploy-branch", value=obj.global_deploy_branch, execute=execute)
                 )
             if obj.source_image:
-                # TODO: should trigger deploy after or call `from_image` instead?
                 result.append(
                     self.set(app_name=obj.app_name, key="source-image", value=obj.source_image, execute=execute)
                 )
@@ -280,13 +279,9 @@ class GitPlugin(DokkuPlugin):
                 )
         return result
 
-    def object_create(self, obj: Git | SSHKey | Auth, execute: bool = True) -> List[str] | List[Command]:
-        return self._create_object(obj=obj, skip_system=False, execute=execute)
-
     def object_create_many(
         self, objs: List[Git | SSHKey | Auth], execute: bool = True
     ) -> Iterator[str] | Iterator[Command]:
-        # The difference between this and calling `self.object_create` for each object is that this one yields only one
-        # global command, so it's faster.
-        for index, obj in enumerate(objs):
-            yield from self._create_object(obj=obj, skip_system=index > 0, execute=execute)
+        # First we add SSH public keys, then authentication and then git repositories settings
+        objs.sort(key=lambda obj: {SSHKey: 0, Auth: 1, Git: 2}[type(obj)])
+        return super().object_create_many(objs=objs, execute=execute)

@@ -48,19 +48,20 @@ class DokkuPlugin:
                 return DataClass(**obj)
         raise ValueError(f"Cannot deserialize object in {self.name}: {repr(obj)}")
 
-    # TODO: base `object_create` method must receive `skip_system` parameter so a general `create_objects` can deal
-    # with it automatically
-    def object_create(self, obj: T, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: T, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         """Create an object for this specific plugin or return list of commands to do it"""
         # XXX: this command MUST NOT run some commands and use the output of those commands to then execute new
         # commands. All actions executed by this method must rely solely on `obj` data provided so the actions can be
         # exported as commands correctly.
-        # TODO: add option to not raise exception if object already exists
         raise NotImplementedError(f"Class {self.__class__.__name__} does not implement `object_create`")
 
-    def object_create_many(self, objs: List[T], execute: bool = True) -> Iterator[str] | Iterator[Command]:
-        for obj in objs:
-            yield from self.object_create(obj, execute=execute)
+    def object_create_many(
+        self, objs: List[T], execute: bool = True
+    ) -> Iterator[str] | Iterator[Command]:
+        # The difference between this and calling `self.object_create` for each object is that this one yields only one
+        # global command, so it's faster.
+        for index, obj in enumerate(objs):
+            yield from self.object_create(obj=obj, skip_system=index > 0, execute=execute)
 
     # TODO: define an interface for `ensure_object` and implement it in current plugins and in CLI (add TODOs for
     # testing this new method in each plugin and a general test with clean + apply + export1 + ensure + export2 + clean
