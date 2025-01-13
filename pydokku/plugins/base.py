@@ -1,3 +1,4 @@
+from itertools import groupby
 from typing import Iterator, List, Type, TypeVar
 
 from ..models import App, Command
@@ -9,6 +10,7 @@ T = TypeVar("T")
 class DokkuPlugin:
     name: str = None
     object_classes: list[Type[T]] = []
+    # TODO: add `requires` so we have a plugin hierarchy and can define the restore order
 
     def __init__(self, dokku):
         self.dokku = dokku
@@ -60,8 +62,13 @@ class DokkuPlugin:
     ) -> Iterator[str] | Iterator[Command]:
         # The difference between this and calling `self.object_create` for each object is that this one yields only one
         # global command, so it's faster.
-        for index, obj in enumerate(objs):
-            yield from self.object_create(obj=obj, skip_system=index > 0, execute=execute)
+        # Since a plugin can have many object types, we batch the execution for each type, this way each of them can
+        # properly receive the `skip_system` parameter. The order of `object_classes` parameter is respected.
+        type_order = {type_: index for index, type_ in enumerate(self.object_classes)}
+        objs.sort(key=lambda obj: type_order[type(obj)])
+        for _, group_objs in groupby(objs, key=type):
+            for index, obj in enumerate(group_objs):
+                yield from self.object_create(obj=obj, skip_system=index > 0, execute=execute)
 
     # TODO: define an interface for `ensure_object` and implement it in current plugins and in CLI (add TODOs for
     # testing this new method in each plugin and a general test with clean + apply + export1 + ensure + export2 + clean

@@ -38,6 +38,7 @@ def test_dump_load():
     scripts_path = current_path.parent / "scripts"
     cleanup_script = str((scripts_path / "cleanup.sh").absolute())
     create_test_env_script = str((scripts_path / "create-test-env.sh").absolute())
+
     subprocess.run([cleanup_script], capture_output=True)
     subprocess.run([create_test_env_script], capture_output=True)
     data_1 = dokku_dump()
@@ -45,6 +46,24 @@ def test_dump_load():
     dokku_load(deepcopy(data_1))
     data_2 = dokku_dump()
     subprocess.run([cleanup_script], capture_output=True)
+
+    # Since we run cleanup, some information will not be exactly the same, like `App.created_at` and
+    # `Process.container_id`, so we need to set them to the same value so the `assert` works as expected.
+    # The `create_test_env_script` will setup as follows:
+    # - test-app-7 is not deployed, but git image is set
+    # - test-app-8 is deployed and git commit changes
+    # - test-app-9 is not deployed and git image is not set
     for app in data_1["apps"] + data_2["apps"]:
         app["created_at"] = None
+    for process_info in data_1["ps"] + data_2["ps"]:
+        for process in process_info["processes"]:
+            process["container_id"] = None
+    for config in data_1["config"] + data_2["config"]:
+        if config["app_name"] == "test-app-8" and config["key"] == "GIT_REV":
+            config["value"] = None
+    for git in data_1["git"] + data_2["git"]:
+        for key in ("last_updated_at", "sha"):
+            if key in git:
+                git[key] = None
+
     assert data_1 == data_2

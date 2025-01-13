@@ -211,4 +211,6 @@ class PsPlugin(DokkuPlugin):
         result.append(self.set(app_name=app_name, key="restart-policy", value=obj.restart_policy, execute=execute))
         process_counter = Counter([process.type for process in obj.processes])
         result.append(self.set_scale(app_name=app_name, process_counts=dict(process_counter), execute=execute))
+        if obj.deployed:
+            result.append(self.restore(app_name=app_name, execute=execute))
         return result

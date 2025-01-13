@@ -11,7 +11,7 @@ from tests.utils import requires_dokku
 
 def test_object_classes():
     dokku = Dokku()
-    assert dokku.git.object_classes == (Git, SSHKey, Auth)
+    assert dokku.git.object_classes == (SSHKey, Auth, Git)
 
 
 def test_set_command():

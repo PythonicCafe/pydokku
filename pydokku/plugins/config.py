@@ -4,6 +4,7 @@ from itertools import groupby
 from typing import Iterator, List
 
 from ..models import App, Command, Config
+from ..utils import get_app_name
 from .base import DokkuPlugin
 
 
@@ -132,9 +133,6 @@ class ConfigPlugin(DokkuPlugin):
         return [self.set_many(configs=[obj], restart=False, execute=execute)]
 
     def object_create_many(self, objs: List[Config], execute: bool = True) -> Iterator[str] | Iterator[Command]:
-        def get_app_name(obj):
-            return obj.app_name
-
         objs.sort(key=get_app_name)
         groups = groupby(objs, key=get_app_name)
         for app_name, configs in groups:

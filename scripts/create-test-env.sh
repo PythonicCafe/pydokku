@@ -53,6 +53,7 @@ dokku git:from-image test-app-8 nginx:1.27.3-alpine-perl
 dokku git:set --global deploy-branch stable
 dokku git:set test-app-7 deploy-branch develop
 dokku git:set test-app-7 keep-git-dir false
+dokku git:set test-app-7 source-image nginx:1.27.3-alpine-perl
 dokku git:allow-host github.com
 dokku git:auth github.com user8 pass8
 dokku git:auth gitlab.com user9 pass9

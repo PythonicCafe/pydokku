@@ -125,17 +125,21 @@ def test_build_config_command():
 
 @requires_dokku
 def test_report_set_disable_enable():
+    def sort_proxy(obj):
+        return (obj.app_name, obj.global_type, obj.app_type)
+
     apps_names = ["test-app-1", "test-app-2", "test-app-3"]
     dokku = Dokku()
-    for app_name in apps_names:
-        dokku.apps.create(app_name)
+    before_app_creation = dokku.proxy.report()
 
     # Default behavior
-    before = dokku.proxy.report()
+    for app_name in apps_names:
+        dokku.apps.create(app_name)
+    after_app_creation = dokku.proxy.report()
     expected_default = [
         Proxy(app_name=app_name, enabled=True, app_type=None, global_type="nginx") for app_name in apps_names
     ]
-    assert before == expected_default
+    assert sorted(after_app_creation, key=sort_proxy) == sorted(before_app_creation + expected_default, key=sort_proxy)
 
     # Changing global will impact new apps
     dokku.proxy.set(app_name=None, proxy_type="caddy")
@@ -143,22 +147,28 @@ def test_report_set_disable_enable():
         proxy.global_type = "caddy"
     new_app_name = "test-app-4"
     dokku.apps.create(new_app_name)
-    after = dokku.proxy.report()
+    after_changing_global = dokku.proxy.report()
     expected_proxy = Proxy(app_name=new_app_name, enabled=True, app_type=None, global_type="caddy")
-    assert after == expected_default + [expected_proxy]
+    assert sorted(after_changing_global, key=sort_proxy) == sorted(
+        before_app_creation + expected_default + [expected_proxy], key=sort_proxy
+    )
 
     # Enable/disable
     dokku.proxy.disable(app_name=new_app_name)
-    final = dokku.proxy.report()
+    after_disabling_app = dokku.proxy.report()
     new_expected_proxy = Proxy(app_name=new_app_name, enabled=False, app_type=None, global_type="caddy")
-    assert final == expected_default + [new_expected_proxy]
+    assert sorted(after_disabling_app, key=sort_proxy) == sorted(
+        before_app_creation + expected_default + [new_expected_proxy], key=sort_proxy
+    )
     dokku.proxy.enable(app_name=new_app_name)
     final = dokku.proxy.report()
     new_expected_proxy = Proxy(app_name=new_app_name, enabled=True, app_type=None, global_type="caddy")
-    assert final == expected_default + [new_expected_proxy]
+    assert sorted(final, key=sort_proxy) == sorted(
+        before_app_creation + expected_default + [new_expected_proxy], key=sort_proxy
+    )
 
     for app_name in apps_names:
         dokku.apps.destroy(app_name)
 
 
-# TODO: test _create_object (checks if it calls build-config and `skip_system` behavior)
+# TODO: test object_create (checks if it calls build-config and `skip_system` behavior)

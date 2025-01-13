@@ -9,6 +9,10 @@ from typing import Any, Callable, List
 REGEXP_DOKKU_HEADER = re.compile(r"^\s*=====> ", flags=re.MULTILINE)
 
 
+def get_app_name(obj):
+    return obj.app_name
+
+
 @lru_cache
 def dataclass_field_set(DataClass):
     return set([field.name for field in fields(DataClass)])

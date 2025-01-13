@@ -2,7 +2,7 @@ import netrc
 import tempfile
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterator, List, Tuple
+from typing import List, Tuple
 
 from ..models import App, Auth, Command, Git, SSHKey
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_timestamp
@@ -37,7 +37,7 @@ class GitPlugin(DokkuPlugin):
     """
 
     name = "git"
-    object_classes = (Git, SSHKey, Auth)
+    object_classes = (SSHKey, Auth, Git)
 
     @lru_cache
     def _get_rows_parser(self):
@@ -261,27 +261,20 @@ class GitPlugin(DokkuPlugin):
                 result.append(
                     self.set(app_name=None, key="deploy-branch", value=obj.global_deploy_branch, execute=execute)
                 )
-            if obj.source_image:
-                result.append(
-                    self.set(app_name=obj.app_name, key="source-image", value=obj.source_image, execute=execute)
-                )
             if obj.deploy_branch:
                 result.append(
                     self.set(app_name=obj.app_name, key="deploy-branch", value=obj.deploy_branch, execute=execute)
                 )
-            if obj.keep_git_path:
-                result.append(
-                    self.set(app_name=obj.app_name, key="keep-git-dir", value=obj.keep_git_path, execute=execute)
-                )
+            result.append(self.set(app_name=obj.app_name, key="keep-git-dir", value=obj.keep_git_path, execute=execute))
             if obj.rev_env_var:
                 result.append(
                     self.set(app_name=obj.app_name, key="rev-env-var", value=obj.rev_env_var, execute=execute)
                 )
+            if obj.source_image:
+                if obj.last_updated_at is None:  # App was not deployed yet, so just set image name
+                    result.append(
+                        self.set(app_name=obj.app_name, key="source-image", value=obj.source_image, execute=execute)
+                    )
+                else:
+                    result.append(self.from_image(app_name=obj.app_name, image=obj.source_image, execute=execute))
         return result
-
-    def object_create_many(
-        self, objs: List[Git | SSHKey | Auth], execute: bool = True
-    ) -> Iterator[str] | Iterator[Command]:
-        # First we add SSH public keys, then authentication and then git repositories settings
-        objs.sort(key=lambda obj: {SSHKey: 0, Auth: 1, Git: 2}[type(obj)])
-        return super().object_create_many(objs=objs, execute=execute)

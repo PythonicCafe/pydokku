@@ -28,6 +28,7 @@ dokku domains:set-global dokku.me
 dokku checks:set --global wait-to-retire 60
 
 # git
+dokku git:set --global deploy-branch master
 sudo bash -c 'rm -f /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts'
 
 # proxy
