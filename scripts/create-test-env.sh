@@ -62,3 +62,7 @@ dokku git:auth gitlab.com user9 pass9
 dokku proxy:set --global caddy
 dokku proxy:set test-app-8 nginx
 dokku proxy:disable test-app-7
+
+# ports
+dokku ports:set test-app-7 http:80:3000 https:443:3000
+dokku ports:add test-app-9 http:8080:5000 https:8081:5000

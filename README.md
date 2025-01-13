@@ -76,9 +76,9 @@ Currently implemented plugins:
 - (core) `ssh-keys`
 - (core) `storage`
 - (core) `proxy`
+- (core) `ports`
 
 Plugins to be implemented soon:
-- (core) `ports`
 - (core) `nginx`
 - (core) `network`
 - (core) `plugin`

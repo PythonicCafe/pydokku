@@ -162,3 +162,11 @@ class Proxy(BaseModel):
     @property
     def type(self) -> str | None:
         return self.app_type or self.global_type
+
+
+@dataclass
+class Port(BaseModel):
+    app_name: str | None
+    scheme: str
+    host_port: int
+    container_port: int | None

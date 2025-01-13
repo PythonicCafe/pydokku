@@ -3,6 +3,7 @@ from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
 from .git import GitPlugin  # noqa
+from .ports import PortsPlugin  # noqa
 from .proxy import ProxyPlugin  # noqa
 from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
