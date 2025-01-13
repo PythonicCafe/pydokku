@@ -2,7 +2,7 @@ import json
 import re
 from collections import Counter
 from functools import lru_cache
-from typing import Iterator, List
+from typing import List
 
 from ..models import App, Command, Process, ProcessInfo
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_path
@@ -76,7 +76,11 @@ class PsPlugin(DokkuPlugin):
         WARNING: if the app is not deployed yet, it won't show the scale for each process type - in this case you can
         get those numbers by executing `self.get_scale(app_name)`.
         """
-        _, stdout, stderr = self._evaluate("report", params=[] if app_name is None else [app_name], full_return=True)
+        # Dokku WILL return error in this `report` command and `check=False` is used in all `:report/list` because of
+        # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
+        _, stdout, stderr = self._evaluate(
+            "report", params=[] if app_name is None else [app_name], check=False, full_return=True
+        )
         stderr = clean_stderr(stderr)
         if "You haven't deployed any applications yet" in stderr:
             return []

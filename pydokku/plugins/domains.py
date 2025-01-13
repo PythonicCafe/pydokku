@@ -65,12 +65,14 @@ class DomainsPlugin(DokkuPlugin):
         return result
 
     def list(self, app_name: str | None = None) -> List[Domain]:
+        # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
+        # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         if app_name is None:
-            stdout_global = self._evaluate("report", ["--global"], execute=True)
-            stdout_apps = self._evaluate("report", execute=True)
+            stdout_global = self._evaluate("report", ["--global"], check=False, execute=True)
+            stdout_apps = self._evaluate("report", check=False, execute=True)
             stdout = f"{stdout_global}\n{stdout_apps}"
         else:
-            stdout = self._evaluate("report", [app_name], execute=True)
+            stdout = self._evaluate("report", [app_name], check=False, execute=True)
         rows_parser = self._get_rows_parser()
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows)

@@ -59,7 +59,11 @@ class GitPlugin(DokkuPlugin):
         )
 
     def report(self, app_name: str | None = None) -> List[Git] | Git:
-        _, stdout, stderr = self._evaluate("report", params=[] if app_name is None else [app_name], full_return=True)
+        # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
+        # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
+        _, stdout, stderr = self._evaluate(
+            "report", params=[] if app_name is None else [app_name], check=False, full_return=True
+        )
         stderr = clean_stderr(stderr)
         if "You haven't deployed any applications yet" in stderr:
             return []

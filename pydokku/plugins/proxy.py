@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Iterator, List
+from typing import List
 
 from ..models import App, Command, Proxy
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool
@@ -35,7 +35,11 @@ class ProxyPlugin(DokkuPlugin):
 
     def report(self, app_name: str = None) -> List[Proxy] | Proxy:
         """Get the list of proxy configs for each app. If `app_name` is `None`, the report includes all apps"""
-        _, stdout, stderr = self._evaluate("report", params=[] if app_name is None else [app_name], full_return=True)
+        # Dokku WILL return error in this `report` command and `check=False` is used in all `:report/list` because of
+        # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
+        _, stdout, stderr = self._evaluate(
+            "report", params=[] if app_name is None else [app_name], check=False, full_return=True
+        )
         stderr = clean_stderr(stderr)
         if "You haven't deployed any applications yet" in stderr:
             return []

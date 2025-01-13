@@ -57,9 +57,7 @@ class DokkuPlugin:
         # exported as commands correctly.
         raise NotImplementedError(f"Class {self.__class__.__name__} does not implement `object_create`")
 
-    def object_create_many(
-        self, objs: List[T], execute: bool = True
-    ) -> Iterator[str] | Iterator[Command]:
+    def object_create_many(self, objs: List[T], execute: bool = True) -> Iterator[str] | Iterator[Command]:
         # The difference between this and calling `self.object_create` for each object is that this one yields only one
         # global command, so it's faster.
         # Since a plugin can have many object types, we batch the execution for each type, this way each of them can

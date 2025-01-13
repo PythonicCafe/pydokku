@@ -87,7 +87,11 @@ class ChecksPlugin(DokkuPlugin):
         not provide an way to retrieve the 'wait-to-retire' global option unless we take it from the app listing,
         so if you haven't created any app, you wouldn't know the global wait to retire setting.
         """
-        _, stdout, stderr = self._evaluate("report", params=[] if app_name is None else [app_name], full_return=True)
+        # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
+        # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
+        _, stdout, stderr = self._evaluate(
+            "report", params=[] if app_name is None else [app_name], check=False, full_return=True
+        )
         if "You haven't deployed any applications yet" in clean_stderr(stderr):
             # TODO: create temp app so we can get global wait to retire?
             return []
