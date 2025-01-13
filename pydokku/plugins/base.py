@@ -16,7 +16,7 @@ class DokkuPlugin:
     def _evaluate(
         self,
         operation: str,
-        params: List[str] = None,
+        params: List[str] | None = None,
         stdin: str = None,
         check: bool = True,
         sudo: bool = False,
@@ -37,7 +37,7 @@ class DokkuPlugin:
     def _execute(self, command: Command) -> tuple[int, str, str]:
         return self.dokku._execute(command)
 
-    def object_list(self, apps: List[App], system: bool = True) -> List[dict]:
+    def object_list(self, apps: List[App], system: bool = True) -> List[T]:
         """List all objects for this specific plugin"""
         raise NotImplementedError(f"Method `object_list` not implemented for {self.__class__.__name__}")
 

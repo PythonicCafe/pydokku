@@ -10,10 +10,15 @@ def test_object_classes():
 
 def test_check_wait_to_retire_property():
     app_name = "test-app-1"
-    check_1 = Check(app_name=app_name, process="web", status="disabled", app_wait_to_retire=None, global_wait_to_retire=60)
-    check_2 = Check(app_name=app_name, process="web", status="disabled", app_wait_to_retire=30, global_wait_to_retire=60)
+    check_1 = Check(
+        app_name=app_name, process="web", status="disabled", app_wait_to_retire=None, global_wait_to_retire=60
+    )
+    check_2 = Check(
+        app_name=app_name, process="web", status="disabled", app_wait_to_retire=30, global_wait_to_retire=60
+    )
     assert check_1.wait_to_retire == 60  # Global `wait_to_retire`, since app's is None
     assert check_2.wait_to_retire == 30  # App's own `wait_to_retire`
+
 
 def test_set_command():
     dokku = Dokku()

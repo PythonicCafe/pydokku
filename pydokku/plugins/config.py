@@ -20,6 +20,7 @@ class ConfigPlugin(DokkuPlugin):
     Extra features:
     - `get()`: hide internal Dokku env vars (keys starting with `DOKKU_`)
     """
+
     name = "config"
     object_classes = (Config,)
 

@@ -14,12 +14,26 @@ def test_object_classes():
 def test_process_info_procfile_path_property():
     app_name = "test-app-1"
     info_1 = ProcessInfo(
-        app_name=app_name, deployed=False, processes=[], can_scale=True, restart_policy="unless-stopped", restore=True,
-        running=False, global_procfile_path=Path("Procfile"), app_procfile_path=None,
+        app_name=app_name,
+        deployed=False,
+        processes=[],
+        can_scale=True,
+        restart_policy="unless-stopped",
+        restore=True,
+        running=False,
+        global_procfile_path=Path("Procfile"),
+        app_procfile_path=None,
     )
     info_2 = ProcessInfo(
-        app_name=app_name, deployed=False, processes=[], can_scale=True, restart_policy="unless-stopped", restore=True,
-        running=False, global_procfile_path=Path("Procfile"), app_procfile_path=Path("Procfile.dokku"),
+        app_name=app_name,
+        deployed=False,
+        processes=[],
+        can_scale=True,
+        restart_policy="unless-stopped",
+        restore=True,
+        running=False,
+        global_procfile_path=Path("Procfile"),
+        app_procfile_path=Path("Procfile.dokku"),
     )
     assert info_1.procfile_path == Path("Procfile")  # Global `procfile_path`, since app's is None
     assert info_2.procfile_path == Path("Procfile.dokku")  # App's own `procfile_path`

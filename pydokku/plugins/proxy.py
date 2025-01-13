@@ -1,6 +1,3 @@
-import json
-import re
-from collections import Counter
 from functools import lru_cache
 from typing import Iterator, List
 
@@ -17,6 +14,7 @@ class ProxyPlugin(DokkuPlugin):
 
     Extra features: none.
     """
+
     name = "proxy"
     object_classes = (Proxy,)
 
@@ -76,9 +74,7 @@ class ProxyPlugin(DokkuPlugin):
         apps_names = [app.name for app in apps]
         return [self.report(app_name)[0] for app_name in apps_names]
 
-    def _create_object(
-        self, obj: Proxy, skip_system: bool = False, execute: bool = True
-    ) -> List[str] | List[Command]:
+    def _create_object(self, obj: Proxy, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         app_name = obj.app_name
         result = []
         if not skip_system:

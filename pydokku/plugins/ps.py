@@ -21,6 +21,7 @@ class PsPlugin(DokkuPlugin):
     - `ps:set`: was split in `set()` and `unset()` methods
     - `ps:scale`: was split in `get_scale()` and `set_scale()` methods
     """
+
     name = "ps"
     object_classes = (ProcessInfo,)
 
@@ -197,7 +198,7 @@ class PsPlugin(DokkuPlugin):
         return result
 
     def _create_object(
-        self, obj: Process, skip_system: bool = False, execute: bool = True
+        self, obj: ProcessInfo, skip_system: bool = False, execute: bool = True
     ) -> List[str] | List[Command]:
         app_name = obj.app_name
         result = []
@@ -212,7 +213,7 @@ class PsPlugin(DokkuPlugin):
         result.append(self.set_scale(app_name=app_name, process_counts=dict(process_counter), execute=execute))
         return result
 
-    def object_create(self, obj: Process, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: ProcessInfo, execute: bool = True) -> List[str] | List[Command]:
         return self._create_object(obj=obj, execute=execute, skip_system=False)
 
     def object_create_many(self, objs: List[ProcessInfo], execute: bool = True) -> Iterator[str] | Iterator[Command]:

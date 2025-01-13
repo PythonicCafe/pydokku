@@ -58,7 +58,7 @@ class GitPlugin(DokkuPlugin):
             },
         )
 
-    def report(self, app_name: str = None) -> List[Git] | Git:
+    def report(self, app_name: str | None = None) -> List[Git] | Git:
         _, stdout, stderr = self._evaluate("report", params=[] if app_name is None else [app_name], full_return=True)
         stderr = clean_stderr(stderr)
         if "You haven't deployed any applications yet" in stderr:
@@ -69,7 +69,12 @@ class GitPlugin(DokkuPlugin):
         return [Git(**row) for row in rows_parser(stdout)]
 
     def from_archive(
-        self, app_name: str, archive_url: str, git_username: str = None, git_email: str = None, execute: bool = True
+        self,
+        app_name: str,
+        archive_url: str,
+        git_username: str | None = None,
+        git_email: str | None = None,
+        execute: bool = True,
     ) -> str | Command:
         params = [app_name, archive_url]
         if git_username is not None:
@@ -85,8 +90,8 @@ class GitPlugin(DokkuPlugin):
         app_name: str,
         image: str,
         build_path: str | Path | None = None,
-        git_username: str = None,
-        git_email: str = None,
+        git_username: str | None = None,
+        git_email: str | None = None,
         execute: bool = True,
     ) -> str | Command:
         params = []

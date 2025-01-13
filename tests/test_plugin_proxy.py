@@ -1,5 +1,5 @@
 from pydokku import Dokku
-from pydokku.models import App, Command, Proxy
+from pydokku.models import Proxy
 from tests.utils import requires_dokku
 
 
@@ -133,8 +133,7 @@ def test_report_set_disable_enable():
     # Default behavior
     before = dokku.proxy.report()
     expected_default = [
-        Proxy(app_name=app_name, enabled=True, app_type=None, global_type="nginx")
-        for app_name in apps_names
+        Proxy(app_name=app_name, enabled=True, app_type=None, global_type="nginx") for app_name in apps_names
     ]
     assert before == expected_default
 
@@ -160,5 +159,6 @@ def test_report_set_disable_enable():
 
     for app_name in apps_names:
         dokku.apps.destroy(app_name)
+
 
 # TODO: test _create_object (checks if it calls build-config and `skip_system` behavior)

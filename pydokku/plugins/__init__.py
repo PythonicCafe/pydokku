@@ -8,7 +8,6 @@ from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-
 # TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
 # TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)
 # TODO: implement nginx:report [<app>] [<flag>]             Displays an nginx report for one or more apps

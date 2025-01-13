@@ -16,11 +16,11 @@ class Dokku:
 
     def __init__(
         self,
-        ssh_host: str = None,
+        ssh_host: str | None = None,
         ssh_port: int = 22,
-        ssh_private_key: Path | str = None,
+        ssh_private_key: Path | str | None = None,
         ssh_user: str = "dokku",
-        ssh_key_password: str = None,
+        ssh_key_password: str | None = None,
         ssh_mux: bool = True,
     ):
         self._ssh_prefix = []

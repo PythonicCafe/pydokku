@@ -15,7 +15,7 @@ def command(
     private_key: Path | str,
     port: int = 22,
     mux: bool = False,
-    mux_filename: Path | str = None,
+    mux_filename: Path | str | None = None,
     mux_timeout: int = 60,
 ) -> List[str]:
     cmd = [

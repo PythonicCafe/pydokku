@@ -63,9 +63,9 @@ class App(BaseModel):
 
 @dataclass
 class Config(BaseModel):
-    app_name: str
+    app_name: str | None
     key: str
-    value: str
+    value: str | None
 
 
 @dataclass
@@ -86,16 +86,16 @@ class Storage(BaseModel):
 
 @dataclass
 class Domain(BaseModel):
-    app_name: str
+    app_name: str | None
     enabled: bool
     domains: List[str]
 
 
 @dataclass
 class Check(BaseModel):
-    app_name: str
+    app_name: str | None
     process: str
-    status: Literal["enabled"] | Literal["disabled"] | Literal["skipped"]
+    status: Literal["enabled"] | Literal["disabled"] | Literal["skipped"] | None
     app_wait_to_retire: int | None
     global_wait_to_retire: int | None
 

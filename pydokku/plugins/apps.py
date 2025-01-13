@@ -20,6 +20,7 @@ class AppsPlugin(DokkuPlugin):
 
     Extra features: none.
     """
+
     name = "apps"
     object_classes = (App,)
 

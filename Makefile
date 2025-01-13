@@ -17,6 +17,9 @@ test-x:					# Execute `pytest` with `-x` option and coverage report
 	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest -vvvsx $(TEST_ARGS)
 	coverage report
 
+type-check:				# Run mypy in the project
+	mypy pydokku/ tests/
+
 vm-create:				# Create a virtual machine using libvirt/virsh to make isolated tests easier (requires sudo)
 	@sudo ./scripts/vm.sh create
 
@@ -35,4 +38,4 @@ vm-start:				# Starts the virtual machine and waits for it to be turned on
 vm-stop:				# Sends the shutdown signal to the virtual machine and wait for it to be turned off
 	@./scripts/vm.sh stop
 
-.PHONY: help lint test test-x vm-create vm-delete vm-ip vm-ssh vm-start vm-stop
+.PHONY: help lint test test-x type-check vm-create vm-delete vm-ip vm-ssh vm-start vm-stop

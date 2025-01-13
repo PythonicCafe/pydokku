@@ -127,7 +127,7 @@ def get_stdout_rows_parser(
     return func
 
 
-def execute_command(command: list[str], stdin: str = None, check=True) -> tuple[int, str, str]:
+def execute_command(command: list[str], stdin: str | None = None, check: bool = True) -> tuple[int, str, str]:
     process = subprocess.Popen(
         command,
         stdin=subprocess.PIPE,

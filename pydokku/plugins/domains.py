@@ -21,6 +21,7 @@ class DomainsPlugin(DokkuPlugin):
     - `domains:set` and `domains:set-global` were merged into `set()`
     - `list()`: will execute `domains:report` both for global and for all apps
     """
+
     name = "domains"
     object_classes = (Domain,)
 

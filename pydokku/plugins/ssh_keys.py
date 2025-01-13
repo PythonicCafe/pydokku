@@ -34,6 +34,7 @@ class SSHKeysPlugin(DokkuPlugin):
     - `list` will add the actual public key by reading the Dokku SSH authorized keys file (if the user has the
       permission to do so)
     """
+
     name = "ssh-keys"
     object_classes = (SSHKey,)
 
