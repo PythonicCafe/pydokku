@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from textwrap import indent
 
+from . import __version__
+
 
 def create_dokku_instance(args):
     from .dokku_cli import Dokku  # noqa
@@ -23,6 +25,7 @@ def dokku_dump(args):
 
     dokku = create_dokku_instance(args)
     data = {
+        "pydokku": {"version": __version__},
         "dokku": {"version": dokku.version()},
     }
     # TODO: if for some reason a plugin cannot export the data completely (eg: storage running via SSH as dokku user,
@@ -110,6 +113,8 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    subparsers.add_parser("version", help="Show current version of pydokku")
+
     # TODO: rename `dump` to `export`
     dump_parser = subparsers.add_parser("dump", help="Export all metadata collected by plugins to JSON")
     dump_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
@@ -133,7 +138,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "dump":
+    if args.command == "version":
+        print(f"pydokku {__version__}")
+    elif args.command == "dump":
         dokku_dump(args)
     elif args.command == "load":
         dokku_load(args)
