@@ -215,17 +215,20 @@ def test_add_list_remove(create_apps):
     apps_names.append(None)  # Global
     apps_domains = [random_domains() for _ in range(4)]
 
-    for app_name, domains in zip(apps_names, apps_domains):
-        before = dokku.domains.list(app_name)[0].domains
-        dokku.domains.add(app_name, domains)
-        after = dokku.domains.list(app_name)[0].domains
-        assert len(after) == len(before) + len(domains)
-        assert set(before).issubset(set(after))
-        random_domain = random.choice(domains)
-        dokku.domains.remove(app_name, [random_domain])
-        final = dokku.domains.list(app_name)[0].domains
-        assert len(final) == len(after) - 1
-        assert random_domain not in final
+    try:
+        for app_name, domains in zip(apps_names, apps_domains):
+            before = dokku.domains.list(app_name)[0].domains
+            dokku.domains.add(app_name, domains)
+            after = dokku.domains.list(app_name)[0].domains
+            assert len(after) == len(before) + len(domains)
+            assert set(before).issubset(set(after))
+            random_domain = random.choice(domains)
+            dokku.domains.remove(app_name, [random_domain])
+            final = dokku.domains.list(app_name)[0].domains
+            assert len(final) == len(after) - 1
+            assert random_domain not in final
+    finally:
+        dokku.domains.set(app_name=None, domains=["dokku.example.net"])
 
 
 @requires_dokku
@@ -234,23 +237,26 @@ def test_add_set_clear(create_apps):
     apps_names.append(None)  # Global
     apps_domains = [random_domains() for _ in range(4)]
 
-    for app_name, domains in zip(apps_names, apps_domains):
-        # The first domain will be added after, then we set (overwrite) with the remaining ones
-        old_domain = domains[0]
-        new_domains = domains[1:]
-        dokku.domains.add(app_name, [old_domain])
-        before = dokku.domains.list(app_name)[0].domains
-        assert old_domain in before
-        dokku.domains.set(app_name, new_domains)
-        after = dokku.domains.list(app_name)[0].domains
-        assert old_domain not in after
-        assert sorted(after) == sorted(new_domains)
+    try:
+        for app_name, domains in zip(apps_names, apps_domains):
+            # The first domain will be added after, then we set (overwrite) with the remaining ones
+            old_domain = domains[0]
+            new_domains = domains[1:]
+            dokku.domains.add(app_name, [old_domain])
+            before = dokku.domains.list(app_name)[0].domains
+            assert old_domain in before
+            dokku.domains.set(app_name, new_domains)
+            after = dokku.domains.list(app_name)[0].domains
+            assert old_domain not in after
+            assert sorted(after) == sorted(new_domains)
 
-        dokku.domains.clear(app_name)  # This WON'T remove ALL domains! Will restore to global ones
-        after_clear_1 = dokku.domains.list(app_name)[0].domains
-        dokku.domains.add(app_name, [f"test-{app_name}.custom.com"])
-        after_add = dokku.domains.list(app_name)[0].domains
-        assert len(after_add) == len(after_clear_1) + 1  # New custom domain added
-        dokku.domains.clear(app_name)
-        after_clear_2 = dokku.domains.list(app_name)[0].domains
-        assert sorted(after_clear_2) == sorted(after_clear_1)  # Only the custom was "cleared"
+            dokku.domains.clear(app_name)  # This WON'T remove ALL domains! Will restore to global ones
+            after_clear_1 = dokku.domains.list(app_name)[0].domains
+            dokku.domains.add(app_name, [f"test-{app_name}.custom.com"])
+            after_add = dokku.domains.list(app_name)[0].domains
+            assert len(after_add) == len(after_clear_1) + 1  # New custom domain added
+            dokku.domains.clear(app_name)
+            after_clear_2 = dokku.domains.list(app_name)[0].domains
+            assert sorted(after_clear_2) == sorted(after_clear_1)  # Only the custom was "cleared"
+    finally:
+        dokku.domains.set(app_name=None, domains=["dokku.example.net"])
