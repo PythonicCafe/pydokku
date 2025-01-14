@@ -1,6 +1,6 @@
 from pydokku.dokku_cli import Dokku
 from pydokku.models import Check
-from tests.utils import requires_dokku
+from tests.utils import create_apps, requires_dokku  # noqa
 
 
 def test_object_classes():
@@ -209,18 +209,13 @@ def test_convert_rows():
 
 
 @requires_dokku
-def test_list_set_enable_disable_skip_run():
-    dokku = Dokku()
-    app_name_1 = "test-app-checks-1"
-    app_name_2 = "test-app-checks-2"
-
-    dokku.apps.create(app_name_1)
-    dokku.apps.create(app_name_2)
+def test_list_set_enable_disable_skip_run(create_apps):
+    dokku, apps_names = create_apps
 
     # Default checks
     checks = {check.app_name: check for check in dokku.checks.list()}
     global_wait = checks[None].global_wait_to_retire
-    for app_name in (app_name_1, app_name_2):
+    for app_name in apps_names:
         check = checks[app_name]
         assert check.app_name == app_name
         assert check.process == "_all_"
@@ -233,39 +228,36 @@ def test_list_set_enable_disable_skip_run():
     new_global_wait = global_wait * 2
     wait_app_1 = global_wait * 3
     dokku.checks.set(app_name=None, key="wait-to-retire", value=new_global_wait)
-    dokku.checks.set(app_name=app_name_1, key="wait-to-retire", value=wait_app_1)
+    dokku.checks.set(app_name=apps_names[0], key="wait-to-retire", value=wait_app_1)
     checks = {check.app_name: check for check in dokku.checks.list()}
     assert checks[None].global_wait_to_retire == new_global_wait
-    assert checks[app_name_1].app_wait_to_retire == wait_app_1
-    assert checks[app_name_1].global_wait_to_retire == new_global_wait
-    assert checks[app_name_1].wait_to_retire == wait_app_1  # Custom value defined
-    assert checks[app_name_2].app_wait_to_retire is None
-    assert checks[app_name_2].global_wait_to_retire == new_global_wait
-    assert checks[app_name_2].wait_to_retire == new_global_wait  # No custom value, so use the global setting
+    assert checks[apps_names[0]].app_wait_to_retire == wait_app_1
+    assert checks[apps_names[0]].global_wait_to_retire == new_global_wait
+    assert checks[apps_names[0]].wait_to_retire == wait_app_1  # Custom value defined
+    assert checks[apps_names[1]].app_wait_to_retire is None
+    assert checks[apps_names[1]].global_wait_to_retire == new_global_wait
+    assert checks[apps_names[1]].wait_to_retire == new_global_wait  # No custom value, so use the global setting
 
-    dokku.checks.disable(app_name_1, ["worker", "another-worker"])
-    app_checks = dokku.checks.list(app_name=app_name_1)
+    dokku.checks.disable(apps_names[0], ["worker", "another-worker"])
+    app_checks = dokku.checks.list(app_name=apps_names[0])
     assert len(app_checks) == 2  # The enabled ones won't be here, since Dokku does not provide this information
     app_checks.sort(key=lambda obj: obj.process)
-    app_checks[0].app_name == app_name_1
+    app_checks[0].app_name == apps_names[0]
     app_checks[0].process == "another-worker"
     app_checks[0].status == "disabled"
-    app_checks[1].app_name == app_name_1
+    app_checks[1].app_name == apps_names[0]
     app_checks[1].process == "worker"
     app_checks[1].status == "disabled"
-    dokku.checks.enable(app_name_1, ["another-worker"])
-    app_checks = dokku.checks.list(app_name=app_name_1)
+    dokku.checks.enable(apps_names[0], ["another-worker"])
+    app_checks = dokku.checks.list(app_name=apps_names[0])
     assert len(app_checks) == 1  # The enabled ones won't be here, since Dokku does not provide this information
     app_checks.sort(key=lambda obj: obj.process)
     app_checks[0].process == "worker"
     app_checks[0].status == "disabled"
 
-    dokku.checks.skip(app_name_2, ["web"])
-    app_checks = dokku.checks.list(app_name=app_name_2)
+    dokku.checks.skip(apps_names[1], ["web"])
+    app_checks = dokku.checks.list(app_name=apps_names[1])
     assert len(app_checks) == 1  # The enabled ones won't be here, since Dokku does not provide this information
-    app_checks[0].app_name == app_name_2
+    app_checks[0].app_name == apps_names[1]
     app_checks[0].process == "web"
     app_checks[0].status == "skipped"
-
-    dokku.apps.destroy(app_name_1)
-    dokku.apps.destroy(app_name_2)

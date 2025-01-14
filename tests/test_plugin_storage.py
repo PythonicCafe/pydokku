@@ -4,7 +4,7 @@ import pytest
 
 from pydokku.dokku_cli import Dokku
 from pydokku.models import Storage
-from tests.utils import requires_dokku
+from tests.utils import create_apps, requires_dokku  # noqa
 
 
 def test_object_classes():
@@ -64,14 +64,14 @@ def test_unmount_command():
 
 
 @requires_dokku
-def test_ensure_mount_list_unmount():
-    app_name = "test-app"
+def test_ensure_mount_list_unmount(create_apps):
+    dokku, apps_names = create_apps
+    app_name = apps_names[0]
+
     host_path = Path("/var/lib/dokku/data/storage/test-app-data")
     container_path = Path("/data")
     storage = Storage(app_name=app_name, host_path=host_path, container_path=container_path)
-    dokku = Dokku()
 
-    dokku.apps.create(app_name)
     path, (user_id, group_id) = dokku.storage.ensure_directory(host_path.name)
     assert path == host_path
     assert path.exists()
@@ -90,7 +90,6 @@ def test_ensure_mount_list_unmount():
     dokku.storage.unmount(storage)
     assert len(dokku.storage.list(app_name)) == 0
     # XXX: won't try to delete the `path` here since the test won't be running as the `dokku` user
-    dokku.apps.destroy(app_name)
 
 
 # TODO: test dump

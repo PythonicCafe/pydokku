@@ -3,7 +3,7 @@ import string
 
 from pydokku.dokku_cli import Dokku
 from pydokku.models import Domain
-from tests.utils import random_value, requires_dokku
+from tests.utils import create_apps, random_value, requires_dokku  # noqa
 
 
 def random_domains():
@@ -210,19 +210,12 @@ def test_convert_rows():
 
 
 @requires_dokku
-def test_add_list_remove():
-    dokku = Dokku()
-    app_name_1 = "test-app-domains-1"
-    app_name_2 = "test-app-domains-2"
-    app_name_3 = None  # Global
-    domains_1 = random_domains()
-    domains_2 = random_domains()
-    domains_3 = random_domains()
+def test_add_list_remove(create_apps):
+    dokku, apps_names = create_apps
+    apps_names.append(None)  # Global
+    apps_domains = [random_domains() for _ in range(4)]
 
-    dokku.apps.create(app_name_1)
-    dokku.apps.create(app_name_2)
-
-    for app_name, domains in ((app_name_1, domains_1), (app_name_2, domains_2), (app_name_3, domains_3)):
+    for app_name, domains in zip(apps_names, apps_domains):
         before = dokku.domains.list(app_name)[0].domains
         dokku.domains.add(app_name, domains)
         after = dokku.domains.list(app_name)[0].domains
@@ -234,24 +227,14 @@ def test_add_list_remove():
         assert len(final) == len(after) - 1
         assert random_domain not in final
 
-    dokku.apps.destroy(app_name_1)
-    dokku.apps.destroy(app_name_2)
-
 
 @requires_dokku
-def test_add_set_clear():
-    dokku = Dokku()
-    app_name_1 = "test-app-domains-1"
-    app_name_2 = "test-app-domains-2"
-    app_name_3 = None  # Global
-    domains_1 = random_domains()
-    domains_2 = random_domains()
-    domains_3 = random_domains()
+def test_add_set_clear(create_apps):
+    dokku, apps_names = create_apps
+    apps_names.append(None)  # Global
+    apps_domains = [random_domains() for _ in range(4)]
 
-    dokku.apps.create(app_name_1)
-    dokku.apps.create(app_name_2)
-
-    for app_name, domains in ((app_name_1, domains_1), (app_name_2, domains_2), (app_name_3, domains_3)):
+    for app_name, domains in zip(apps_names, apps_domains):
         # The first domain will be added after, then we set (overwrite) with the remaining ones
         old_domain = domains[0]
         new_domains = domains[1:]
@@ -271,6 +254,3 @@ def test_add_set_clear():
         dokku.domains.clear(app_name)
         after_clear_2 = dokku.domains.list(app_name)[0].domains
         assert sorted(after_clear_2) == sorted(after_clear_1)  # Only the custom was "cleared"
-
-    dokku.apps.destroy(app_name_1)
-    dokku.apps.destroy(app_name_2)

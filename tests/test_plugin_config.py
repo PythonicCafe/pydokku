@@ -158,20 +158,22 @@ def test_set_get_merged():
     dokku = Dokku()
     initial_global = dokku.config.get(None, as_dict=True)
     dokku.apps.create(app_name)
-    assert dokku.config.get(app_name, merged=False, as_dict=True) == {}
-    expected_merged = {key: str(value) for key, value in initial_global.items()}
-    assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
-    dokku.config.set_many_dict(None, keys_global)
-    assert dokku.config.get(app_name, merged=False, as_dict=True) == {}
-    expected_merged = {key: str(value) for key, value in {**initial_global, **keys_global}.items()}
-    assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
-    dokku.config.set_many_dict(app_name, keys_local, restart=False)
-    assert dokku.config.get(app_name, merged=False, as_dict=True) == {
-        key: str(value) for key, value in keys_local.items()
-    }
-    expected_merged = {key: str(value) for key, value in {**initial_global, **keys_global, **keys_local}.items()}
-    assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
-    dokku.apps.destroy(app_name)
+    try:
+        assert dokku.config.get(app_name, merged=False, as_dict=True) == {}
+        expected_merged = {key: str(value) for key, value in initial_global.items()}
+        assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
+        dokku.config.set_many_dict(None, keys_global)
+        assert dokku.config.get(app_name, merged=False, as_dict=True) == {}
+        expected_merged = {key: str(value) for key, value in {**initial_global, **keys_global}.items()}
+        assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
+        dokku.config.set_many_dict(app_name, keys_local, restart=False)
+        assert dokku.config.get(app_name, merged=False, as_dict=True) == {
+            key: str(value) for key, value in keys_local.items()
+        }
+        expected_merged = {key: str(value) for key, value in {**initial_global, **keys_global, **keys_local}.items()}
+        assert dokku.config.get(app_name, merged=True, as_dict=True) == expected_merged
+    finally:
+        dokku.apps.destroy(app_name)
 
 
 @requires_dokku
