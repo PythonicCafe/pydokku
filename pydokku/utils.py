@@ -9,12 +9,12 @@ from typing import Any, Callable, List
 REGEXP_DOKKU_HEADER = re.compile(r"^\s*=====> ", flags=re.MULTILINE)
 
 
-def get_app_name(obj):
+def get_app_name(obj: Any) -> str | None:
     return obj.app_name
 
 
 @lru_cache
-def dataclass_field_set(DataClass):
+def dataclass_field_set(DataClass) -> List[str]:
     return set([field.name for field in fields(DataClass)])
 
 
@@ -36,25 +36,47 @@ def clean_stderr(value: str) -> str:
 
 
 @lru_cache
-def get_system_tzinfo():
+def get_system_tzinfo() -> datetime.timezone:
     return datetime.datetime.now().astimezone().tzinfo
 
 
-def parse_timestamp(value):
+def parse_timestamp(value: str | None) -> datetime.datetime | None:
     value = str(value if value is not None else "").lower()
     if not value:
         return None
     return datetime.datetime.fromtimestamp(int(value)).replace(tzinfo=get_system_tzinfo())
 
 
-def parse_int(value):
+def parse_int(value: str | None) -> int | None:
+    """
+    >>> print(parse_int(""))
+    None
+    >>> parse_int("123")
+    123
+    >>> type(parse_int("123"))
+    <class 'int'>
+    """
     value = str(value if value is not None else "").lower()
     if not value:
         return None
     return int(value)
 
 
-def parse_bool(value):
+def parse_bool(value: str | None) -> bool | None:
+    """
+    >>> print(parse_bool(""))
+    None
+    >>> parse_bool("true")
+    True
+    >>> parse_bool("false")
+    False
+    >>> type(parse_bool("true"))
+    <class 'bool'>
+    >>> parse_bool("true") == parse_bool("t") == parse_bool("True") == parse_bool("T")
+    True
+    >>> parse_bool("false") == parse_bool("f") == parse_bool("False") == parse_bool("F")
+    True
+    """
     value = str(value if value is not None else "").lower()
     if not value:
         return None
@@ -62,24 +84,43 @@ def parse_bool(value):
 
 
 def parse_path(value: str | None) -> Path | None:
+    """
+    >>> from pathlib import Path
+    >>> print(parse_path(""))
+    None
+    >>> isinstance(parse_path("file.ext"), Path)
+    True
+    """
     value = str(value or "").strip() if value else None
     if not value:
         return None
     return Path(value)
 
 
-def parse_comma_separated_list(text):
+def parse_comma_separated_list(text: str | None) -> List[str]:
+    """
+    >>> parse_comma_separated_list("")
+    []
+    >>> parse_comma_separated_list('abc,123",456')
+    ['abc', '123"', '456']
+    """
     text = str(text or "").strip() if text else None
     if not text or text == "none":
         return []
     return text.split(",")
 
 
-def parse_space_separated_list(text):
+def parse_space_separated_list(text: str | None) -> List[str]:
+    """
+    >>> parse_space_separated_list("")
+    []
+    >>> parse_space_separated_list('   abc 123"    456')
+    ['abc', '123"', '456']
+    """
     text = str(text or "").strip() if text else None
     if not text:
         return []
-    return text.split(" ")
+    return [item for item in text.strip().split(" ") if item]
 
 
 def get_stdout_rows_parser(

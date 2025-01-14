@@ -9,12 +9,12 @@ lint:					# Run linter commands
 
 test:					# Execute `pytest` and coverage report
 	./scripts/cleanup.sh
-	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest -vvvs $(TEST_ARGS)
+	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest --doctest-modules -vvvs tests/ pydokku/ $(TEST_ARGS)
 	coverage report
 
 test-x:					# Execute `pytest` with `-x` option and coverage report
 	./scripts/cleanup.sh
-	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest -vvvsx $(TEST_ARGS)
+	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest --doctest-modules -vvvsx tests/ pydokku/ $(TEST_ARGS)
 	coverage report
 
 type-check:				# Run mypy in the project
