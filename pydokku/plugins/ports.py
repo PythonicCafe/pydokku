@@ -123,7 +123,7 @@ class PortsPlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[Port]:
         apps_names = [app.name for app in apps]
         if system:
-            return [port for port in self.report() if port.app_name in [None] + apps_names]
+            return [obj for obj in self.report() if obj.app_name in [None] + apps_names]
         else:
             return [self.report(app_name=app_name) for app_name in apps_names]
 

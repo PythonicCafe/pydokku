@@ -3,20 +3,22 @@ from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
 from .git import GitPlugin  # noqa
+from .nginx import NginxPlugin  # noqa
 from .ports import PortsPlugin  # noqa
 from .proxy import ProxyPlugin  # noqa
 from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-# TODO: implement nginx:access-logs <app> [-t]              Show the nginx access logs for an application (-t follows)
-# TODO: implement nginx:error-logs <app> [-t]               Show the nginx error logs for an application (-t follows)
-# TODO: implement nginx:report [<app>] [<flag>]             Displays an nginx report for one or more apps
-# TODO: implement nginx:set <app> <property> (<value>)      Set or clear an nginx property for an app
-# TODO: implement nginx:show-config <app>                   Display app nginx config
-# TODO: implement nginx:start                               Starts the nginx server
-# TODO: implement nginx:stop                                Stops the nginx server
-# TODO: implement nginx:validate-config [<app>] [--clean]   Validates and optionally cleans up invalid nginx configurations
+# TODO: implement network:create <network>                     Creates an attachable docker network
+# TODO: implement network:destroy <network>                    Destroys a docker network
+# TODO: implement network:exists <network>                     Checks if a docker network exists
+# TODO: implement network:info <network> [--format text|json]  Outputs information about a docker network
+# TODO: implement network:list [--format text|json]            Lists all docker networks
+# TODO: implement network:rebuild <app>                        Rebuilds network settings for an app
+# TODO: implement network:rebuildall                           Rebuild network settings for all apps
+# TODO: implement network:report [<app>] [<flag>]              Displays a network report for one or more apps
+# TODO: implement network:set <app> <property> (<value>...)    Set or clear a network property for an app
 
 # TODO: implement plugin:disable <name>                                                                               Disable an installed plugin (third-party only)
 # TODO: implement plugin:enable <name>                                                                                Enable a previously disabled plugin

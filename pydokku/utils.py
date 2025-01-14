@@ -47,6 +47,25 @@ def parse_timestamp(value: str | None) -> datetime.datetime | None:
     return datetime.datetime.fromtimestamp(int(value)).replace(tzinfo=get_system_tzinfo())
 
 
+def parse_timedelta_seconds(value: str | None) -> datetime.timedelta | None:
+    """
+    Parse a seconds value
+    >>> import datetime
+    >>> print(parse_timedelta_seconds(""))
+    None
+    >>> print(parse_timedelta_seconds(None))
+    None
+    >>> parse_timedelta_seconds("15724800")
+    datetime.timedelta(days=182)
+    >>> parse_timedelta_seconds(15724800)
+    datetime.timedelta(days=182)
+    """
+    value = str(value if value is not None else "").lower()
+    if not value:
+        return None
+    return datetime.timedelta(seconds=int(value))
+
+
 def parse_int(value: str | None) -> int | None:
     """
     >>> print(parse_int(""))
@@ -128,6 +147,8 @@ def get_stdout_rows_parser(
     discards: List[str] | None = None,
     renames: dict[str, str] | None = None,
     parsers: dict[str, Callable[[str], Any]] | None = None,
+    separator: str = "_",
+    remove_prefix=None,
 ) -> Callable:
     """Returns a function that parses stdout and returns a list of rows, already converted/parsed based on configs"""
 
@@ -152,12 +173,14 @@ def get_stdout_rows_parser(
             row[app_name_key] = row_app_name
             for line in lines[1:]:
                 line = line.strip()
-                separator = line.find(":")
-                key, value = line[:separator], line[separator + 1 :]
+                stop = line.find(":")
+                key, value = line[:stop], line[stop + 1 :]
                 if normalize_keys:
-                    key = key.lower().replace(" ", "_")
+                    key = key.lower().replace(" ", separator)
                 if renames is not None and key in renames:
                     key = renames[key]
+                if remove_prefix is not None and key.startswith(remove_prefix):
+                    key = key[len(remove_prefix) :]
                 if discards is not None and key in discards:
                     continue
                 value = value.strip()

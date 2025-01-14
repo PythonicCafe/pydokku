@@ -65,5 +65,7 @@ def test_dump_load():
         for key in ("last_updated_at", "sha"):
             if key in git:
                 git[key] = None
+    for nginx in data_1["nginx"] + data_2["nginx"]:
+        nginx["last_visited_at"] = None  # For some reason, nginx adds it after a while
 
     assert data_1 == data_2

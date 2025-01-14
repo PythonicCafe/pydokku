@@ -170,3 +170,38 @@ class Port(BaseModel):
     scheme: str
     host_port: int
     container_port: int | None
+
+
+@dataclass
+class Nginx(BaseModel):
+    app_name: str | None
+    access_log_format: str | None = None
+    access_log_path: Path | None = None
+    bind_address_ipv4: str | None = None
+    bind_address_ipv6: str | None = None
+    client_body_timeout: str | None = None
+    client_header_timeout: str | None = None
+    client_max_body_size: str | None = None
+    disable_custom_config: bool | None = None
+    error_log_path: Path | None = None
+    hsts: bool | None = None
+    hsts_include_subdomains: bool | None = None
+    hsts_max_age: datetime.timedelta | None = None
+    hsts_preload: bool | None = None
+    keepalive_timeout: str | None = None
+    last_visited_at: str | None = None
+    lingering_timeout: str | None = None
+    nginx_conf_sigil_path: Path | None = None
+    proxy_buffer_size: str | None = None
+    proxy_buffering: str | None = None
+    proxy_buffers: str | None = None
+    proxy_busy_buffers_size: str | None = None
+    proxy_connect_timeout: str | None = None
+    proxy_read_timeout: str | None = None
+    proxy_send_timeout: str | None = None
+    send_timeout: str | None = None
+    underscore_in_headers: str | None = None
+    x_forwarded_for_value: str | None = None
+    x_forwarded_port_value: str | None = None
+    x_forwarded_proto_value: str | None = None
+    x_forwarded_ssl: str | None = None

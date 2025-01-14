@@ -34,6 +34,38 @@ sudo bash -c 'rm -f /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts'
 # proxy
 dokku proxy:set --global nginx
 
+# nginx
+dokku nginx:set --global access-log-format
+dokku nginx:set --global access-log-path
+dokku nginx:set --global bind-address-ipv4
+dokku nginx:set --global bind-address-ipv6
+dokku nginx:set --global client-body-timeout
+dokku nginx:set --global client-header-timeout
+dokku nginx:set --global client-max-body-size
+dokku nginx:set --global disable-custom-config
+dokku nginx:set --global error-log-path
+dokku nginx:set --global hsts
+dokku nginx:set --global hsts-include-subdomains
+dokku nginx:set --global hsts-max-age
+dokku nginx:set --global hsts-preload
+dokku nginx:set --global keepalive-timeout
+dokku nginx:set --global lingering-timeout
+dokku nginx:set --global nginx-conf-sigil-path
+dokku nginx:set --global proxy-buffer-size
+dokku nginx:set --global proxy-buffering
+dokku nginx:set --global proxy-buffers
+dokku nginx:set --global proxy-busy-buffers-size
+dokku nginx:set --global proxy-connect-timeout
+dokku nginx:set --global proxy-read-timeout
+dokku nginx:set --global proxy-send-timeout
+dokku nginx:set --global send-timeout
+dokku nginx:set --global underscore-in-headers
+dokku nginx:set --global x-forwarded-for-value
+dokku nginx:set --global x-forwarded-port-value
+dokku nginx:set --global x-forwarded-proto-value
+dokku nginx:set --global x-forwarded-ssl
+
+
 # Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
 # destroyed. More info: <https://github.com/dokku/dokku/issues/7443>
 find /var/lib/dokku/config/*/ -name 'test-*' | sudo xargs rm -rf

@@ -66,3 +66,9 @@ dokku proxy:disable test-app-7
 # ports
 dokku ports:set test-app-7 http:80:3000 https:443:3000
 dokku ports:add test-app-9 http:8080:5000 https:8081:5000
+
+# nginx
+dokku nginx:set --global client-max-body-size 123456
+dokku nginx:set --global error-log-path
+dokku nginx:set test-app-8 hsts-max-age 84600
+dokku nginx:set test-app-7 send-timeout 120s
