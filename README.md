@@ -78,9 +78,9 @@ Currently implemented plugins:
 - (core) `proxy`
 - (core) `ports`
 - (core) `nginx`
+- (core) `network`
 
 Plugins to be implemented soon:
-- (core) `network`
 - (core) `plugin`
 - (official) `redirect`
 - (official) `maintenance`

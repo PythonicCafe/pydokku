@@ -65,6 +65,15 @@ dokku nginx:set --global x-forwarded-port-value
 dokku nginx:set --global x-forwarded-proto-value
 dokku nginx:set --global x-forwarded-ssl
 
+# network
+dokku --quiet network:list | grep -E --color=no '^test-' | while read network; do
+	echo $network | dokku network:destroy $network
+done
+dokku network:set --global initial-network
+dokku network:set --global bind-all-interfaces false
+dokku network:set --global tld
+dokku network:set --global attach-post-deploy
+dokku network:set --global attach-post-create
 
 # Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
 # destroyed. More info: <https://github.com/dokku/dokku/issues/7443>

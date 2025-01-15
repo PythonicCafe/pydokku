@@ -5,6 +5,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Literal
 
+from .utils import parse_iso_format
+
 
 class BaseModel:
     def serialize(self):
@@ -205,3 +207,39 @@ class Nginx(BaseModel):
     x_forwarded_port_value: str | None = None
     x_forwarded_proto_value: str | None = None
     x_forwarded_ssl: str | None = None
+
+
+@dataclass
+class Network(BaseModel):
+    name: str
+    id: str
+    created_at: datetime.datetime
+    driver: str
+    scope: str
+    internal: bool
+    ipv6: bool
+    labels: dict[str, str]
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Network":
+        return cls(
+            id=data["ID"],
+            name=data["Name"],
+            driver=data["Driver"],
+            scope=data["Scope"],
+            created_at=parse_iso_format(data["CreatedAt"]),
+            internal=data["Internal"],
+            ipv6=data["IPv6"],
+            labels=data["Labels"],
+        )
+
+
+@dataclass
+class AppNetwork(BaseModel):
+    app_name: str
+    attach_post_create: List[str]
+    attach_post_deploy: List[str]
+    bind_all_interfaces: bool
+    initial_network: str | None = None
+    static_web_listener: str | None = None
+    tld: str | None = None

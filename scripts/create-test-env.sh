@@ -7,7 +7,7 @@ set -e
 dokku domains:set-global dokku.example.net
 
 # apps
-for appName in test-app-7 test-app-8 test-app-9; do
+for appName in test-app-5 test-app-6 test-app-7 test-app-8 test-app-9; do
 	echo "$appName" | dokku apps:destroy "$appName" 2> /dev/null || echo
 	dokku apps:create "$appName"
 done
@@ -72,3 +72,17 @@ dokku nginx:set --global client-max-body-size 123456
 dokku nginx:set --global error-log-path
 dokku nginx:set test-app-8 hsts-max-age 84600
 dokku nginx:set test-app-7 send-timeout 120s
+
+# network
+for network in $(seq 1 3); do
+    dokku network:create "test-net-${network}"
+done
+dokku network:set --global initial-network test-net-1
+dokku network:set test-app-6 bind-all-interfaces false
+dokku network:set test-app-6 tld svc.cluster.local
+dokku network:set test-app-7 attach-post-deploy test-net-2
+dokku network:set test-app-7 static-web-listener 127.0.0.1:5000
+dokku network:set test-app-8 attach-post-create test-net-2
+dokku network:set test-app-9 attach-post-create test-net-2
+dokku network:set test-app-9 bind-all-interfaces true
+dokku network:set test-app-9 initial-network none

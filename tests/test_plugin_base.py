@@ -39,13 +39,17 @@ def test_dump_load():
     cleanup_script = str((scripts_path / "cleanup.sh").absolute())
     create_test_env_script = str((scripts_path / "create-test-env.sh").absolute())
 
-    subprocess.run([cleanup_script], capture_output=True)
-    subprocess.run([create_test_env_script], capture_output=True)
+    result = subprocess.run([cleanup_script], capture_output=True)
+    assert result.returncode == 0
+    result = subprocess.run([create_test_env_script], capture_output=True)
+    assert result.returncode == 0
     data_1 = dokku_dump()
-    subprocess.run([cleanup_script], capture_output=True)
+    result = subprocess.run([cleanup_script], capture_output=True)
+    assert result.returncode == 0
     dokku_load(deepcopy(data_1))
     data_2 = dokku_dump()
-    subprocess.run([cleanup_script], capture_output=True)
+    result = subprocess.run([cleanup_script], capture_output=True)
+    assert result.returncode == 0
 
     # Since we run cleanup, some information will not be exactly the same, like `App.created_at` and
     # `Process.container_id`, so we need to set them to the same value so the `assert` works as expected.
@@ -67,5 +71,24 @@ def test_dump_load():
                 git[key] = None
     for nginx in data_1["nginx"] + data_2["nginx"]:
         nginx["last_visited_at"] = None  # For some reason, nginx adds it after a while
+
+    def sort_network(obj):
+        if "name" in obj:  # Network
+            return (0, obj["name"])
+        else:  # AppNetwork
+            return (
+                1,
+                obj["app_name"] if obj["app_name"] is not None else "",
+                obj["initial_network"] if obj["initial_network"] is not None else "",
+                obj["attach_post_create"],
+                obj["attach_post_deploy"],
+            )
+
+    # Order of returned networks could be different between the extractions, so it's forced
+    data_1["network"].sort(key=sort_network)
+    data_2["network"].sort(key=sort_network)
+    for network in data_1["network"] + data_2["network"]:
+        if "labels" in network and "com.dokku.network-name" in network["labels"]:
+            network["id"] = network["created_at"] = None
 
     assert data_1 == data_2

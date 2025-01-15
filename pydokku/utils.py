@@ -47,6 +47,13 @@ def parse_timestamp(value: str | None) -> datetime.datetime | None:
     return datetime.datetime.fromtimestamp(int(value)).replace(tzinfo=get_system_tzinfo())
 
 
+def parse_iso_format(value: str | None) -> datetime.datetime | None:
+    value = str(value if value is not None else "")
+    if not value:
+        return None
+    return datetime.datetime.fromisoformat(value)
+
+
 def parse_timedelta_seconds(value: str | None) -> datetime.timedelta | None:
     """
     Parse a seconds value
