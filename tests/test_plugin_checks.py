@@ -1,6 +1,6 @@
 from pydokku.dokku_cli import Dokku
 from pydokku.models import Check
-from tests.utils import create_apps, requires_dokku  # noqa
+from tests.utils import requires_dokku
 
 
 def test_object_classes():

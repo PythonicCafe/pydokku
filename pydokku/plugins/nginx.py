@@ -3,7 +3,14 @@ from functools import lru_cache
 from typing import Any, List
 
 from ..models import App, Command, Nginx
-from ..utils import dataclass_field_set, get_stdout_rows_parser, parse_bool, parse_path, parse_timedelta_seconds, parse_timestamp
+from ..utils import (
+    dataclass_field_set,
+    get_stdout_rows_parser,
+    parse_bool,
+    parse_path,
+    parse_timedelta_seconds,
+    parse_timestamp,
+)
 from .base import DokkuPlugin
 
 

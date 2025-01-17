@@ -3,7 +3,7 @@ import string
 
 from pydokku.dokku_cli import Dokku
 from pydokku.models import Domain
-from tests.utils import create_apps, random_value, requires_dokku  # noqa
+from tests.utils import random_value, requires_dokku
 
 
 def random_domains():
