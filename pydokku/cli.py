@@ -29,7 +29,9 @@ def dokku_dump(args):
         "dokku": {"version": dokku.version()},
     }
     # TODO: if for some reason a plugin cannot export the data completely (eg: storage running via SSH as dokku user,
-    # or ssh-keys running via SSH as dokku user), then print a warning on stderr.
+    # or ssh-keys running via SSH as dokku user), then print a warning on stderr (use
+    # `plugin.requires_extra_commands`).
+    # TODO: add a list of not-exported plugins (use `dokku.plugin.list()` and compare with the ones available)
     # TODO: add debugging log for each found plugin etc.?
     # TODO: add a progress bar?
     print("Finding apps...", file=sys.stderr, end="", flush=True)
@@ -80,7 +82,8 @@ def dokku_load(args):
                 file=sys.stderr,
             )
     execute = not args.print_only
-    # TODO: ordering is important! may first get apps and then pass the list of apps to each plugin
+    # TODO: use a `requires` parameter on each plugin and implement a requirement-solver to make sure the execution is
+    # in the correct order
     for key, values in sorted(data.items()):
         prefix = ("# " if not execute else "") + f"[{key}] "
         if not hasattr(dokku, key):

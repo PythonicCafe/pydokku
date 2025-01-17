@@ -3,6 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from pydokku import Dokku
+from pydokku.utils import execute_command
 from tests.utils import requires_dokku
 
 
@@ -39,17 +40,13 @@ def test_dump_load():
     cleanup_script = str((scripts_path / "cleanup.sh").absolute())
     create_test_env_script = str((scripts_path / "create-test-env.sh").absolute())
 
-    result = subprocess.run([cleanup_script], capture_output=True)
-    assert result.returncode == 0
-    result = subprocess.run([create_test_env_script], capture_output=True)
-    assert result.returncode == 0
+    execute_command([cleanup_script], check=True)
+    execute_command([create_test_env_script], check=True)
     data_1 = dokku_dump()
-    result = subprocess.run([cleanup_script], capture_output=True)
-    assert result.returncode == 0
+    execute_command([cleanup_script], check=True)
     dokku_load(deepcopy(data_1))
     data_2 = dokku_dump()
-    result = subprocess.run([cleanup_script], capture_output=True)
-    assert result.returncode == 0
+    execute_command([cleanup_script], check=True)
 
     # Since we run cleanup, some information will not be exactly the same, like `App.created_at` and
     # `Process.container_id`, so we need to set them to the same value so the `assert` works as expected.

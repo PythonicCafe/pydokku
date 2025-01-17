@@ -2,39 +2,41 @@
 
 command -v dokku > /dev/null 2>&1 || exit 0
 
-# apps
+function log() { echo; echo; echo "[$(date --iso=seconds)] Cleaning: $@"; }
+
+log "apps"
 dokku apps:list | grep -v '=====> My Apps' | grep -E --color=no 'test-' | while read appName; do
 	echo $appName | dokku apps:destroy $appName
 done
 
-# config
+log "config"
 testVars=$(dokku config:show --global | grep -v '=====> global env vars' | egrep -E --color=no '^test_' | sed 's/:.*//')
 if [[ ! -z $testVars ]]; then
 	dokku config:unset --global $testVars
 fi
 
-# ssh-keys
+log "ssh-keys"
 dokku ssh-keys:list 2> /dev/null | grep -E --color=no 'NAME="test-' | sed 's/.*NAME="//; s/".*//' | while read keyName; do
 	sudo dokku ssh-keys:remove $keyName
 done
 
-# storage
+log "storage"
 sudo bash -c 'rm -rf /var/lib/dokku/data/storage/test-*'
 
-# domains
+log "domains"
 dokku domains:set-global dokku.me
 
-# checks
+log "checks"
 dokku checks:set --global wait-to-retire 60
 
-# git
+log "git"
 dokku git:set --global deploy-branch master
 sudo bash -c 'rm -f /home/dokku/.ssh/id_* /home/dokku/.ssh/known_hosts'
 
-# proxy
+log "proxy"
 dokku proxy:set --global nginx
 
-# nginx
+log "nginx"
 dokku nginx:set --global access-log-format
 dokku nginx:set --global access-log-path
 dokku nginx:set --global bind-address-ipv4
@@ -65,7 +67,7 @@ dokku nginx:set --global x-forwarded-port-value
 dokku nginx:set --global x-forwarded-proto-value
 dokku nginx:set --global x-forwarded-ssl
 
-# network
+log "network"
 dokku --quiet network:list | grep -E --color=no '^test-' | while read network; do
 	echo $network | dokku network:destroy $network
 done
@@ -75,6 +77,7 @@ dokku network:set --global tld
 dokku network:set --global attach-post-deploy
 dokku network:set --global attach-post-create
 
+log "plugin properties"
 # Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
 # destroyed. More info: <https://github.com/dokku/dokku/issues/7443>
 find /var/lib/dokku/config/*/ -name 'test-*' | sudo xargs rm -rf
