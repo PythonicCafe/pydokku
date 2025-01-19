@@ -88,3 +88,16 @@ dokku network:set test-app-8 attach-post-create test-net-2
 dokku network:set test-app-9 attach-post-create test-net-2
 dokku network:set test-app-9 bind-all-interfaces true
 dokku network:set test-app-9 initial-network none
+
+log "plugin"
+TEMP_DIR="/var/lib/dokku/tmp"
+sudo mkdir -p "$TEMP_DIR"
+for plugin in elasticsearch letsencrypt maintenance mariadb mysql postgres rabbitmq redirect redis; do
+	localRepoPath="${TEMP_DIR}/dokku-copy-${plugin}"
+	if [[ ! -e "$localRepoPath" ]]; then
+		sudo git clone "https://github.com/dokku/dokku-${plugin}.git" "$localRepoPath"
+	fi
+	sudo dokku plugin:install "file://${localRepoPath}/.git" --name "$plugin"
+done
+sudo dokku plugin:disable elasticsearch 2> /dev/null || echo
+

@@ -4,21 +4,31 @@ command -v dokku > /dev/null 2>&1 || exit 0
 
 function log() { echo; echo; echo "[$(date --iso=seconds)] Cleaning: $@"; }
 
+# First, plugins that don't require any `apps`
+
+log "plugin"
+for plugin in elasticsearch letsencrypt maintenance mariadb mysql postgres rabbitmq redirect redis; do
+	sudo dokku plugin:uninstall "$plugin" 2> /dev/null || echo
+done
+
+log "ssh-keys"
+dokku ssh-keys:list 2> /dev/null | grep -E --color=no 'NAME="test-' | sed 's/.*NAME="//; s/".*//' | while read keyName; do
+	sudo dokku ssh-keys:remove $keyName
+done
+
 log "apps"
 dokku apps:list | grep -v '=====> My Apps' | grep -E --color=no 'test-' | while read appName; do
 	echo $appName | dokku apps:destroy $appName
 done
+
+
+# Then, plugins that require `apps`
 
 log "config"
 testVars=$(dokku config:show --global | grep -v '=====> global env vars' | egrep -E --color=no '^test_' | sed 's/:.*//')
 if [[ ! -z $testVars ]]; then
 	dokku config:unset --global $testVars
 fi
-
-log "ssh-keys"
-dokku ssh-keys:list 2> /dev/null | grep -E --color=no 'NAME="test-' | sed 's/.*NAME="//; s/".*//' | while read keyName; do
-	sudo dokku ssh-keys:remove $keyName
-done
 
 log "storage"
 sudo bash -c 'rm -rf /var/lib/dokku/data/storage/test-*'

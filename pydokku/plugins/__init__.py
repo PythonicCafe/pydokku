@@ -5,6 +5,7 @@ from .domains import DomainsPlugin  # noqa
 from .git import GitPlugin  # noqa
 from .network import NetworkPlugin  # noqa
 from .nginx import NginxPlugin  # noqa
+from .plugin import PluginPlugin  # noqa
 from .ports import PortsPlugin  # noqa
 from .proxy import ProxyPlugin  # noqa
 from .ps import PsPlugin  # noqa

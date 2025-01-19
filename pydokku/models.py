@@ -243,3 +243,17 @@ class AppNetwork(BaseModel):
     initial_network: str | None = None
     static_web_listener: str | None = None
     tld: str | None = None
+
+
+@dataclass
+class Plugin(BaseModel):
+    name: str
+    version: str
+    enabled: bool
+    description: str
+    git_url: str | None = None
+    git_reference: str | None = None
+
+    @property
+    def is_core(self):
+        return self.description.startswith("dokku core ")
