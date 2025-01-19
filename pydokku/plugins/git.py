@@ -26,6 +26,9 @@ class GitPlugin(DokkuPlugin):
     """
     dokku core git plugin
 
+    WARNING: if you have a deploy key (created via `git:generate-deploy-key`) it WON'T be exported by this plugin,
+    since it would require reading the PRIVATE key. The PUBLIC key is exported since it can be useful.
+
     EXTRA features:
     - `host_list` method: read known hosts file (which is populated by `git:allow-host` subcommand)
     - `auth_list` method: read netrc file (which is populated by `git:auth` subcommand)
@@ -114,6 +117,7 @@ class GitPlugin(DokkuPlugin):
         return self._evaluate("initialize", params=[app_name], execute=execute)
 
     def public_key(self) -> SSHKey | None:
+        """Read dokku public SSH key (deploy key)"""
         _, stdout, stderr = self._evaluate("public-key", execute=True, check=False, full_return=True)
         if "There is no deploy key associated" in stderr:
             return None
@@ -223,7 +227,7 @@ class GitPlugin(DokkuPlugin):
         self,
         app_name: str,
         repository_url: str,
-        git_ref: str | None = None,
+        git_reference: str | None = None,
         build: bool = False,
         build_if_changes: bool = False,
         execute: bool = True,
@@ -236,16 +240,18 @@ class GitPlugin(DokkuPlugin):
         elif build_if_changes:
             params.append("--build-if-changes")
         params.extend([app_name, repository_url])
-        if git_ref is not None:
-            params.append(git_ref)
+        if git_reference is not None:
+            params.append(git_reference)
         return self._evaluate("sync", params=params, execute=execute)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Git | SSHKey | Auth]:
-        # TODO: the current dokku user public key (as in `self.public_key`) is not exported!
         result = []
         if self.dokku.can_execute_regular_commands:
             result.extend(self.host_list())
             result.extend(self.auth_list())
+        key = self.public_key()
+        if key is not None:
+            result.append(key)
         result.extend(self.report())
         return result
 
@@ -258,8 +264,9 @@ class GitPlugin(DokkuPlugin):
                 self.auth_add(hostname=obj.hostname, username=obj.username, password=obj.password, execute=execute)
             )
         elif isinstance(obj, SSHKey):
-            for host_or_ip in obj.name.split(","):
-                result.append(self.host_add(hostname=host_or_ip, execute=execute))
+            if obj.name != "dokku-public-key":
+                for host_or_ip in obj.name.split(","):
+                    result.append(self.host_add(hostname=host_or_ip, execute=execute))
         elif isinstance(obj, Git):
             if obj.global_deploy_branch and not skip_system:
                 result.append(

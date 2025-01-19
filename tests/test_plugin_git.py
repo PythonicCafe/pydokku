@@ -256,7 +256,7 @@ def test_from_archive_command():
 def test_sync_command():
     app_name = "test-app-9"
     repository_url = "https://github.com/PythonicCafe/some-repository.git"
-    git_ref = "57d85d743220e197fcb4612733ba6a201aa65b7c"
+    git_reference = "57d85d743220e197fcb4612733ba6a201aa65b7c"
     dokku = Dokku()
 
     command = dokku.git.sync(app_name=app_name, repository_url=repository_url, execute=False)
@@ -285,8 +285,8 @@ def test_sync_command():
     assert command.check is True
     assert command.sudo is False
 
-    command = dokku.git.sync(app_name=app_name, repository_url=repository_url, git_ref=git_ref, execute=False)
-    assert command.command == ["dokku", "git:sync", app_name, repository_url, git_ref]
+    command = dokku.git.sync(app_name=app_name, repository_url=repository_url, git_reference=git_reference, execute=False)
+    assert command.command == ["dokku", "git:sync", app_name, repository_url, git_reference]
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is False

@@ -120,6 +120,7 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
 - The command and attribute names are more or less the same as in Dokku, except for:
   - `system` is used instead of `global`, since `global` is a Python reserved keyword
   - `path` is used instead of `dir` to maintain consistency with Python standard library (`pathlib` module)
+  - `git_reference` is used instead of `committish`, `tag`, `branch` and `commit`
   - Some standardization to make actions more clear, like:
     - `dokku.git.host_add` for executing `git:allow-host` (the command adds a host to the list of SSH known hosts for
       the Dokku user)

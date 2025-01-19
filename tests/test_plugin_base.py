@@ -66,6 +66,8 @@ def test_dump_load():
         for key in ("last_updated_at", "sha"):
             if key in git:
                 git[key] = None
+    # Created public key is exported but won't be created again
+    data_1["git"] = [git for git in data_1["git"] if git.get("name") != "dokku-public-key"]
     for nginx in data_1["nginx"] + data_2["nginx"]:
         nginx["last_visited_at"] = None  # For some reason, nginx adds it after a while
 
