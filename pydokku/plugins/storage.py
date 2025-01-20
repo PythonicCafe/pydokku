@@ -39,7 +39,7 @@ class StoragePlugin(DokkuPlugin):
     def list(self, app_name: str) -> List[Storage]:
         # Dokku won't return error in this `list` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
-        stdout = self._evaluate("list", [app_name, "--format", "json"], check=False)
+        stdout = self._evaluate("list", [app_name, "--format", "json"], check=False, execute=True)
         result = [
             Storage(app_name=app_name, host_path=item["host_path"], container_path=item["container_path"])
             for item in json.loads(stdout)

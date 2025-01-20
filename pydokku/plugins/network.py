@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Any, List
 
 from ..models import App, AppNetwork, Command, Network
-from ..utils import get_stdout_rows_parser, parse_bool, parse_comma_separated_list
+from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_comma_separated_list
 from .base import DokkuPlugin
 
 
@@ -101,9 +101,22 @@ class NetworkPlugin(DokkuPlugin):
         return result
 
     def report(self, app_name: str | None = None) -> List[AppNetwork]:
-        # `dokku network:report --format json` is useless since it does not contain the app name!
         system = app_name is None
-        stdout = self._evaluate("report", params=[] if system else [app_name], execute=True)
+        # `dokku network:report --format json` is useless since it does not contain the app name!
+        # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
+        # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
+        _, stdout, stderr = self._evaluate(
+            "report",
+            params=[] if system else [app_name],
+            check=False,
+            full_return=True,
+            execute=True,
+        )
+        stderr = clean_stderr(stderr)
+        if "You haven't deployed any applications yet" in stderr:
+            return []
+        elif stderr:
+            raise RuntimeError(f"Error executing network:report: {stderr}")
         rows_parser = self._get_rows_parser()
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows, skip_system=app_name is not None)

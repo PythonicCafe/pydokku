@@ -89,8 +89,13 @@ class ChecksPlugin(DokkuPlugin):
         """
         # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
+        system = app_name is None
         _, stdout, stderr = self._evaluate(
-            "report", params=[] if app_name is None else [app_name], check=False, full_return=True
+            "report",
+            params=[] if system else [app_name],
+            check=False,
+            full_return=True,
+            execute=True,
         )
         if "You haven't deployed any applications yet" in clean_stderr(stderr):
             # TODO: create temp app so we can get global wait to retire?

@@ -164,4 +164,5 @@ def test_install_command():
     assert command.check is True
     assert command.sudo is True
 
+
 # TODO: test list and assert git_reference and git_remote

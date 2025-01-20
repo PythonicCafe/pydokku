@@ -138,9 +138,7 @@ class PluginPlugin(DokkuPlugin):
             result.append(
                 self.install(git_url=obj.git_url, git_reference=obj.git_reference, name=obj.name, execute=execute)
             )
-        if obj.enabled:
-            result.append(self.enable(obj.name, execute=execute))
-        else:
+        if not obj.enabled:
             result.append(self.disable(obj.name, execute=execute))
         return result
 

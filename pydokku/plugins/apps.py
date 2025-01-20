@@ -44,9 +44,9 @@ class AppsPlugin(DokkuPlugin):
         )
 
     def list(self) -> List[App]:
-        # Dokku WILL return error in this `report` command and `check=False` is used in all `:report/list` because of
+        # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
-        _, stdout, stderr = self._evaluate("report", check=False, execute=True, full_return=True)
+        _, stdout, stderr = self._evaluate("report", check=False, full_return=True, execute=True)
         if not stdout and "You haven't deployed any applications yet" in stderr:
             return []
         elif stderr:

@@ -358,11 +358,17 @@ def test_convert_report_rows():
 
 @requires_dokku
 def test_create_list_destroy():
+    # Ensure none of the networks and apps exist. Removing apps before networks is important because if a network is
+    # attached to an app it will be impossible to remove the network.
+    dokku = Dokku()
+    for app in dokku.apps.list():
+        dokku.apps.destroy(app.name)
     network_names = ["test-net-1", "test-net-2"]
-    for name in network_names:  # Ensure none of the networks exist
+    for name in network_names:
+        # Since we're testing Dokku's network implementation, I prefer to delete them using Docker instead of the Dokku
+        # network command.
         execute_command(["sudo", "docker", "network", "remove", name], check=False)
 
-    dokku = Dokku()
     before = dokku.network.list()
     returned_names = [network.name for network in before]
     for name in network_names:
@@ -386,11 +392,18 @@ def test_create_list_destroy():
 
 @requires_dokku
 def test_set_unset_report(create_apps):
+    # Ensure none of the networks and apps exist. Removing apps before networks is important because if a network is
+    # attached to an app it will be impossible to remove the network.
+    dokku, apps_names = create_apps
+    for app in dokku.apps.list():
+        if app.name not in apps_names:
+            dokku.apps.destroy(app.name)
     network_names = [f"test-net-{x}" for x in range(10)]
-    for name in network_names:  # Ensure none of the networks exist
+    for name in network_names:
+        # Since we're testing Dokku's network implementation, I prefer to delete them using Docker instead of the Dokku
+        # network command.
         execute_command(["sudo", "docker", "network", "remove", name], check=False)
 
-    dokku, apps_names = create_apps
     for name in network_names:
         dokku.network.create(name=name)
 

@@ -56,10 +56,15 @@ class PortsPlugin(DokkuPlugin):
         return result
 
     def report(self, app_name: str = None) -> List[Port]:
-        # Dokku WILL return error in this `report` command and `check=False` is used in all `:report/list` because of
+        # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
+        system = app_name is None
         _, stdout, stderr = self._evaluate(
-            "report", params=[] if app_name is None else [app_name], check=False, full_return=True
+            "report",
+            params=[] if system else [app_name],
+            check=False,
+            full_return=True,
+            execute=True,
         )
         stderr = clean_stderr(stderr)
         if "You haven't deployed any applications yet" in stderr:

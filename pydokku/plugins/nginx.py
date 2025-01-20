@@ -103,7 +103,8 @@ class NginxPlugin(DokkuPlugin):
     def report(self, app_name: str | None = None) -> str | Command:
         # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
-        stdout = self._evaluate("report", params=[] if app_name is None else [app_name], execute=True)
+        system = app_name is None
+        stdout = self._evaluate("report", params=[] if system else [app_name], check=False, execute=True)
         rows_parser = self._get_rows_parser()
         parsed_rows = rows_parser(stdout)
         result = []

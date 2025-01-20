@@ -51,9 +51,9 @@ class SSHKeysPlugin(DokkuPlugin):
 
     def list(self) -> List[SSHKey]:
         # First, read keys on `dokku ssh-keys:list` command
-        # Dokku WILL return error in this `list` command and `check=False` is used in all `:report/list` because of
+        # Dokku WILL return error in this `list` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
-        _, stdout, stderr = self._evaluate("list", ["--format", "json"], check=False, full_return=True)
+        _, stdout, stderr = self._evaluate("list", ["--format", "json"], check=False, full_return=True, execute=True)
         if "No public keys found" in stderr:
             return []
         keys = []
