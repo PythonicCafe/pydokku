@@ -3,6 +3,7 @@ import random
 
 from pydokku.dokku_cli import Dokku
 from pydokku.models import AppNetwork, Network
+from pydokku.utils import execute_command
 from tests.utils import random_value, requires_dokku
 
 
@@ -357,9 +358,11 @@ def test_convert_report_rows():
 
 @requires_dokku
 def test_create_list_destroy():
-    dokku = Dokku()
     network_names = ["test-net-1", "test-net-2"]
+    for name in network_names:  # Ensure none of the networks exist
+        execute_command(["sudo", "docker", "network", "remove", name], check=False)
 
+    dokku = Dokku()
     before = dokku.network.list()
     returned_names = [network.name for network in before]
     for name in network_names:
@@ -383,8 +386,11 @@ def test_create_list_destroy():
 
 @requires_dokku
 def test_set_unset_report(create_apps):
-    dokku, apps_names = create_apps
     network_names = [f"test-net-{x}" for x in range(10)]
+    for name in network_names:  # Ensure none of the networks exist
+        execute_command(["sudo", "docker", "network", "remove", name], check=False)
+
+    dokku, apps_names = create_apps
     for name in network_names:
         dokku.network.create(name=name)
 
@@ -406,9 +412,13 @@ def test_set_unset_report(create_apps):
             possible_networks = [name for name in network_names if name not in global_networks]
             app_nets = list(random.sample(possible_networks, random.randint(3, len(possible_networks))))
         apps_nets[app_name]["attach-post-create"] = app_nets[:2]
-        dokku.network.set_many(app_name=app_name, key="attach-post-create", values=apps_nets[app_name]["attach-post-create"])
+        dokku.network.set_many(
+            app_name=app_name, key="attach-post-create", values=apps_nets[app_name]["attach-post-create"]
+        )
         apps_nets[app_name]["attach-post-deploy"] = app_nets[2:]
-        dokku.network.set_many(app_name=app_name, key="attach-post-deploy", values=apps_nets[app_name]["attach-post-deploy"])
+        dokku.network.set_many(
+            app_name=app_name, key="attach-post-deploy", values=apps_nets[app_name]["attach-post-deploy"]
+        )
         apps_nets[app_name]["tld"] = f"{random_value(16)}.example.net"
         dokku.network.set(app_name=app_name, key="tld", value=apps_nets[app_name]["tld"])
         apps_nets[app_name]["bind-all-interfaces"] = random.choice([True, False])

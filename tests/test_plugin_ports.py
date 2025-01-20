@@ -200,7 +200,7 @@ def test_report_add_remove_set_clear(create_apps):
     dokku, apps_names = create_apps
 
     # Default behavior
-    after_app_creation = dokku.ports.report()
+    after_app_creation = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
     expected_global = Port(app_name=None, scheme="http", host_port=80, container_port=5000)
     assert [expected_global] == after_app_creation
 
@@ -232,20 +232,20 @@ def test_report_add_remove_set_clear(create_apps):
         ),
     ]
     dokku.ports.add(new_ports, execute=True)
-    only_first_app = dokku.ports.report(app_name="test-app-1")
+    only_first_app = [obj for obj in dokku.ports.report(app_name="test-app-1") if obj.app_name in [None] + apps_names]
     assert only_first_app == new_ports[:2]
-    after_new_ports = dokku.ports.report()
+    after_new_ports = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + new_ports, key=sort_ports) == sorted(after_new_ports, key=sort_ports)
     dokku.ports.remove(ports=[new_ports[-1]], execute=True)
-    after_remove = dokku.ports.report()
+    after_remove = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + new_ports[:-1], key=sort_ports) == sorted(after_remove, key=sort_ports)
     dokku.ports.set(ports=[new_ports[0]], execute=True)
-    after_set = dokku.ports.report()
+    after_set = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + [new_ports[0], new_ports[2]], key=sort_ports) == sorted(
         after_set, key=sort_ports
     )
     dokku.ports.clear(app_name="test-app-1", execute=True)
-    after_set = dokku.ports.report()
+    after_set = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + [new_ports[2]], key=sort_ports) == sorted(after_set, key=sort_ports)
 
 

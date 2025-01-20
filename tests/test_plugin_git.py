@@ -6,6 +6,7 @@ import pytest
 from pydokku import Dokku
 from pydokku.models import Auth, Git, SSHKey
 from pydokku.plugins.git import parse_netrc_file
+from pydokku.utils import execute_command
 from tests.utils import requires_dokku
 
 
@@ -285,7 +286,9 @@ def test_sync_command():
     assert command.check is True
     assert command.sudo is False
 
-    command = dokku.git.sync(app_name=app_name, repository_url=repository_url, git_reference=git_reference, execute=False)
+    command = dokku.git.sync(
+        app_name=app_name, repository_url=repository_url, git_reference=git_reference, execute=False
+    )
     assert command.command == ["dokku", "git:sync", app_name, repository_url, git_reference]
     assert command.stdin is None
     assert command.check is True
@@ -294,9 +297,16 @@ def test_sync_command():
 
 @requires_dokku
 def test_deploy_key():
+    return_code, stdout, stderr = execute_command(["sudo", "cat", "/home/dokku/.ssh/id_ed25519"], check=False)
+    key_exists = return_code == 0 and not stderr
+    if key_exists:
+        # A key already exists, let's delete it so we can create a new one
+        execute_command(["sudo", "rm", "/home/dokku/.ssh/id_ed25519"], check=False)
+        execute_command(["sudo", "rm", "/home/dokku/.ssh/id_ed25519.pub"], check=False)
+
     dokku = Dokku()
-    no_key = dokku.git.public_key()
-    assert no_key is None  # No deploy key created
+    key = dokku.git.public_key()
+    assert key is None  # No deploy key created
     created_key = dokku.git.generate_deploy_key()
     read_key = dokku.git.public_key()
     assert created_key == read_key
