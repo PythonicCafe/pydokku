@@ -6,24 +6,25 @@ from textwrap import indent
 from . import __version__
 
 
-def create_dokku_instance(args):
+def create_dokku_instance(ssh_config: dict = None):
     from .dokku_cli import Dokku  # noqa
 
+    ssh_config = ssh_config or {}
     return Dokku(
-        ssh_host=args.ssh_host,
-        ssh_user=args.ssh_user,
-        ssh_port=args.ssh_port,
-        ssh_private_key=args.ssh_private_key,
-        ssh_key_password=args.ssh_key_password or os.environ.get("SSH_KEY_PASSWORD"),
-        ssh_mux=not args.no_ssh_mux,
+        ssh_host=ssh_config.get("host"),
+        ssh_user=ssh_config.get("user"),
+        ssh_port=ssh_config.get("port"),
+        ssh_private_key=ssh_config.get("private_key"),
+        ssh_key_password=ssh_config.get("key_password"),
+        ssh_mux=ssh_config.get("mux"),
     )
 
 
-def dokku_dump(args):
+def dokku_dump(json_filename: Path, ssh_config: dict, quiet: bool = False, indent: int = 2):
     import json
     import sys
 
-    dokku = create_dokku_instance(args)
+    dokku = create_dokku_instance(ssh_config=ssh_config)
     data = {
         "pydokku": {"version": __version__},
         "dokku": {"version": dokku.version()},
@@ -34,54 +35,57 @@ def dokku_dump(args):
     # TODO: add a list of not-exported plugins (use `dokku.plugin.list()` and compare with the ones available)
     # TODO: add debugging log for each found plugin etc.?
     # TODO: add a progress bar?
-    print("Finding apps...", file=sys.stderr, end="", flush=True)
+    if not quiet:
+        print("Finding apps...", file=sys.stderr, end="", flush=True)
     apps = dokku.apps.list()
-    print(f" {len(apps)} found.", file=sys.stderr, flush=True)
+    if not quiet:
+        print(f" {len(apps)} found.", file=sys.stderr, flush=True)
     # TODO: add option to filter by app name and/or global
     for name, plugin in dokku.plugins.items():
-        print(f"Listing and serializing objects for plugin {name}...", file=sys.stderr, end="", flush=True)
+        if not quiet:
+            print(f"Listing and serializing objects for plugin {name}...", file=sys.stderr, end="", flush=True)
         try:
             data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
         except NotImplementedError:
-            if not args.quiet:
+            if not quiet:
                 print(
                     f"WARNING: cannot export data for plugin {repr(name)} (`dump` method not implemened)",
                     file=sys.stderr,
                 )
         else:
-            print(f" {len(data[name])} exported.", file=sys.stderr, flush=True)
+            if not quiet:
+                print(f" {len(data[name])} exported.", file=sys.stderr, flush=True)
 
-    if args.json_filename.name != "-":
-        args.json_filename.parent.mkdir(parents=True, exist_ok=True)
-        with args.json_filename.open(mode="w") as fobj:
-            json.dump(data, fobj, indent=args.indent, default=str)
+    if json_filename.name != "-":
+        json_filename.parent.mkdir(parents=True, exist_ok=True)
+        with json_filename.open(mode="w") as fobj:
+            json.dump(data, fobj, indent=indent, default=str)
     else:
-        print(json.dumps(data, indent=args.indent, default=str))
+        print(json.dumps(data, indent=indent, default=str))
 
 
-def dokku_load(args):
+def dokku_load(json_filename: Path, ssh_config: dict, force: bool = False, quiet: bool = False, execute: bool = True):
     import json
     import sys
 
-    input_file = args.json_filename if args.json_filename.name != "-" else sys.stdin
+    input_file = json_filename if json_filename.name != "-" else sys.stdin
     with input_file.open() as fobj:
         data = json.load(fobj)
     metadata = data.pop("dokku")
-    dokku = create_dokku_instance(args)
+    dokku = create_dokku_instance(ssh_config=ssh_config)
     expected_version = metadata["version"]
     current_version = dokku.version()
     if current_version != expected_version:
-        if not args.force:
+        if not force:
             print(
                 f"ERROR: version mismatch (current: {current_version}, expected: {expected_version}). Use `--force` if you want to continue"
             )
             exit(1)
-        elif not args.quiet:
+        elif not quiet:
             print(
                 f"WARNING: version mismatch (current: {current_version}, expected: {expected_version}).",
                 file=sys.stderr,
             )
-    execute = not args.print_only
     # TODO: use a `requires` parameter on each plugin and implement a requirement-solver to make sure the execution is
     # in the correct order
     for key, values in sorted(data.items()):
@@ -140,13 +144,32 @@ def main():
     load_parser.add_argument("json_filename", type=Path, help="Filename created by `pydokku dump` command")
 
     args = parser.parse_args()
+    ssh_config = {
+        "host": args.ssh_host,
+        "user": args.ssh_user,
+        "port": args.ssh_port,
+        "private_key": args.ssh_private_key,
+        "key_password": args.ssh_key_password or os.environ.get("SSH_KEY_PASSWORD"),
+        "mux": not args.no_ssh_mux,
+    }
 
     if args.command == "version":
         print(f"pydokku {__version__}")
     elif args.command == "dump":
-        dokku_dump(args)
+        dokku_dump(
+            json_filename=args.json_filename,
+            ssh_config=ssh_config,
+            quiet=args.quiet,
+            indent=args.indent,
+        )
     elif args.command == "load":
-        dokku_load(args)
+        dokku_load(
+            json_filename=args.json_filename,
+            force=args.force,
+            quiet=args.quiet,
+            execute=not args.print_only,
+            ssh_config=ssh_config,
+        )
 
 
 if __name__ == "__main__":

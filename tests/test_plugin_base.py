@@ -1,35 +1,19 @@
+import json
+import tempfile
 from copy import deepcopy
 from pathlib import Path
 
 from pydokku import Dokku
+from pydokku.cli import dokku_dump, dokku_load
 from pydokku.utils import execute_command
 from tests.utils import requires_dokku
 
 
-def dokku_dump():
-    # TODO: unify with pydokku/cli.py (without the logging)
-    dokku = Dokku()
-    data = {
-        "dokku": {"version": dokku.version()},
-    }
-    apps = dokku.apps.list()
-    for name, plugin in dokku.plugins.items():
-        data[name] = []
-        for obj in plugin.object_list(apps, system=True):
-            data[name].append(obj.serialize())
-    return data
-
-
-def dokku_load(data):
-    # TODO: unify with pydokku/cli.py (without the logging)
-    dokku = Dokku()
-    for key, values in sorted(data.items()):
-        if key == "dokku":
-            continue
-        plugin = getattr(dokku, key)
-        objects = [plugin.object_deserialize(row) for row in values]
-        for result in plugin.object_create_many(objects, execute=True):
-            continue
+def run_dump():
+    with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
+        path = Path(tmp.name)
+        dokku_dump(json_filename=path, ssh_config={}, quiet=True)
+        return json.loads(path.read_text())
 
 
 @requires_dokku
@@ -41,10 +25,13 @@ def test_dump_load():
 
     execute_command([cleanup_script], check=True)
     execute_command([create_test_env_script], check=True)
-    data_1 = dokku_dump()
+    data_1 = run_dump()
     execute_command([cleanup_script], check=True)
-    dokku_load(deepcopy(data_1))
-    data_2 = dokku_dump()
+    with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
+        path = Path(tmp.name)
+        path.write_text(json.dumps(data_1, default=str))
+        dokku_load(json_filename=path, ssh_config={}, force=True, quiet=False, execute=True)
+    data_2 = run_dump()
     execute_command([cleanup_script], check=True)
 
     # Since we run cleanup, some information will not be exactly the same, like `App.created_at` and

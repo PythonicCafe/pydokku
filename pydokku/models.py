@@ -208,6 +208,12 @@ class Nginx(BaseModel):
     x_forwarded_proto_value: str | None = None
     x_forwarded_ssl: str | None = None
 
+    def serialize(self):
+        row = super().serialize()
+        if row["hsts_max_age"] is not None:
+            row["hsts_max_age"] = int(row["hsts_max_age"].total_seconds())
+        return row
+
 
 @dataclass
 class Network(BaseModel):
