@@ -208,7 +208,7 @@ def test_set_scale_command():
     assert command.sudo is False
 
 
-def test_parse_report():
+def test_parse_list():
     stdout = """
         =====> some-app ps information
             Deployed:                      true

@@ -55,7 +55,7 @@ class PortsPlugin(DokkuPlugin):
                 result.append(self._parse_port_string(app_name=row["app_name"], value=port))
         return result
 
-    def report(self, app_name: str = None) -> List[Port]:
+    def list(self, app_name: str | None = None) -> List[Port]:
         # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
@@ -128,9 +128,9 @@ class PortsPlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[Port]:
         apps_names = [app.name for app in apps]
         if system:
-            return [obj for obj in self.report() if obj.app_name in [None] + apps_names]
+            return [obj for obj in self.list() if obj.app_name in [None] + apps_names]
         else:
-            return [self.report(app_name=app_name) for app_name in apps_names]
+            return [self.list(app_name=app_name) for app_name in apps_names]
 
     def object_create(self, obj: Port, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         # `skip_system` is ignored since there's no way to set global port mapping

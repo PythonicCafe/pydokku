@@ -70,8 +70,8 @@ class PsPlugin(DokkuPlugin):
             result.append(ProcessInfo(**row))
         return result
 
-    def report(self, app_name: str = None) -> List[ProcessInfo] | ProcessInfo:
-        """Get a report of . If `app_name` is `None`, the report includes all apps
+    def list(self, app_name: str | None = None) -> List[ProcessInfo] | ProcessInfo:
+        """Get the list of processes. If `app_name` is `None`, the report includes all apps
 
         WARNING: if the app is not deployed yet, it won't show the scale for each process type - in this case you can
         get those numbers by executing `self.get_scale(app_name)`.
@@ -191,7 +191,7 @@ class PsPlugin(DokkuPlugin):
         apps_names = [app.name for app in apps]
         result = []
         for app_name in apps_names:
-            process_info = self.report(app_name=app_name)[0]
+            process_info = self.list(app_name=app_name)[0]
             if not process_info.processes:  # Probably app not deployed yet - get more info via `self.get_scale`
                 for proc_type, number in self.get_scale(app_name=app_name).items():
                     for process_id in range(1, number + 1):

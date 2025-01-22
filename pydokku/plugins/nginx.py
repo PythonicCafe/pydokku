@@ -18,10 +18,10 @@ class NginxPlugin(DokkuPlugin):
     """
     dokku core nginx plugin
 
-    Subcommands NOT implemented: TODO
+    Subcommands NOT implemented: none.
 
     Extra features:
-    - `report()` will add a global object
+    - `list()` will add a global object
     """
 
     name = "nginx"
@@ -100,7 +100,7 @@ class NginxPlugin(DokkuPlugin):
             result.append(Nginx(**app_row))
         return result
 
-    def report(self, app_name: str | None = None) -> str | Command:
+    def list(self, app_name: str | None = None) -> str | Command:
         # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
@@ -154,9 +154,9 @@ class NginxPlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[Nginx]:
         apps_names = [app.name for app in apps]
         if system:
-            return [obj for obj in self.report() if obj.app_name in [None] + apps_names]
+            return [obj for obj in self.list() if obj.app_name in [None] + apps_names]
         else:
-            return [self.report(app_name=app_name) for app_name in apps_names]
+            return [self.list(app_name=app_name) for app_name in apps_names]
 
     def object_create(self, obj: Nginx, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
         # This command ignores `skip_system` since there's an object dedicated to global configs.

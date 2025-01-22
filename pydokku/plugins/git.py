@@ -61,7 +61,7 @@ class GitPlugin(DokkuPlugin):
             },
         )
 
-    def report(self, app_name: str | None = None) -> List[Git] | Git:
+    def list(self, app_name: str | None = None) -> List[Git] | Git:
         # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
@@ -257,7 +257,7 @@ class GitPlugin(DokkuPlugin):
         key = self.public_key()
         if key is not None:
             result.append(key)
-        result.extend(self.report())
+        result.extend(self.list())
         return result
 
     def object_create(

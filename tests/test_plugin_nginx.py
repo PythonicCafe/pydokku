@@ -400,16 +400,16 @@ def test_validate_config_command():
 
 
 @requires_dokku
-def test_set_unset_report(create_apps):
+def test_set_unset_list(create_apps):
     dokku, apps_names = create_apps
 
-    before = [obj for obj in dokku.nginx.report() if obj.app_name in [None] + apps_names]
+    before = [obj for obj in dokku.nginx.list() if obj.app_name in [None] + apps_names]
     assert len(before) == len(apps_names) + 1  # apps + global
 
     dokku.nginx.set(app_name=None, key="client-max-body-size", value="500m")
     dokku.nginx.set(app_name=apps_names[0], key="hsts-max-age", value=84600)
     dokku.nginx.set(app_name=apps_names[1], key="send-timeout", value="120s")
-    after = [obj for obj in dokku.nginx.report() if obj.app_name in [None] + apps_names]
+    after = [obj for obj in dokku.nginx.list() if obj.app_name in [None] + apps_names]
     assert after[0].app_name is None
     assert before[0].client_max_body_size != "500m"
     assert after[0].client_max_body_size == "500m"

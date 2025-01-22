@@ -16,7 +16,7 @@ def test_proxy_type_property():
     assert proxy_2.type == "caddy"  # App's own `type`
 
 
-def test_parse_report():
+def test_parse_list():
     stdout = """
         =====> test-app-7 proxy information
                Proxy computed type:           nginx
@@ -124,14 +124,14 @@ def test_build_config_command():
 
 
 @requires_dokku
-def test_report_set_disable_enable(create_apps):
+def test_list_set_disable_enable(create_apps):
     def sort_proxy(obj):
         return (obj.app_name, obj.global_type, obj.app_type)
 
     dokku, apps_names = create_apps
 
     # Default behavior
-    after_app_creation = dokku.proxy.report()
+    after_app_creation = dokku.proxy.list()
     old_proxy = after_app_creation[0].global_type
     expected_default = [
         Proxy(app_name=app_name, enabled=True, app_type=None, global_type=old_proxy) for app_name in apps_names
@@ -147,19 +147,19 @@ def test_report_set_disable_enable(create_apps):
     new_app_name = "test-app-4"
     dokku.apps.create(new_app_name)
     try:
-        after_changing_global = dokku.proxy.report()
+        after_changing_global = dokku.proxy.list()
         result = [proxy for proxy in after_changing_global if proxy.app_name in apps_names + [new_app_name]]
         expected_proxy = Proxy(app_name=new_app_name, enabled=True, app_type=None, global_type=new_proxy)
         assert sorted(result, key=sort_proxy) == sorted(expected_default + [expected_proxy], key=sort_proxy)
 
         # Enable/disable
         dokku.proxy.disable(app_name=new_app_name)
-        after_disabling_app = dokku.proxy.report()
+        after_disabling_app = dokku.proxy.list()
         result = [proxy for proxy in after_disabling_app if proxy.app_name in apps_names + [new_app_name]]
         new_expected_proxy = Proxy(app_name=new_app_name, enabled=False, app_type=None, global_type=new_proxy)
         assert sorted(result, key=sort_proxy) == sorted(expected_default + [new_expected_proxy], key=sort_proxy)
         dokku.proxy.enable(app_name=new_app_name)
-        final = dokku.proxy.report()
+        final = dokku.proxy.list()
         result = [proxy for proxy in final if proxy.app_name in apps_names + [new_app_name]]
         new_expected_proxy = Proxy(app_name=new_app_name, enabled=True, app_type=None, global_type=new_proxy)
         assert sorted(result, key=sort_proxy) == sorted(expected_default + [new_expected_proxy], key=sort_proxy)

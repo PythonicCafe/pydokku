@@ -37,7 +37,7 @@ class PluginPlugin(DokkuPlugin):
     """
     dokku core plugin plugin
 
-    Subcommands NOT implemented: xxx
+    Subcommands NOT implemented: none.
 
     EXTRA features:
     - `list` will add the actual git remote and reference reading files inside `.git` for each non-core plugin.

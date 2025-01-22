@@ -98,7 +98,7 @@ def test_parse_deploy_key():
     assert result == expected
 
 
-def test_parse_report():
+def test_parse_list():
     stdout = """
         =====> test-app-10 git information
             Git deploy branch:             master

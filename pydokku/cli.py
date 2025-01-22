@@ -53,6 +53,7 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
     errlog(f" {len(apps)} found.")
     exported_plugins = set()
     for name, plugin in dokku.plugins.items():
+        # TODO: what if the plugin is disabled?
         errlog(f"Listing and serializing objects for plugin {name}...", end="")
         try:
             data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
@@ -98,6 +99,7 @@ def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quie
         if not hasattr(dokku, key):
             errlog(f"WARNING: skipping unknown plugin {repr(key)}")
             continue
+        # TODO: what if the plugin is disabled?
         errlog(f"{prefix}Reading objects...", end="")
         plugin = getattr(dokku, key)
         objects = [plugin.object_deserialize(row) for row in values]
@@ -109,6 +111,7 @@ def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quie
             if execute:
                 output = indent(output, "    ")
             print(output)
+            # TODO: add option to return output instead of printing
 
 
 def main():

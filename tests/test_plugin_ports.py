@@ -108,7 +108,7 @@ def test_remove_command():
     assert commands[1].sudo is False
 
 
-def test_parse_report():
+def test_parse_list():
     stdout = """
         =====> test-app-1 ports information
             Ports map:                     http:80:5001 https:443:5001
@@ -193,14 +193,14 @@ def test_convert_rows():
 
 
 @requires_dokku
-def test_report_add_remove_set_clear(create_apps):
+def test_list_add_remove_set_clear(create_apps):
     def sort_ports(obj):
         return (obj.app_name or "", obj.scheme, obj.host_port)
 
     dokku, apps_names = create_apps
 
     # Default behavior
-    after_app_creation = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
+    after_app_creation = [obj for obj in dokku.ports.list() if obj.app_name in [None] + apps_names]
     expected_global = Port(app_name=None, scheme="http", host_port=80, container_port=5000)
     assert [expected_global] == after_app_creation
 
@@ -232,20 +232,20 @@ def test_report_add_remove_set_clear(create_apps):
         ),
     ]
     dokku.ports.add(new_ports, execute=True)
-    only_first_app = [obj for obj in dokku.ports.report(app_name="test-app-1") if obj.app_name in [None] + apps_names]
+    only_first_app = [obj for obj in dokku.ports.list(app_name="test-app-1") if obj.app_name in [None] + apps_names]
     assert only_first_app == new_ports[:2]
-    after_new_ports = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
+    after_new_ports = [obj for obj in dokku.ports.list() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + new_ports, key=sort_ports) == sorted(after_new_ports, key=sort_ports)
     dokku.ports.remove(ports=[new_ports[-1]], execute=True)
-    after_remove = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
+    after_remove = [obj for obj in dokku.ports.list() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + new_ports[:-1], key=sort_ports) == sorted(after_remove, key=sort_ports)
     dokku.ports.set(ports=[new_ports[0]], execute=True)
-    after_set = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
+    after_set = [obj for obj in dokku.ports.list() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + [new_ports[0], new_ports[2]], key=sort_ports) == sorted(
         after_set, key=sort_ports
     )
     dokku.ports.clear(app_name="test-app-1", execute=True)
-    after_set = [obj for obj in dokku.ports.report() if obj.app_name in [None] + apps_names]
+    after_set = [obj for obj in dokku.ports.list() if obj.app_name in [None] + apps_names]
     assert sorted(after_app_creation + [new_ports[2]], key=sort_ports) == sorted(after_set, key=sort_ports)
 
 

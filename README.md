@@ -147,6 +147,9 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
   commands. In some plugins, a deliberate choice was made to represent the "global" object separately (e.g., in the
   `domains` plugin). In others, there may be multiple dataclasses, as they represent entirely different entities (e.g.,
   in the `git` plugin).
+- All plugins have a `list()` method to execute the `:report` or `:list` Dokku-equivalent subcommand - so you always
+  use one name for listing the objects and don't need to be confused about which is the correct name to use in which
+  plugin. The only exception is `network`, which have both (the outputs are different).
 - Because of the way Dokku works, if you don't have any application created you may not get the global values for the
   system in some plugins (like `nginx`). Dokku adds the global information in the middle of the app report, so you need
   at least one dummy app to have the global output.
