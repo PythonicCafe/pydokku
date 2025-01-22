@@ -100,3 +100,7 @@ for plugin in elasticsearch letsencrypt maintenance mariadb mysql postgres rabbi
 	sudo dokku plugin:install "file://${localRepoPath}/.git" --name "$plugin"
 done
 sudo dokku plugin:disable elasticsearch 2> /dev/null || echo
+
+log "redirect"
+dokku redirect:set test-app-8 old.example.net new.example.net
+dokku redirect:set test-app-9 older.example.net new.example.net 302

@@ -9,6 +9,7 @@ from .plugin import PluginPlugin  # noqa
 from .ports import PortsPlugin  # noqa
 from .proxy import ProxyPlugin  # noqa
 from .ps import PsPlugin  # noqa
+from .redirect import RedirectPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 

@@ -72,17 +72,17 @@ Currently implemented plugins:
 - (core) `config`
 - (core) `domains`
 - (core) `git`
+- (core) `network`
+- (core) `nginx`
+- (core) `plugin`
+- (core) `ports`
+- (core) `proxy`
 - (core) `ps`
 - (core) `ssh-keys`
 - (core) `storage`
-- (core) `proxy`
-- (core) `ports`
-- (core) `nginx`
-- (core) `network`
-- (core) `plugin`
+- (official) `redirect`
 
 Plugins to be implemented soon:
-- (official) `redirect`
 - (official) `maintenance`
 - (official) `letsencrypt`
 - (official, service) `postgres`

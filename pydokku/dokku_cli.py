@@ -69,6 +69,7 @@ class Dokku:
             PortsPlugin,
             ProxyPlugin,
             PsPlugin,
+            RedirectPlugin,
             SSHKeysPlugin,
             StoragePlugin,
         )
@@ -85,6 +86,7 @@ class Dokku:
             "ports": PortsPlugin,
             "proxy": ProxyPlugin,
             "ps": PsPlugin,
+            "redirect": RedirectPlugin,
             "ssh_keys": SSHKeysPlugin,
             "storage": StoragePlugin,
         }

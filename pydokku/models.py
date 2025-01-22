@@ -263,3 +263,11 @@ class Plugin(BaseModel):
     @property
     def is_core(self):
         return self.description.startswith("dokku core ")
+
+
+@dataclass
+class Redirect(BaseModel):
+    app_name: str
+    source: str
+    destination: str
+    code: int

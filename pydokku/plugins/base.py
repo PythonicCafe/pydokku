@@ -17,7 +17,7 @@ class DokkuPlugin:
 
     def _evaluate(
         self,
-        operation: str,
+        operation: str | None,
         params: List[str] | None = None,
         stdin: str = None,
         check: bool = True,
@@ -25,8 +25,9 @@ class DokkuPlugin:
         execute: bool = True,
         full_return: bool = False,
     ) -> str | Command | tuple[int, str, str]:
+        subcommand = f"{self.name}:{operation}" if operation is not None else self.name
         cmd = Command(
-            command=["dokku", f"{self.name}:{operation}"] + (params if params is not None else []),
+            command=["dokku", subcommand] + (params if params is not None else []),
             stdin=stdin,
             check=check,
             sudo=sudo,
