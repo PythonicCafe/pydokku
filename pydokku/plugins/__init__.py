@@ -12,25 +12,6 @@ from .ps import PsPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-# TODO: implement network:create <network>                     Creates an attachable docker network
-# TODO: implement network:destroy <network>                    Destroys a docker network
-# TODO: implement network:exists <network>                     Checks if a docker network exists
-# TODO: implement network:info <network> [--format text|json]  Outputs information about a docker network
-# TODO: implement network:list [--format text|json]            Lists all docker networks
-# TODO: implement network:rebuild <app>                        Rebuilds network settings for an app
-# TODO: implement network:rebuildall                           Rebuild network settings for all apps
-# TODO: implement network:report [<app>] [<flag>]              Displays a network report for one or more apps
-# TODO: implement network:set <app> <property> (<value>...)    Set or clear a network property for an app
-
-# TODO: implement plugin:disable <name>                                                                               Disable an installed plugin (third-party only)
-# TODO: implement plugin:enable <name>                                                                                Enable a previously disabled plugin
-# TODO: implement plugin:install [--core|--git-url] [--committish branch|commit|commit] [--name custom-plugin-name]   Optionally download git-url (and pin to the specified branch/commit/tag) & run install trigger for active plugins (or only core ones)
-# TODO: implement plugin:install-dependencies [--core]                                                                Run install-dependencies trigger for active plugins (or only core ones)
-# TODO: implement plugin:list                                                                                         Print active plugins
-# TODO: implement plugin:trigger <args...>                                                                            Trigger an arbitrary plugin hook
-# TODO: implement plugin:uninstall <name>                                                                             Uninstall a plugin (third-party only)
-# TODO: implement plugin:update [name [branch|commit|tag]]                                                            Optionally update named plugin from git (and pin to the specified branch/commit/tag) & run update trigger for active plugins
-
 # TODO: implement redirect <app>                           Display the redirects set on app
 # TODO: implement redirect:set <app> <src> <dest> [<code>] Set a redirect from <src> domain to <dest> domain
 # TODO: implement redirect:unset <app> <src>               Unset a redirect from <source>

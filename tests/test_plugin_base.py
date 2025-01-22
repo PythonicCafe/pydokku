@@ -1,9 +1,7 @@
 import json
 import tempfile
-from copy import deepcopy
 from pathlib import Path
 
-from pydokku import Dokku
 from pydokku.cli import dokku_dump, dokku_load
 from pydokku.utils import execute_command
 from tests.utils import requires_dokku

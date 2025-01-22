@@ -51,14 +51,14 @@ dokku ps:scale test-app-9 web=2 worker=3
 
 log "git"
 dokku git:generate-deploy-key
-dokku git:from-image test-app-8 nginx:1.27.3-alpine-perl
+dokku git:allow-host github.com
+dokku git:auth github.com user8 pass8
+dokku git:auth gitlab.com user9 pass9
 dokku git:set --global deploy-branch stable
 dokku git:set test-app-7 deploy-branch develop
 dokku git:set test-app-7 keep-git-dir false
 dokku git:set test-app-7 source-image nginx:1.27.3-alpine-perl
-dokku git:allow-host github.com
-dokku git:auth github.com user8 pass8
-dokku git:auth gitlab.com user9 pass9
+dokku git:from-image test-app-8 nginx:1.27.3-alpine-perl
 
 log "proxy"
 dokku proxy:set --global caddy
@@ -100,4 +100,3 @@ for plugin in elasticsearch letsencrypt maintenance mariadb mysql postgres rabbi
 	sudo dokku plugin:install "file://${localRepoPath}/.git" --name "$plugin"
 done
 sudo dokku plugin:disable elasticsearch 2> /dev/null || echo
-

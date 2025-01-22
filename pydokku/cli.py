@@ -1,5 +1,7 @@
 import argparse
+import json
 import os
+import sys
 from pathlib import Path
 from textwrap import indent
 
@@ -20,10 +22,20 @@ def create_dokku_instance(ssh_config: dict = None):
     )
 
 
-def dokku_dump(json_filename: Path, ssh_config: dict, quiet: bool = False, indent: int = 2):
-    import json
-    import sys
+def no_log(*args, **kwargs):
+    return
 
+
+def error_log(*args, **kwargs):
+    if "file" not in kwargs:
+        kwargs["file"] = sys.stderr
+    if "flush" not in kwargs:
+        kwargs["flush"] = True
+    print(*args, **kwargs)
+
+
+def dokku_dump(json_filename: Path, ssh_config: dict, quiet: bool = False, indent: int = 2):
+    errlog = no_log if quiet else error_log
     dokku = create_dokku_instance(ssh_config=ssh_config)
     data = {
         "pydokku": {"version": __version__},
@@ -32,42 +44,38 @@ def dokku_dump(json_filename: Path, ssh_config: dict, quiet: bool = False, inden
     # TODO: if for some reason a plugin cannot export the data completely (eg: storage running via SSH as dokku user,
     # or ssh-keys running via SSH as dokku user), then print a warning on stderr (use
     # `plugin.requires_extra_commands`).
-    # TODO: add a list of not-exported plugins (use `dokku.plugin.list()` and compare with the ones available)
-    # TODO: add debugging log for each found plugin etc.?
     # TODO: add a progress bar?
-    if not quiet:
-        print("Finding apps...", file=sys.stderr, end="", flush=True)
+    errlog("Finding plugins...", end="")
+    plugins = dokku.plugin.list()
+    errlog(f" {len(plugins)} found.")
+    errlog("Finding apps...", end="")
     apps = dokku.apps.list()
-    if not quiet:
-        print(f" {len(apps)} found.", file=sys.stderr, flush=True)
-    # TODO: add option to filter by app name and/or global
+    errlog(f" {len(apps)} found.")
+    exported_plugins = set()
     for name, plugin in dokku.plugins.items():
-        if not quiet:
-            print(f"Listing and serializing objects for plugin {name}...", file=sys.stderr, end="", flush=True)
+        errlog(f"Listing and serializing objects for plugin {name}...", end="")
         try:
             data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
         except NotImplementedError:
-            if not quiet:
-                print(
-                    f"WARNING: cannot export data for plugin {repr(name)} (`dump` method not implemened)",
-                    file=sys.stderr,
-                )
+            errlog(f"WARNING: cannot export data for plugin {repr(name)} (`dump` method not implemened)")
         else:
-            if not quiet:
-                print(f" {len(data[name])} exported.", file=sys.stderr, flush=True)
-
-    if json_filename.name != "-":
-        json_filename.parent.mkdir(parents=True, exist_ok=True)
-        with json_filename.open(mode="w") as fobj:
-            json.dump(data, fobj, indent=indent, default=str)
+            exported_plugins.add(name)
+            errlog(f" {len(data[name])} exported.")
+    not_exported = set(plugin.name for plugin in plugins) - exported_plugins
+    if not_exported:
+        plural = "s" if len(plugins) != 1 else ""
+        names = ", ".join(sorted(not_exported))
+        errlog(f"WARNING: {len(not_exported)} plugin{plural} were not exported (not implemented): {names}")
+    json_data = json.dumps(data, indent=indent, default=str)
+    if json_filename.name == "-":
+        print(json_data)
     else:
-        print(json.dumps(data, indent=indent, default=str))
+        json_filename.parent.mkdir(parents=True, exist_ok=True)
+        json_filename.write_text(json_data)
 
 
 def dokku_load(json_filename: Path, ssh_config: dict, force: bool = False, quiet: bool = False, execute: bool = True):
-    import json
-    import sys
-
+    errlog = no_log if quiet else error_log
     input_file = json_filename if json_filename.name != "-" else sys.stdin
     with input_file.open() as fobj:
         data = json.load(fobj)
@@ -78,26 +86,23 @@ def dokku_load(json_filename: Path, ssh_config: dict, force: bool = False, quiet
     if current_version != expected_version:
         if not force:
             print(
-                f"ERROR: version mismatch (current: {current_version}, expected: {expected_version}). Use `--force` if you want to continue"
-            )
-            exit(1)
-        elif not quiet:
-            print(
-                f"WARNING: version mismatch (current: {current_version}, expected: {expected_version}).",
+                f"ERROR: version mismatch (current: {current_version}, expected: {expected_version}). Use `--force` if you want to continue",
                 file=sys.stderr,
             )
+            exit(1)
+        errlog(f"WARNING: version mismatch (current: {current_version}, expected: {expected_version}).")
     # TODO: use a `requires` parameter on each plugin and implement a requirement-solver to make sure the execution is
     # in the correct order
     for key, values in sorted(data.items()):
         prefix = ("# " if not execute else "") + f"[{key}] "
         if not hasattr(dokku, key):
-            print(f"WARNING: skipping unknown plugin {repr(key)}", file=sys.stderr)
+            errlog(f"WARNING: skipping unknown plugin {repr(key)}")
             continue
-        print(f"{prefix}Reading objects...", flush=True, end="")
+        errlog(f"{prefix}Reading objects...", end="")
         plugin = getattr(dokku, key)
         objects = [plugin.object_deserialize(row) for row in values]
-        print(f" {len(objects)} loaded.")
-        print(f"{prefix}Creating objects")
+        errlog(f" {len(objects)} loaded.")
+        errlog(f"{prefix}Creating objects")
         for result in plugin.object_create_many(objects, execute=execute):
             # `result` will be command's stdout (if execute) or Command object (if not execute)
             output = str(result).strip()
@@ -122,14 +127,13 @@ def main():
 
     subparsers.add_parser("version", help="Show current version of pydokku")
 
-    # TODO: rename `dump` to `export`
+    # TODO: rename `dump` to `export` and `load` to `apply`
     dump_parser = subparsers.add_parser("dump", help="Export all metadata collected by plugins to JSON")
     dump_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
     dump_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
     dump_parser.add_argument("json_filename", type=Path, help="JSON filename to save data")
-    # TODO: add options for filters
+    # TODO: add options for filters (by app or plugin name)
 
-    # TODO: rename `load` to `apply`
     load_parser = subparsers.add_parser(
         "load", help="Load a JSON specification and execute all needed operations in a Dokku installation"
     )

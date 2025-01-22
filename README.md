@@ -105,6 +105,40 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
 - Define the concept of a "recipe", with variables for the context (similar to cookiecutter), the template itself and a
   "render" method. The CLI commands would be: `recipe-load`, `recipe-render`, `recipe-ensure`.
 - May rename CLI's `load` to `execute`
+- Implement other official plugins:
+  - `00_dokku-standard`
+  - `20_events`
+  - `app-json`
+  - `builder-dockerfile`
+  - `builder-herokuish`
+  - `builder-lambda`
+  - `builder-nixpacks`
+  - `builder-null`
+  - `builder-pack`
+  - `builder`
+  - `buildpacks`
+  - `caddy-vhosts`
+  - `certs`
+  - `common`
+  - `cron`
+  - `docker-options`
+  - `enter`
+  - `haproxy-vhosts`
+  - `logs`
+  - `nginx-vhosts`
+  - `openresty-vhosts`
+  - `registry`
+  - `repo`
+  - `resource`
+  - `run`
+  - `scheduler-docker-local`
+  - `scheduler-k3s`
+  - `scheduler-null`
+  - `scheduler`
+  - `shell`
+  - `ssh-keys`
+  - `trace`
+  - `traefik-vhosts`
 
 
 ## Terminology and compatibility
