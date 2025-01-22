@@ -4,7 +4,7 @@ import random
 from pydokku.dokku_cli import Dokku
 from pydokku.models import AppNetwork, Network
 from pydokku.utils import execute_command
-from tests.utils import random_value, requires_dokku
+from tests.utils import random_alphanum, requires_dokku
 
 
 def test_object_classes():
@@ -432,7 +432,7 @@ def test_set_unset_report(create_apps):
         dokku.network.set_many(
             app_name=app_name, key="attach-post-deploy", values=apps_nets[app_name]["attach-post-deploy"]
         )
-        apps_nets[app_name]["tld"] = f"{random_value(16)}.example.net"
+        apps_nets[app_name]["tld"] = f"test-{random_alphanum(16)}.example.net"
         dokku.network.set(app_name=app_name, key="tld", value=apps_nets[app_name]["tld"])
         apps_nets[app_name]["bind-all-interfaces"] = random.choice([True, False])
         dokku.network.set(

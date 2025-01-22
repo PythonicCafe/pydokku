@@ -4,7 +4,7 @@ import pytest
 
 from pydokku.dokku_cli import Dokku
 from pydokku.models import Config
-from tests.utils import random_value, requires_dokku
+from tests.utils import random_alphanum, random_value, requires_dokku
 
 
 def test_object_classes():
@@ -15,7 +15,7 @@ def test_object_classes():
 def test_set_many_command():
     app_name = "test-app"
     app_name_2 = "test-app-2"
-    pairs = {"test_" + random_value(8): random_value(64) for _ in range(random.randint(1, 10))}
+    pairs = {"test_" + random_alphanum(8): random_value(64) for _ in range(random.randint(1, 10))}
     dokku = Dokku()
 
     command = dokku.config.set_many_dict(app_name, pairs, restart=False, execute=False)
@@ -58,7 +58,7 @@ def test_set_many_command():
 def test_unset_many_command():
     app_name = "test-app"
     app_name_2 = "test-app-2"
-    keys = ["test_" + random_value(8) for _ in range(random.randint(1, 10))]
+    keys = ["test_" + random_alphanum(8) for _ in range(random.randint(1, 10))]
     dokku = Dokku()
 
     command = dokku.config.unset_many_list(app_name, keys, restart=False, execute=False)

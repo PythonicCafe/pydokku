@@ -11,6 +11,10 @@ def random_value(max_chars: int, possible_chars: str = ascii_letters + digits + 
     return "".join(random.choice(possible_chars) for _ in range(n_chars))
 
 
+def random_alphanum(max_chars: int) -> str:
+    return random_value(max_chars=max_chars, possible_chars=ascii_letters + digits)
+
+
 def command_available(command):
     try:
         subprocess.run(command, capture_output=True)
