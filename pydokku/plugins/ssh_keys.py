@@ -1,6 +1,6 @@
 import json
 import re
-from typing import List
+from typing import List, Union
 
 from ..models import App, Command, SSHKey
 from ..ssh import REGEXP_SSH_PUBLIC_KEY
@@ -75,7 +75,7 @@ class SSHKeysPlugin(DokkuPlugin):
             # authorized keys
             return keys
 
-    def add(self, key: SSHKey, execute: bool = True) -> str | Command:
+    def add(self, key: SSHKey, execute: bool = True) -> Union[str, Command]:
         """Add a SSH key to Dokku"""
         if key.public_key is None:
             raise ValueError("Cannot add an empty public key")
@@ -95,7 +95,7 @@ class SSHKeysPlugin(DokkuPlugin):
             raise ValueError(f"Cannot add SSH key: {clean_stderr(stderr)}")
         return stdout
 
-    def remove(self, key: SSHKey, execute: bool = True) -> str | Command:
+    def remove(self, key: SSHKey, execute: bool = True) -> Union[str, Command]:
         # WARNING: Dokku won't throw an error if you try to delete an unexisting key
         if not key.name and not key.fingerprint:
             raise ValueError("A key name or fingerprint is needed so it can be removed")
@@ -106,5 +106,7 @@ class SSHKeysPlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[SSHKey]:
         return self.list()
 
-    def object_create(self, obj: SSHKey, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: SSHKey, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         return [self.add(obj, execute=execute)]

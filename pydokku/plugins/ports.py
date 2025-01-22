@@ -1,6 +1,6 @@
 from functools import lru_cache
 from itertools import groupby
-from typing import Iterator, List
+from typing import Iterator, List, Union
 
 from ..models import App, Command, Port
 from ..utils import clean_stderr, get_app_name, get_stdout_rows_parser, parse_space_separated_list
@@ -37,7 +37,7 @@ class PortsPlugin(DokkuPlugin):
             },
         )
 
-    def _parse_port_string(self, app_name: str | None, value: str) -> Port:
+    def _parse_port_string(self, app_name: Union[str, None], value: str) -> Port:
         scheme, ports = value.split(":", maxsplit=1)
         if ":" in ports:
             host_port, container_port = [int(item) for item in ports.split(":")]
@@ -55,7 +55,7 @@ class PortsPlugin(DokkuPlugin):
                 result.append(self._parse_port_string(app_name=row["app_name"], value=port))
         return result
 
-    def list(self, app_name: str | None = None) -> List[Port]:
+    def list(self, app_name: Union[str, None] = None) -> List[Port]:
         # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
@@ -75,10 +75,10 @@ class PortsPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows, skip_system=app_name is not None)
 
-    def clear(self, app_name: str, execute: bool = True) -> str | Command:
+    def clear(self, app_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("clear", params=[app_name], execute=execute)
 
-    def add(self, ports: List[Port], execute: bool = True) -> List[str] | List[Command]:
+    def add(self, ports: List[Port], execute: bool = True) -> Union[List[str], List[Command]]:
         result = []
         ports.sort(key=get_app_name)
         for app_name, app_ports in groupby(ports, key=get_app_name):
@@ -95,7 +95,7 @@ class PortsPlugin(DokkuPlugin):
             result.append(app_result)
         return result
 
-    def set(self, ports: List[Port], execute: bool = True) -> List[str] | List[Command]:
+    def set(self, ports: List[Port], execute: bool = True) -> Union[List[str], List[Command]]:
         result = []
         ports.sort(key=get_app_name)
         for app_name, app_ports in groupby(ports, key=get_app_name):
@@ -112,7 +112,7 @@ class PortsPlugin(DokkuPlugin):
             result.append(app_result)
         return result
 
-    def remove(self, ports: List[Port], execute: bool = True) -> List[str] | List[Command]:
+    def remove(self, ports: List[Port], execute: bool = True) -> Union[List[str], List[Command]]:
         result = []
         ports.sort(key=get_app_name)
         for app_name, app_ports in groupby(ports, key=get_app_name):
@@ -132,13 +132,15 @@ class PortsPlugin(DokkuPlugin):
         else:
             return [self.list(app_name=app_name) for app_name in apps_names]
 
-    def object_create(self, obj: Port, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Port, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         # `skip_system` is ignored since there's no way to set global port mapping
         if obj.app_name is None:
             return []
         return self.set(ports=[obj], execute=execute)
 
-    def object_create_many(self, objs: List[Port], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+    def object_create_many(self, objs: List[Port], execute: bool = True) -> Union[Iterator[str], Iterator[Command]]:
         filtered_objs = [obj for obj in objs if obj.app_name is not None]
         if filtered_objs:
             yield from self.set(ports=filtered_objs, execute=execute)

@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import Iterator, List, Type, TypeVar
+from typing import Iterator, List, Tuple, Type, TypeVar, Union
 
 from ..models import App, Command
 from ..utils import dataclass_field_set
@@ -9,7 +9,7 @@ T = TypeVar("T")
 
 class DokkuPlugin:
     name: str = None
-    object_classes: list[Type[T]] = []
+    object_classes: List[Type[T]] = []
     # TODO: add `requires` so we have a plugin hierarchy and can define the restore order
 
     def __init__(self, dokku):
@@ -17,14 +17,14 @@ class DokkuPlugin:
 
     def _evaluate(
         self,
-        operation: str | None,
-        params: List[str] | None = None,
+        operation: Union[str, None],
+        params: Union[List[str], None] = None,
         stdin: str = None,
         check: bool = True,
         sudo: bool = False,
         execute: bool = True,
         full_return: bool = False,
-    ) -> str | Command | tuple[int, str, str]:
+    ) -> Union[str, Command, Tuple[int, str, str]]:
         subcommand = f"{self.name}:{operation}" if operation is not None else self.name
         cmd = Command(
             command=["dokku", subcommand] + (params if params is not None else []),
@@ -37,7 +37,7 @@ class DokkuPlugin:
         return_code, stdout, stderr = self._execute(cmd)
         return stdout if not full_return else (return_code, stdout, stderr)
 
-    def _execute(self, command: Command) -> tuple[int, str, str]:
+    def _execute(self, command: Command) -> Tuple[int, str, str]:
         return self.dokku._execute(command)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[T]:
@@ -52,14 +52,14 @@ class DokkuPlugin:
                 return DataClass(**obj)
         raise ValueError(f"Cannot deserialize object in {self.name}: {repr(obj)}")
 
-    def object_create(self, obj: T, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(self, obj: T, skip_system: bool = False, execute: bool = True) -> Union[List[str], List[Command]]:
         """Create an object for this specific plugin or return list of commands to do it"""
         # XXX: this command MUST NOT run some commands and use the output of those commands to then execute new
         # commands. All actions executed by this method must rely solely on `obj` data provided so the actions can be
         # exported as commands correctly.
         raise NotImplementedError(f"Class {self.__class__.__name__} does not implement `object_create`")
 
-    def object_create_many(self, objs: List[T], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+    def object_create_many(self, objs: List[T], execute: bool = True) -> Union[Iterator[str], Iterator[Command]]:
         # The difference between this and calling `self.object_create` for each object is that this one yields only one
         # global command, so it's faster.
         # Since a plugin can have many object types, we batch the execution for each type, this way each of them can

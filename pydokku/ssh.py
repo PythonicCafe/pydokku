@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 KEY_TYPES = "dsa ecdsa ecdsa-sk ed25519 ed25519-sk rsa".split()
 REGEXP_SSH_PUBLIC_KEY = re.compile(f"(ssh-(?:{'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0-9+/=]+(?: [^@]+@[^@]+)?)")
@@ -12,10 +12,10 @@ REGEXP_SSH_PUBLIC_KEY = re.compile(f"(ssh-(?:{'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0
 def command(
     user: str,
     host: str,
-    private_key: Path | str,
+    private_key: Union[Path, str],
     port: int = 22,
     mux: bool = False,
-    mux_filename: Path | str | None = None,
+    mux_filename: Union[Path, str, None] = None,
     mux_timeout: int = 60,
 ) -> List[str]:
     cmd = [
@@ -57,7 +57,7 @@ def start_process(command) -> subprocess.Popen:
     )
 
 
-def key_requires_password(filename: Path | str) -> bool:
+def key_requires_password(filename: Union[Path, str]) -> bool:
     """Use `ssh-keygen` to check if a SSH key file is password-protected
 
     `ssh-keygen` is used to print the public key related to a private one. If the key is password-protected, the
@@ -69,7 +69,7 @@ def key_requires_password(filename: Path | str) -> bool:
     return process.wait() != 0
 
 
-def key_create(filename: Path | str, key_type: str, password: str | None = None) -> str:
+def key_create(filename: Union[Path, str], key_type: str, password: Union[str, None] = None) -> str:
     """Use `ssh-keygen` to create a new SSH key"""
     if key_type not in KEY_TYPES:
         raise ValueError(f"Invalid SSH key type: {repr(key_type)}")
@@ -91,7 +91,7 @@ def key_create(filename: Path | str, key_type: str, password: str | None = None)
     return process.stdout.read().strip()
 
 
-def key_unlock(filename: Path | str, password: str) -> Path:
+def key_unlock(filename: Union[Path, str], password: str) -> Path:
     """Copy the SSH key to a temp file and uses `ssh-keygen` to unlock and overwrite the newly created file"""
     filename = Path(filename).expanduser().absolute()
     temp = tempfile.NamedTemporaryFile(delete=False, prefix="pydokku-")
@@ -110,7 +110,7 @@ def key_unlock(filename: Path | str, password: str) -> Path:
 
 
 @contextmanager
-def unlock_key(filename: Path | str, password: str):
+def unlock_key(filename: Union[Path, str], password: str):
     """Context manager for temporarily unlocking a SSH key"""
     temp_key = None
     try:
@@ -121,7 +121,7 @@ def unlock_key(filename: Path | str, password: str):
             temp_key.unlink()
 
 
-def key_fingerprint(filename_or_content: Path | str) -> str:
+def key_fingerprint(filename_or_content: Union[Path, str]) -> str:
     """Extract a fingerprint from a public SSH key"""
     if isinstance(filename_or_content, str) and REGEXP_SSH_PUBLIC_KEY.findall(filename_or_content):
         # `filename_or_content` is the key content, so we use `ssh-keygen`'s stdin

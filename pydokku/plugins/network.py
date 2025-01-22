@@ -1,6 +1,6 @@
 import json
 from functools import lru_cache
-from typing import Any, List
+from typing import Any, List, Union
 
 from ..models import App, AppNetwork, Command, Network
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_comma_separated_list
@@ -26,10 +26,10 @@ class NetworkPlugin(DokkuPlugin):
     name = "network"
     object_classes = (Network, AppNetwork)
 
-    def create(self, name: str, execute: bool = True) -> str | Command:
+    def create(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("create", params=[name], execute=execute)
 
-    def destroy(self, name: str, force: bool = False, execute: bool = True) -> str | Command:
+    def destroy(self, name: str, force: bool = False, execute: bool = True) -> Union[str, Command]:
         params = []
         if force:
             params.append("--force")
@@ -43,10 +43,12 @@ class NetworkPlugin(DokkuPlugin):
         stdout = self._evaluate("list", params=["--format", "json"], execute=True)
         return self._parse_list_json(stdout)
 
-    def set(self, app_name: str | None, key: str, value: Any, execute: bool = True) -> str | Command:
+    def set(self, app_name: Union[str, None], key: str, value: Any, execute: bool = True) -> Union[str, Command]:
         return self.set_many(app_name=app_name, key=key, values=[value], execute=execute)
 
-    def set_many(self, app_name: str | None, key: str, values: List[str], execute: bool = True) -> str | Command:
+    def set_many(
+        self, app_name: Union[str, None], key: str, values: List[str], execute: bool = True
+    ) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         params = [app_parameter, key]
@@ -58,7 +60,7 @@ class NetworkPlugin(DokkuPlugin):
             params.append(value)
         return self._evaluate("set", params=params, execute=execute)
 
-    def unset(self, app_name: str | None, key: str, execute: bool = True) -> str | Command:
+    def unset(self, app_name: Union[str, None], key: str, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key], execute=execute)
@@ -100,7 +102,7 @@ class NetworkPlugin(DokkuPlugin):
             result.append(AppNetwork(**app_row))
         return result
 
-    def report(self, app_name: str | None = None) -> List[AppNetwork]:
+    def report(self, app_name: Union[str, None] = None) -> List[AppNetwork]:
         system = app_name is None
         # `dokku network:report --format json` is useless since it does not contain the app name!
         # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
@@ -121,7 +123,7 @@ class NetworkPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows, skip_system=app_name is not None)
 
-    def rebuild(self, app_name: str | None, execute: bool = True) -> str | Command:
+    def rebuild(self, app_name: Union[str, None], execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         if system:
             subcommand, params = "rebuildall", []
@@ -129,7 +131,7 @@ class NetworkPlugin(DokkuPlugin):
             subcommand, params = "rebuild", [app_name]
         return self._evaluate(subcommand, params=params, execute=execute)
 
-    def object_list(self, apps: List[App], system: bool = True) -> List[Network | AppNetwork]:
+    def object_list(self, apps: List[App], system: bool = True) -> List[Union[Network, AppNetwork]]:
         apps_names = [app.name for app in apps]
         result = []
         result.extend(self.list())
@@ -140,8 +142,8 @@ class NetworkPlugin(DokkuPlugin):
         return result
 
     def object_create(
-        self, obj: Network | AppNetwork, skip_system: bool = False, execute: bool = True
-    ) -> List[str] | List[Command]:
+        self, obj: Union[Network, AppNetwork], skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         result = []
         if isinstance(obj, Network):
             if obj.labels is not None and "com.dokku.network-name" in obj.labels:  # Create only Dokku-created networks

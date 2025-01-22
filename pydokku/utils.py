@@ -4,12 +4,12 @@ import subprocess
 from dataclasses import fields
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 REGEXP_DOKKU_HEADER = re.compile(r"^\s*=====> ", flags=re.MULTILINE)
 
 
-def get_app_name(obj: Any) -> str | None:
+def get_app_name(obj: Any) -> Union[str, None]:
     return obj.app_name
 
 
@@ -40,21 +40,19 @@ def get_system_tzinfo() -> datetime.timezone:
     return datetime.datetime.now().astimezone().tzinfo
 
 
-def parse_timestamp(value: str | None) -> datetime.datetime | None:
+def parse_timestamp(value: Union[str, None]) -> Union[datetime.datetime, None]:
     value = str(value if value is not None else "").lower()
     if not value:
         return None
     return datetime.datetime.fromtimestamp(int(value)).replace(tzinfo=get_system_tzinfo())
 
 
-def parse_iso_format(value: str | None) -> datetime.datetime | None:
+def parse_iso_format(value: Union[str, None]) -> Union[datetime.datetime, None]:
     value = str(value if value is not None else "")
     if not value:
         return None
     return datetime.datetime.fromisoformat(value)
-
-
-def parse_timedelta_seconds(value: str | None) -> datetime.timedelta | None:
+def parse_timedelta_seconds(value: Union[str, None]) -> Union[datetime.timedelta, None]:
     """
     Parse a seconds value
     >>> import datetime
@@ -73,7 +71,7 @@ def parse_timedelta_seconds(value: str | None) -> datetime.timedelta | None:
     return datetime.timedelta(seconds=int(value))
 
 
-def parse_int(value: str | None) -> int | None:
+def parse_int(value: Union[str, None]) -> Union[int, None]:
     """
     >>> print(parse_int(""))
     None
@@ -88,7 +86,7 @@ def parse_int(value: str | None) -> int | None:
     return int(value)
 
 
-def parse_bool(value: str | None) -> bool | None:
+def parse_bool(value: Union[str, None]) -> Union[bool, None]:
     """
     >>> print(parse_bool(""))
     None
@@ -109,7 +107,7 @@ def parse_bool(value: str | None) -> bool | None:
     return {"true": True, "t": True, "false": False, "f": False}[value]
 
 
-def parse_path(value: str | None) -> Path | None:
+def parse_path(value: Union[str, None]) -> Union[Path, None]:
     """
     >>> from pathlib import Path
     >>> print(parse_path(""))
@@ -123,7 +121,7 @@ def parse_path(value: str | None) -> Path | None:
     return Path(value)
 
 
-def parse_comma_separated_list(text: str | None) -> List[str]:
+def parse_comma_separated_list(text: Union[str, None]) -> List[str]:
     """
     >>> parse_comma_separated_list("")
     []
@@ -136,7 +134,7 @@ def parse_comma_separated_list(text: str | None) -> List[str]:
     return text.split(",")
 
 
-def parse_space_separated_list(text: str | None) -> List[str]:
+def parse_space_separated_list(text: Union[str, None]) -> List[str]:
     """
     >>> parse_space_separated_list("")
     []
@@ -151,9 +149,9 @@ def parse_space_separated_list(text: str | None) -> List[str]:
 
 def get_stdout_rows_parser(
     normalize_keys: bool = False,
-    discards: List[str] | None = None,
-    renames: dict[str, str] | None = None,
-    parsers: dict[str, Callable[[str], Any]] | None = None,
+    discards: Union[List[str], None] = None,
+    renames: Union[Dict[str, str], None] = None,
+    parsers: Union[Dict[str, Callable[[str], Any]], None] = None,
     separator: str = "_",
     remove_prefix=None,
 ) -> Callable:
@@ -202,7 +200,7 @@ def get_stdout_rows_parser(
     return func
 
 
-def execute_command(command: list[str], stdin: str | None = None, check: bool = True) -> tuple[int, str, str]:
+def execute_command(command: List[str], stdin: Union[str, None] = None, check: bool = True) -> Tuple[int, str, str]:
     process = subprocess.Popen(
         command,
         stdin=subprocess.PIPE,

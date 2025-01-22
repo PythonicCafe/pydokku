@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List
+from typing import List, Union
 
 from ..models import App, Check, Command
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_comma_separated_list, parse_int
@@ -41,7 +41,7 @@ class ChecksPlugin(DokkuPlugin):
             },
         )
 
-    def _convert_rows(self, parsed_rows: List[dict], app_name: str | None) -> List[Check]:
+    def _convert_rows(self, parsed_rows: List[dict], app_name: Union[str, None]) -> List[Check]:
         result = []
         for row in parsed_rows:
             if not result and app_name is None:
@@ -79,7 +79,7 @@ class ChecksPlugin(DokkuPlugin):
                         )
         return result
 
-    def list(self, app_name: str | None = None) -> List[Check]:
+    def list(self, app_name: Union[str, None] = None) -> List[Check]:
         """List disabled and skipped checks for an app
 
         WARNING: Dokku doesn't list the enabled checks! You must call
@@ -106,30 +106,30 @@ class ChecksPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows, app_name)
 
-    def set(self, app_name: str | None, key: str, value: int, execute: bool = True) -> str | Command:
+    def set(self, app_name: Union[str, None], key: str, value: int, execute: bool = True) -> Union[str, Command]:
         """Set app's property"""
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key, str(value)], execute=execute)
 
-    def unset(self, app_name: str | None, key: str, execute: bool = True) -> str | Command:
+    def unset(self, app_name: Union[str, None], key: str, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key], execute=execute)
 
-    def disable(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> str | Command:
+    def disable(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> Union[str, Command]:
         ps = [",".join(process_names)] if process_names is not None else []
         return self._evaluate("disable", params=[app_name] + ps, execute=execute)
 
-    def enable(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> str | Command:
+    def enable(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> Union[str, Command]:
         ps = [",".join(process_names)] if process_names is not None else []
         return self._evaluate("enable", params=[app_name] + ps, execute=execute)
 
-    def skip(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> str | Command:
+    def skip(self, app_name: str, process_names: List[str] = None, execute: bool = True) -> Union[str, Command]:
         ps = [",".join(process_names)] if process_names is not None else []
         return self._evaluate("skip", params=[app_name] + ps, execute=execute)
 
-    def run(self, app_name: str, execute: bool = True) -> str | Command:
+    def run(self, app_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("run", params=[app_name], execute=execute)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Check]:
@@ -138,7 +138,9 @@ class ChecksPlugin(DokkuPlugin):
             apps_names = [None] + apps_names
         return [obj for obj in self.list() if obj.app_name in apps_names]
 
-    def object_create(self, obj: Check, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Check, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         system = app_name is None
         result = []

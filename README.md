@@ -2,7 +2,9 @@
 
 pydokku is a Python library and command-line tool to interface with Dokku. It makes it pretty easy to get structured
 data regarding a Dokku server and also to easily setup apps and its configurations. It supports interfacing with a
-local Dokku command or via SSH (using a multiplexed connection for speed).
+local Dokku command or via SSH (using a multiplexed connection for speed). It's developed in Python 3.11 but may run
+smoothly in Python3.8+ installations, so it's useful to grab data about an old server and migrate to a new one and also
+to automate some stuff. :)
 
 Goals:
 - Create a well tested tool to interface/control Dokku
@@ -135,7 +137,6 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
   - `scheduler-null`
   - `scheduler`
   - `shell`
-  - `ssh-keys`
   - `trace`
   - `traefik-vhosts`
 

@@ -1,7 +1,7 @@
 import random
 import string
 from functools import lru_cache
-from typing import List
+from typing import List, Union
 
 from ..models import App, Command, Domain
 from ..utils import get_stdout_rows_parser, parse_bool, parse_space_separated_list
@@ -64,7 +64,7 @@ class DomainsPlugin(DokkuPlugin):
                 )
         return result
 
-    def list(self, app_name: str | None = None) -> List[Domain]:
+    def list(self, app_name: Union[str, None] = None) -> List[Domain]:
         # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
@@ -78,7 +78,7 @@ class DomainsPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows)
 
-    def add(self, app_name: str | None, domains: List[str], execute: bool = True) -> str | Command:
+    def add(self, app_name: Union[str, None], domains: List[str], execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         if not system:
             command, params = "add", [app_name] + domains
@@ -86,7 +86,7 @@ class DomainsPlugin(DokkuPlugin):
             command, params = "add-global", domains
         return self._evaluate(command, params=params, execute=execute)
 
-    def set(self, app_name: str | None, domains: List[str], execute: bool = True) -> str | Command:
+    def set(self, app_name: Union[str, None], domains: List[str], execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         if not system:
             command, params = "set", [app_name] + domains
@@ -94,7 +94,7 @@ class DomainsPlugin(DokkuPlugin):
             command, params = "set-global", domains
         return self._evaluate(command, params=params, execute=execute)
 
-    def clear(self, app_name: str | None, execute: bool = True) -> str | Command:
+    def clear(self, app_name: Union[str, None], execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         if not system:
             command, params = "clear", [app_name]
@@ -102,7 +102,7 @@ class DomainsPlugin(DokkuPlugin):
             command, params = "clear-global", []
         return self._evaluate(command, params=params, execute=execute)
 
-    def remove(self, app_name: str | None, domains: List[str], execute: bool = True) -> str | Command:
+    def remove(self, app_name: Union[str, None], domains: List[str], execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         if not system:
             command, params = "remove", [app_name] + domains
@@ -110,10 +110,10 @@ class DomainsPlugin(DokkuPlugin):
             command, params = "remove-global", domains
         return self._evaluate(command, params=params, execute=execute)
 
-    def enable(self, app_name: str, execute: bool = True) -> str | Command:
+    def enable(self, app_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("enable", params=[app_name], execute=execute)
 
-    def disable(self, app_name: str, execute: bool = True) -> str | Command:
+    def disable(self, app_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("disable", params=[app_name], execute=execute)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Domain]:
@@ -122,7 +122,9 @@ class DomainsPlugin(DokkuPlugin):
             apps_names = [None] + apps_names
         return [obj for obj in self.list() if obj.app_name in apps_names]
 
-    def object_create(self, obj: Domain, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Domain, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         # Since there's a specific object for "system" (having `app_name=None`), `skip_system` is ignored here (it's
         # different from other plugins like `proxy`, where the system object is "hidden" in another object).
         app_name = obj.app_name

@@ -1,6 +1,6 @@
 import configparser
 import re
-from typing import List
+from typing import List, Union
 
 from ..models import App, Command, Plugin
 from .base import DokkuPlugin
@@ -8,7 +8,7 @@ from .base import DokkuPlugin
 REGEXP_PLUGIN_LIST = re.compile(r"^\s*([^ ]+)\s+([^ ]+)?\s*(enabled|disabled)\s+(.*)$")
 
 
-def get_git_origin_url(config_data: str) -> str | None:
+def get_git_origin_url(config_data: str) -> Union[str, None]:
     parser = configparser.ConfigParser()
     parser.read_string(config_data)
     if 'remote "origin"' in parser:
@@ -81,12 +81,12 @@ class PluginPlugin(DokkuPlugin):
 
     def install(
         self,
-        git_url: str | None = None,
-        git_reference: str | None = None,
-        name: str | None = None,
+        git_url: Union[str, None] = None,
+        git_reference: Union[str, None] = None,
+        name: Union[str, None] = None,
         core: bool = False,
         execute: bool = True,
-    ) -> str | Command:
+    ) -> Union[str, Command]:
         if core:
             if git_url is not None or git_reference is not None or name is not None:
                 raise ValueError("If `core` is `True`, then no other option should be provided")
@@ -103,16 +103,18 @@ class PluginPlugin(DokkuPlugin):
                 params.extend(["--name", name])
         return self._evaluate("install", params=params, sudo=True, execute=execute)
 
-    def enable(self, name: str, execute: bool = True) -> str | Command:
+    def enable(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("enable", params=[name], sudo=True, execute=execute)
 
-    def disable(self, name: str, execute: bool = True) -> str | Command:
+    def disable(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("disable", params=[name], sudo=True, execute=execute)
 
-    def uninstall(self, name: str, execute: bool = True) -> str | Command:
+    def uninstall(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("uninstall", params=[name], sudo=True, execute=execute)
 
-    def update(self, name: str | None = None, git_reference: str | None = None, execute: bool = True) -> str | Command:
+    def update(
+        self, name: Union[str, None] = None, git_reference: Union[str, None] = None, execute: bool = True
+    ) -> Union[str, Command]:
         params = []
         if name is not None:
             params.append(name)
@@ -120,17 +122,19 @@ class PluginPlugin(DokkuPlugin):
             params.append(git_reference)
         return self._evaluate("update", params=params, sudo=True, execute=execute)
 
-    def install_dependencies(self, core: bool = False, execute: bool = True) -> str | Command:
+    def install_dependencies(self, core: bool = False, execute: bool = True) -> Union[str, Command]:
         params = [] if not core else ["--core"]
         return self._evaluate("install-dependencies", params=params, sudo=True, execute=execute)
 
-    def trigger(self, args: List[str], execute: bool = True) -> str | Command:
+    def trigger(self, args: List[str], execute: bool = True) -> Union[str, Command]:
         return self._evaluate("trigger", params=list(args), sudo=True, execute=execute)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Plugin]:
         return self.list()
 
-    def object_create(self, obj: Plugin, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Plugin, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         if obj.is_core:
             return []
         result = []

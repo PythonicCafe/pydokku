@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from typing import List, Literal
+from typing import List, Literal, Tuple, Union
 
 from ..models import App, Command, Storage
 from ..utils import clean_stderr
@@ -15,9 +15,12 @@ CHOWN_OPTIONS = {
     "packeto": (2000, 2000),
     "root": (0, 0),
 }
-ChownType = None
-for opt in CHOWN_OPTIONS.keys():
-    ChownType |= Literal[opt]
+ChownType = Union[
+    Literal["herokuish"],
+    Literal["heroku"],
+    Literal["packeto"],
+    Literal["root"],
+]
 USER_GROUP_ID_CHOWN = {value: key for key, value in CHOWN_OPTIONS.items()}
 
 
@@ -64,7 +67,7 @@ class StoragePlugin(DokkuPlugin):
 
     def ensure_directory(
         self, name: str, chown: ChownType = None, execute: bool = True
-    ) -> tuple[Path, tuple[int, int]] | Command:
+    ) -> Union[Tuple[Path, Tuple[int, int]], Command]:
         params = []
         if chown is not None:
             if chown not in CHOWN_OPTIONS.keys():
@@ -82,7 +85,7 @@ class StoragePlugin(DokkuPlugin):
         user_id, group_id = [int(item) for item in REGEXP_USER_GROUP.findall(lines[1])[0]]
         return path, (user_id, group_id)
 
-    def mount(self, storage: Storage, execute: bool = True) -> str | Command:
+    def mount(self, storage: Storage, execute: bool = True) -> Union[str, Command]:
         host_path = storage.host_path
         container_path = storage.container_path
         if not host_path.is_absolute():
@@ -91,7 +94,7 @@ class StoragePlugin(DokkuPlugin):
             raise ValueError(f"`container_path` must be an absolute path (got: {container_path})")
         return self._evaluate("mount", params=[storage.app_name, f"{host_path}:{container_path}"], execute=execute)
 
-    def unmount(self, storage: Storage, execute: bool = True) -> str | Command:
+    def unmount(self, storage: Storage, execute: bool = True) -> Union[str, Command]:
         host_path = storage.host_path
         container_path = storage.container_path
         result = self._evaluate(
@@ -107,7 +110,9 @@ class StoragePlugin(DokkuPlugin):
     def object_list(self, apps: List[App], system: bool = True) -> List[Storage]:
         return [obj for app in apps for obj in self.list(app.name)]
 
-    def object_create(self, obj: Storage, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Storage, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         # XXX: if storage's user and group ID can't be found in USER_GROUP_ID_CHOWN, won't apply any chown
         chown = USER_GROUP_ID_CHOWN.get((obj.user_id, obj.group_id))
         return [

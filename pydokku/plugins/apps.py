@@ -1,6 +1,6 @@
 import re
 from functools import lru_cache
-from typing import List
+from typing import List, Union
 
 from ..models import App, Command
 from ..utils import get_stdout_rows_parser, parse_bool, parse_path, parse_timestamp
@@ -54,32 +54,34 @@ class AppsPlugin(DokkuPlugin):
         rows_parser = self._get_rows_parser()
         return [App(**row) for row in rows_parser(stdout)]
 
-    def create(self, name: str, execute: bool = True) -> str | Command:
+    def create(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("create", params=[name], execute=execute)
 
-    def destroy(self, name: str, execute: bool = True) -> str | Command:
+    def destroy(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("destroy", params=[name], stdin=name, execute=execute)
 
-    def clone(self, old_name: str, new_name: str, execute: bool = True) -> str | Command:
+    def clone(self, old_name: str, new_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("clone", params=[old_name, new_name], execute=execute)
 
-    def lock(self, name: str, execute: bool = True) -> str | Command:
+    def lock(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("lock", params=[name], execute=execute)
 
-    def unlock(self, name: str, execute: bool = True) -> str | Command:
+    def unlock(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("unlock", params=[name], execute=execute)
 
     def locked(self, name: str) -> bool:
         stdout = self._evaluate("unlock", params=[name], check=False, execute=True)
         return bool(stdout)
 
-    def rename(self, old_name: str, new_name: str, execute: bool = True) -> str | Command:
+    def rename(self, old_name: str, new_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("rename", params=[old_name, new_name], execute=execute)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[App]:
         return apps
 
-    def object_create(self, obj: App, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: App, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         result = [self.create(name=obj.name, execute=execute)]
         if obj.locked:
             result.append(self.lock(name=obj.name, execute=execute))

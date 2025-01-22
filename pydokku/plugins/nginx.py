@@ -1,6 +1,6 @@
 import datetime
 from functools import lru_cache
-from typing import Any, List
+from typing import Any, List, Union
 
 from ..models import App, Command, Nginx
 from ..utils import (
@@ -100,7 +100,7 @@ class NginxPlugin(DokkuPlugin):
             result.append(Nginx(**app_row))
         return result
 
-    def list(self, app_name: str | None = None) -> str | Command:
+    def list(self, app_name: Union[str, None] = None) -> Union[str, Command]:
         # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
@@ -112,13 +112,13 @@ class NginxPlugin(DokkuPlugin):
             result.extend(self._convert_rows(parsed_rows=[row], skip_system=index > 0))
         return result
 
-    def access_logs(self, app_name: str, execute: bool = True) -> str | Command:
+    def access_logs(self, app_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("access-logs", params=[app_name], execute=execute)
 
-    def error_logs(self, app_name: str, execute: bool = True) -> str | Command:
+    def error_logs(self, app_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("error-logs", params=[app_name], execute=execute)
 
-    def set(self, app_name: str | None, key: str, value: Any, execute: bool = True) -> str | Command:
+    def set(self, app_name: Union[str, None], key: str, value: Any, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         if isinstance(value, bool):
@@ -129,21 +129,23 @@ class NginxPlugin(DokkuPlugin):
             value = str(value)
         return self._evaluate("set", params=[app_parameter, key, value], execute=execute)
 
-    def unset(self, app_name: str | None, key: str, execute: bool = True) -> str | Command:
+    def unset(self, app_name: Union[str, None], key: str, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key], execute=execute)
 
-    def start(self, execute: bool = True) -> str | Command:
+    def start(self, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("start", execute=execute)
 
-    def stop(self, execute: bool = True) -> str | Command:
+    def stop(self, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("stop", execute=execute)
 
-    def get_config(self, app_name: str) -> str | Command:
+    def get_config(self, app_name: str) -> Union[str, Command]:
         return self._evaluate("show-config", params=[app_name], check=True, execute=True)
 
-    def validate_config(self, app_name: str | None = None, clean: bool = False, execute: bool = True) -> str | Command:
+    def validate_config(
+        self, app_name: Union[str, None] = None, clean: bool = False, execute: bool = True
+    ) -> Union[str, Command]:
         params = []
         if app_name is not None:
             params.append(app_name)
@@ -158,7 +160,9 @@ class NginxPlugin(DokkuPlugin):
         else:
             return [self.list(app_name=app_name) for app_name in apps_names]
 
-    def object_create(self, obj: Nginx, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Nginx, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         # This command ignores `skip_system` since there's an object dedicated to global configs.
         app_name = obj.app_name
         result = []

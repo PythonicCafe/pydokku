@@ -3,6 +3,7 @@ import hashlib
 import tempfile
 from functools import cached_property
 from pathlib import Path
+from typing import Tuple, Union
 
 from . import ssh
 from .models import Command
@@ -16,11 +17,11 @@ class Dokku:
 
     def __init__(
         self,
-        ssh_host: str | None = None,
+        ssh_host: Union[str, None] = None,
         ssh_port: int = 22,
-        ssh_private_key: Path | str | None = None,
+        ssh_private_key: Union[Path, str, None] = None,
         ssh_user: str = "dokku",
-        ssh_key_password: str | None = None,
+        ssh_key_password: Union[str, None] = None,
         ssh_mux: bool = True,
     ):
         self._ssh_prefix = []
@@ -122,7 +123,7 @@ class Dokku:
                 if filename.exists():
                     filename.unlink()
 
-    def _prepare_command(self, command: Command) -> tuple[str]:
+    def _prepare_command(self, command: Command) -> Tuple[str]:
         """Prepare the final command to be executed, considering sudo, local/remote user and the command itself"""
         cmd = list(command.command)
         use_sudo = command.sudo
@@ -145,7 +146,7 @@ class Dokku:
                 use_sudo = False  # If executing locally and the local user is `root`, `sudo` is not needed
         return self._ssh_prefix + (["sudo"] if use_sudo else []) + cmd
 
-    def _execute(self, command: Command) -> tuple[int, str, str]:
+    def _execute(self, command: Command) -> Tuple[int, str, str]:
         cmd = self._prepare_command(command)
         # TODO: may add a debugging log call here with the full command to be executed
         return execute_command(command=cmd, stdin=command.stdin, check=command.check)

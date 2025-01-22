@@ -3,7 +3,7 @@ import datetime
 import shlex
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Literal
+from typing import Dict, List, Literal, Union
 
 from .utils import parse_iso_format
 
@@ -32,8 +32,8 @@ class Command(BaseModel):
 @dataclass
 class SSHKey(BaseModel):
     name: str
-    fingerprint: str | None = None
-    public_key: str | None = None
+    fingerprint: Union[str, None] = None
+    public_key: Union[str, None] = None
 
     def calculate_fingerprint(self):
         from .ssh import key_fingerprint
@@ -42,7 +42,7 @@ class SSHKey(BaseModel):
         self.fingerprint = result.split()[1]
 
     @classmethod
-    def open(cls, name: str, path: str | Path, calculate_fingerprint: bool = True) -> "SSHKey":
+    def open(cls, name: str, path: Union[Path, str], calculate_fingerprint: bool = True) -> "SSHKey":
         """Open a public SSH key file and create a SSHKey object"""
         obj = cls(name=name, public_key=Path(path).expanduser().read_text(), fingerprint=None)
         if calculate_fingerprint:
@@ -58,25 +58,25 @@ class App(BaseModel):
     name: str
     path: Path
     locked: bool
-    created_at: datetime.datetime | None = None
-    deploy_source: str | None = None
-    deploy_source_metadata: str | None = None
+    created_at: Union[datetime.datetime, None] = None
+    deploy_source: Union[str, None] = None
+    deploy_source_metadata: Union[str, None] = None
 
 
 @dataclass
 class Config(BaseModel):
-    app_name: str | None
+    app_name: Union[str, None]
     key: str
-    value: str | None
+    value: Union[str, None]
 
 
 @dataclass
 class Storage(BaseModel):
     app_name: str
-    host_path: Path | str
-    container_path: Path | str
-    user_id: int | None = None
-    group_id: int | None = None
+    host_path: Union[Path, str]
+    container_path: Union[Path, str]
+    user_id: Union[int, None] = None
+    group_id: Union[int, None] = None
 
     def __post_init__(self):
         # Force conversion to Path if string is passed
@@ -88,21 +88,21 @@ class Storage(BaseModel):
 
 @dataclass
 class Domain(BaseModel):
-    app_name: str | None
+    app_name: Union[str, None]
     enabled: bool
     domains: List[str]
 
 
 @dataclass
 class Check(BaseModel):
-    app_name: str | None
+    app_name: Union[str, None]
     process: str
-    status: Literal["enabled"] | Literal["disabled"] | Literal["skipped"] | None
-    app_wait_to_retire: int | None
-    global_wait_to_retire: int | None
+    status: Union[Literal["enabled"], Literal["disabled"], Literal["skipped"], None]
+    app_wait_to_retire: Union[int, None]
+    global_wait_to_retire: Union[int, None]
 
     @property
-    def wait_to_retire(self) -> int | None:
+    def wait_to_retire(self) -> Union[int, None]:
         return self.app_wait_to_retire or self.global_wait_to_retire
 
 
@@ -110,8 +110,8 @@ class Check(BaseModel):
 class Process(BaseModel):
     type: str
     id: int
-    status: Literal["running"] | Literal["exited"] | None
-    container_id: str | None = None
+    status: Union[Literal["running"], Literal["exited"], None]
+    container_id: Union[str, None] = None
 
 
 @dataclass
@@ -123,8 +123,8 @@ class ProcessInfo(BaseModel):
     restart_policy: str
     restore: bool
     running: bool
-    global_procfile_path: Path | None = None
-    app_procfile_path: Path | None = None
+    global_procfile_path: Union[Path, None] = None
+    app_procfile_path: Union[Path, None] = None
 
     def __post_init__(self):
         if self.processes and not isinstance(self.processes[0], Process):
@@ -143,70 +143,70 @@ class Git(BaseModel):
     deploy_branch: str
     rev_env_var: str
     sha: str
-    source_image: str | None = None
-    last_updated_at: datetime.datetime | None = None
+    source_image: Union[str, None] = None
+    last_updated_at: Union[datetime.datetime, None] = None
 
 
 @dataclass
 class Auth(BaseModel):
     hostname: str
-    username: str | None = None
-    password: str | None = None
+    username: Union[str, None] = None
+    password: Union[str, None] = None
 
 
 @dataclass
 class Proxy(BaseModel):
     app_name: str
     enabled: bool
-    global_type: str | None = None
-    app_type: str | None = None
+    global_type: Union[str, None] = None
+    app_type: Union[str, None] = None
 
     @property
-    def type(self) -> str | None:
+    def type(self) -> Union[str, None]:
         return self.app_type or self.global_type
 
 
 @dataclass
 class Port(BaseModel):
-    app_name: str | None
+    app_name: Union[str, None]
     scheme: str
     host_port: int
-    container_port: int | None
+    container_port: Union[int, None]
 
 
 @dataclass
 class Nginx(BaseModel):
-    app_name: str | None
-    access_log_format: str | None = None
-    access_log_path: Path | None = None
-    bind_address_ipv4: str | None = None
-    bind_address_ipv6: str | None = None
-    client_body_timeout: str | None = None
-    client_header_timeout: str | None = None
-    client_max_body_size: str | None = None
-    disable_custom_config: bool | None = None
-    error_log_path: Path | None = None
-    hsts: bool | None = None
-    hsts_include_subdomains: bool | None = None
-    hsts_max_age: datetime.timedelta | None = None
-    hsts_preload: bool | None = None
-    keepalive_timeout: str | None = None
-    last_visited_at: str | None = None
-    lingering_timeout: str | None = None
-    nginx_conf_sigil_path: Path | None = None
-    proxy_buffer_size: str | None = None
-    proxy_buffering: str | None = None
-    proxy_buffers: str | None = None
-    proxy_busy_buffers_size: str | None = None
-    proxy_connect_timeout: str | None = None
-    proxy_read_timeout: str | None = None
-    proxy_send_timeout: str | None = None
-    send_timeout: str | None = None
-    underscore_in_headers: str | None = None
-    x_forwarded_for_value: str | None = None
-    x_forwarded_port_value: str | None = None
-    x_forwarded_proto_value: str | None = None
-    x_forwarded_ssl: str | None = None
+    app_name: Union[str, None]
+    access_log_format: Union[str, None] = None
+    access_log_path: Union[Path, None] = None
+    bind_address_ipv4: Union[str, None] = None
+    bind_address_ipv6: Union[str, None] = None
+    client_body_timeout: Union[str, None] = None
+    client_header_timeout: Union[str, None] = None
+    client_max_body_size: Union[str, None] = None
+    disable_custom_config: Union[bool, None] = None
+    error_log_path: Union[Path, None] = None
+    hsts: Union[bool, None] = None
+    hsts_include_subdomains: Union[bool, None] = None
+    hsts_max_age: Union[datetime.timedelta, None] = None
+    hsts_preload: Union[bool, None] = None
+    keepalive_timeout: Union[str, None] = None
+    last_visited_at: Union[str, None] = None
+    lingering_timeout: Union[str, None] = None
+    nginx_conf_sigil_path: Union[Path, None] = None
+    proxy_buffer_size: Union[str, None] = None
+    proxy_buffering: Union[str, None] = None
+    proxy_buffers: Union[str, None] = None
+    proxy_busy_buffers_size: Union[str, None] = None
+    proxy_connect_timeout: Union[str, None] = None
+    proxy_read_timeout: Union[str, None] = None
+    proxy_send_timeout: Union[str, None] = None
+    send_timeout: Union[str, None] = None
+    underscore_in_headers: Union[str, None] = None
+    x_forwarded_for_value: Union[str, None] = None
+    x_forwarded_port_value: Union[str, None] = None
+    x_forwarded_proto_value: Union[str, None] = None
+    x_forwarded_ssl: Union[str, None] = None
 
     def serialize(self):
         row = super().serialize()
@@ -224,7 +224,7 @@ class Network(BaseModel):
     scope: str
     internal: bool
     ipv6: bool
-    labels: dict[str, str]
+    labels: Dict[str, str]
 
     @classmethod
     def from_dict(cls, data: dict) -> "Network":
@@ -246,9 +246,9 @@ class AppNetwork(BaseModel):
     attach_post_create: List[str]
     attach_post_deploy: List[str]
     bind_all_interfaces: bool
-    initial_network: str | None = None
-    static_web_listener: str | None = None
-    tld: str | None = None
+    initial_network: Union[str, None] = None
+    static_web_listener: Union[str, None] = None
+    tld: Union[str, None] = None
 
 
 @dataclass
@@ -257,8 +257,8 @@ class Plugin(BaseModel):
     version: str
     enabled: bool
     description: str
-    git_url: str | None = None
-    git_reference: str | None = None
+    git_url: Union[str, None] = None
+    git_reference: Union[str, None] = None
 
     @property
     def is_core(self):

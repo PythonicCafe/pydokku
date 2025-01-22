@@ -2,7 +2,7 @@ import netrc
 import tempfile
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from ..models import App, Auth, Command, Git, SSHKey
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_timestamp
@@ -61,7 +61,7 @@ class GitPlugin(DokkuPlugin):
             },
         )
 
-    def list(self, app_name: str | None = None) -> List[Git] | Git:
+    def list(self, app_name: Union[str, None] = None) -> Union[List[Git], Git]:
         # Dokku won't return error in this `report` command, but `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
@@ -84,10 +84,10 @@ class GitPlugin(DokkuPlugin):
         self,
         app_name: str,
         archive_url: str,
-        git_username: str | None = None,
-        git_email: str | None = None,
+        git_username: Union[str, None] = None,
+        git_email: Union[str, None] = None,
         execute: bool = True,
-    ) -> str | Command:
+    ) -> Union[str, Command]:
         params = [app_name, archive_url]
         if git_username is not None:
             params.append(git_username)
@@ -101,11 +101,11 @@ class GitPlugin(DokkuPlugin):
         self,
         app_name: str,
         image: str,
-        build_path: str | Path | None = None,
-        git_username: str | None = None,
-        git_email: str | None = None,
+        build_path: Union[str, Path, None] = None,
+        git_username: Union[str, None] = None,
+        git_email: Union[str, None] = None,
         execute: bool = True,
-    ) -> str | Command:
+    ) -> Union[str, Command]:
         params = []
         if build_path is not None:
             params.extend(["--build-dir", str(Path(build_path).absolute())])
@@ -118,10 +118,10 @@ class GitPlugin(DokkuPlugin):
             raise ValueError("`git_username` is required for using `git_email`")
         return self._evaluate("from-image", params=params, execute=execute)
 
-    def initialize(self, app_name: str, execute: bool = True) -> str | Command:
+    def initialize(self, app_name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("initialize", params=[app_name], execute=execute)
 
-    def public_key(self) -> SSHKey | None:
+    def public_key(self) -> Union[SSHKey, None]:
         """Read dokku public SSH key (deploy key)"""
         _, stdout, stderr = self._evaluate("public-key", execute=True, check=False, full_return=True)
         if "There is no deploy key associated" in stderr:
@@ -130,7 +130,9 @@ class GitPlugin(DokkuPlugin):
         key.calculate_fingerprint()
         return key
 
-    def set(self, app_name: str | None, key: str, value: str | bool, execute: bool = True) -> str | Command:
+    def set(
+        self, app_name: Union[str, None], key: str, value: Union[str, bool], execute: bool = True
+    ) -> Union[str, Command]:
         if isinstance(value, bool):
             value = str(value).lower()
         else:
@@ -139,12 +141,12 @@ class GitPlugin(DokkuPlugin):
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key, value], execute=execute)
 
-    def unset(self, app_name: str | None, key: str, execute: bool = True) -> str | Command:
+    def unset(self, app_name: Union[str, None], key: str, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key], execute=execute)
 
-    def host_add(self, hostname: str, execute: bool = True) -> str | Command:
+    def host_add(self, hostname: str, execute: bool = True) -> Union[str, Command]:
         """Add `hostname` to dokku's user known hosts (calls `dokku git:allow-host`, but with a better name)"""
         return self._evaluate("allow-host", params=[hostname], execute=execute)
 
@@ -173,7 +175,7 @@ class GitPlugin(DokkuPlugin):
             result.append(key)
         return result
 
-    def _parse_generate_deploy_key(self, stdout: str) -> Tuple[str | None, str | None]:
+    def _parse_generate_deploy_key(self, stdout: str) -> Tuple[Union[str, None], Union[str, None]]:
         pubkey_str = "Your public key has been saved in "
         fingerprint_str = "The key fingerprint is:"
         last_line = fingerprint = pubkey_path = None
@@ -186,7 +188,7 @@ class GitPlugin(DokkuPlugin):
             last_line = line
         return fingerprint, pubkey_path
 
-    def generate_deploy_key(self, execute: bool = True) -> SSHKey | Command:
+    def generate_deploy_key(self, execute: bool = True) -> Union[SSHKey, Command]:
         result = self._evaluate("generate-deploy-key", execute=execute, full_return=True)
         if not execute:
             return result
@@ -208,10 +210,10 @@ class GitPlugin(DokkuPlugin):
             public_key=public_key,
         )
 
-    def auth_add(self, hostname: str, username: str, password: str, execute: bool = True) -> str | Command:
+    def auth_add(self, hostname: str, username: str, password: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("auth", params=[hostname, username, password], execute=execute)
 
-    def auth_remove(self, hostname: str, execute: bool = True) -> str | Command:
+    def auth_remove(self, hostname: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("auth", params=[hostname], execute=execute)
 
     def auth_list(self) -> List[Auth]:
@@ -232,11 +234,11 @@ class GitPlugin(DokkuPlugin):
         self,
         app_name: str,
         repository_url: str,
-        git_reference: str | None = None,
+        git_reference: Union[str, None] = None,
         build: bool = False,
         build_if_changes: bool = False,
         execute: bool = True,
-    ) -> str | Command:
+    ) -> Union[str, Command]:
         if build and build_if_changes:
             build = False
         params = []
@@ -249,7 +251,7 @@ class GitPlugin(DokkuPlugin):
             params.append(git_reference)
         return self._evaluate("sync", params=params, execute=execute)
 
-    def object_list(self, apps: List[App], system: bool = True) -> List[Git | SSHKey | Auth]:
+    def object_list(self, apps: List[App], system: bool = True) -> List[Union[Git, SSHKey, Auth]]:
         result = []
         if self.dokku.can_execute_regular_commands:
             result.extend(self.host_list())
@@ -261,8 +263,8 @@ class GitPlugin(DokkuPlugin):
         return result
 
     def object_create(
-        self, obj: Git | SSHKey | Auth, skip_system: bool = False, execute: bool = True
-    ) -> List[str] | List[Command]:
+        self, obj: Union[Git, SSHKey, Auth], skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         result = []
         if isinstance(obj, Auth):
             result.append(

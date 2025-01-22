@@ -2,7 +2,7 @@ import json
 import re
 from collections import Counter
 from functools import lru_cache
-from typing import List
+from typing import Dict, List, Union
 
 from ..models import App, Command, Process, ProcessInfo
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_path
@@ -70,7 +70,7 @@ class PsPlugin(DokkuPlugin):
             result.append(ProcessInfo(**row))
         return result
 
-    def list(self, app_name: str | None = None) -> List[ProcessInfo] | ProcessInfo:
+    def list(self, app_name: Union[str, None] = None) -> Union[List[ProcessInfo], ProcessInfo]:
         """Get the list of processes. If `app_name` is `None`, the report includes all apps
 
         WARNING: if the app is not deployed yet, it won't show the scale for each process type - in this case you can
@@ -95,7 +95,9 @@ class PsPlugin(DokkuPlugin):
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows)
 
-    def start(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def start(
+        self, app_name: Union[str, None] = None, parallel: int = None, execute: bool = True
+    ) -> Union[str, Command]:
         system = app_name is None
         params = []
         if parallel is not None:
@@ -103,7 +105,9 @@ class PsPlugin(DokkuPlugin):
         params.append(app_name if not system else "--all")
         return self._evaluate("start", params=params, execute=execute)
 
-    def stop(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def stop(
+        self, app_name: Union[str, None] = None, parallel: int = None, execute: bool = True
+    ) -> Union[str, Command]:
         system = app_name is None
         params = []
         if parallel is not None:
@@ -112,8 +116,8 @@ class PsPlugin(DokkuPlugin):
         return self._evaluate("stop", params=params, execute=execute)
 
     def restart(
-        self, app_name: str | None = None, parallel: int = None, process: str = None, execute: bool = True
-    ) -> str | Command:
+        self, app_name: Union[str, None] = None, parallel: int = None, process: str = None, execute: bool = True
+    ) -> Union[str, Command]:
         """
         Restart an app with process-type granularity
 
@@ -133,7 +137,9 @@ class PsPlugin(DokkuPlugin):
             params.append(process)
         return self._evaluate("restart", params=params, execute=execute)
 
-    def rebuild(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def rebuild(
+        self, app_name: Union[str, None] = None, parallel: int = None, execute: bool = True
+    ) -> Union[str, Command]:
         system = app_name is None
         params = []
         if parallel is not None:
@@ -141,7 +147,9 @@ class PsPlugin(DokkuPlugin):
         params.append(app_name if not system else "--all")
         return self._evaluate("rebuild", params=params, execute=execute)
 
-    def restore(self, app_name: str | None = None, parallel: int = None, execute: bool = True) -> str | Command:
+    def restore(
+        self, app_name: Union[str, None] = None, parallel: int = None, execute: bool = True
+    ) -> Union[str, Command]:
         system = app_name is None
         params = []
         if parallel is not None:
@@ -149,17 +157,17 @@ class PsPlugin(DokkuPlugin):
         params.append(app_name if not system else "--all")
         return self._evaluate("restore", params=params, execute=execute)
 
-    def set(self, app_name: str | None, key: str, value: str, execute: bool = True) -> str | Command:
+    def set(self, app_name: Union[str, None], key: str, value: str, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key, str(value)], execute=execute)
 
-    def unset(self, app_name: str | None, key: str, execute: bool = True) -> str | Command:
+    def unset(self, app_name: Union[str, None], key: str, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         return self._evaluate("set", params=[app_parameter, key], execute=execute)
 
-    def _parse_scale(self, stdout: str) -> dict[str, int]:
+    def _parse_scale(self, stdout: str) -> Dict[str, int]:
         lines = stdout.split("proctype: qty", maxsplit=1)[1].strip().splitlines()
         pairs = {}
         for line in lines:
@@ -169,7 +177,7 @@ class PsPlugin(DokkuPlugin):
                 pairs[key] = int(value)
         return pairs
 
-    def get_scale(self, app_name: str) -> dict[str, int]:
+    def get_scale(self, app_name: str) -> Dict[str, int]:
         """Get number of processes for each process type of an app (`dokku ps:scale app-name`)"""
         _, stdout, stderr = self._evaluate("scale", params=[app_name], execute=True, full_return=True)
         if stderr:
@@ -177,8 +185,8 @@ class PsPlugin(DokkuPlugin):
         return self._parse_scale(stdout)
 
     def set_scale(
-        self, app_name: str, process_counts: dict[str, int], skip_deploy: bool = False, execute: bool = True
-    ) -> str | Command:
+        self, app_name: str, process_counts: Dict[str, int], skip_deploy: bool = False, execute: bool = True
+    ) -> Union[str, Command]:
         """Set the number of processes for process types of an app (`dokku ps:scale app-name type1=n1 type2=n2 ...`)"""
         params = []
         if skip_deploy:
@@ -208,7 +216,7 @@ class PsPlugin(DokkuPlugin):
 
     def object_create(
         self, obj: ProcessInfo, skip_system: bool = False, execute: bool = True
-    ) -> List[str] | List[Command]:
+    ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         result = []
         if not skip_system:

@@ -1,7 +1,7 @@
 import base64
 import json
 from itertools import groupby
-from typing import Iterator, List
+from typing import Iterator, List, Union
 
 from ..models import App, Command, Config
 from ..utils import get_app_name
@@ -26,8 +26,8 @@ class ConfigPlugin(DokkuPlugin):
     object_classes = (Config,)
 
     def get(
-        self, app_name: str | None, merged: bool = False, hide_internal: bool = True, as_dict: bool = False
-    ) -> List[Config] | dict:
+        self, app_name: Union[str, None], merged: bool = False, hide_internal: bool = True, as_dict: bool = False
+    ) -> Union[List[Config], dict]:
         """Get all configurations set for an app, with the option to merge them with the global ones"""
         # TODO: even if `hide_internal` is `True`, this method will also export internal configs like `NO_VHOST` and
         # `GIT_REV`, which will impact other plugins (like `domains` and `git`). Need to decide whether to
@@ -48,7 +48,7 @@ class ConfigPlugin(DokkuPlugin):
             return data
         return [Config(app_name=app_name, key=key, value=value) for key, value in data.items()]
 
-    def set_many(self, configs: List[Config], restart: bool = False, execute: bool = True) -> str | Command:
+    def set_many(self, configs: List[Config], restart: bool = False, execute: bool = True) -> Union[str, Command]:
         """Set many key-value configuration pairs in one command - for one app only"""
         encoded_pairs = {}
         app_names = set()
@@ -73,15 +73,15 @@ class ConfigPlugin(DokkuPlugin):
 
     def set_many_dict(
         self, app_name: str, keys_values: dict, restart: bool = False, execute: bool = True
-    ) -> str | Command:
+    ) -> Union[str, Command]:
         """Utility method so you don't need to convert a `dict` into a list of `Config` objects to set many"""
         configs = [Config(app_name=app_name, key=key, value=value) for key, value in keys_values.items()]
         return self.set_many(configs=configs, restart=restart, execute=execute)
 
-    def set(self, config: Config, restart: bool = False, execute: bool = True) -> str | Command:
+    def set(self, config: Config, restart: bool = False, execute: bool = True) -> Union[str, Command]:
         return self.set_many(configs=[config], restart=restart, execute=execute)
 
-    def unset_many(self, configs: List[Config], restart: bool = False, execute: bool = True) -> str | Command:
+    def unset_many(self, configs: List[Config], restart: bool = False, execute: bool = True) -> Union[str, Command]:
         keys = []
         app_names = set()
         for config in configs:
@@ -102,15 +102,15 @@ class ConfigPlugin(DokkuPlugin):
 
     def unset_many_list(
         self, app_name: str, keys: List[str], restart: bool = False, execute: bool = True
-    ) -> str | Command:
+    ) -> Union[str, Command]:
         """Utility method so you don't need to convert a list of keys into a list of `Config` objects to unset many"""
         configs = [Config(app_name=app_name, key=key, value=None) for key in keys]
         return self.unset_many(configs=configs, restart=restart, execute=execute)
 
-    def unset(self, config: Config, restart: bool = False, execute: bool = True) -> str | Command:
+    def unset(self, config: Config, restart: bool = False, execute: bool = True) -> Union[str, Command]:
         return self.unset_many(configs=[config], restart=restart, execute=execute)
 
-    def clear(self, app_name: str | None, restart: bool = False, execute: bool = True) -> str | Command:
+    def clear(self, app_name: Union[str, None], restart: bool = False, execute: bool = True) -> Union[str, Command]:
         system = app_name is None
         if system and restart:
             raise ValueError("Cannot restart when clearing global config")
@@ -129,10 +129,12 @@ class ConfigPlugin(DokkuPlugin):
             result.extend(self.get(app_name=app_name, hide_internal=True))
         return result
 
-    def object_create(self, obj: Config, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Config, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         return [self.set_many(configs=[obj], restart=False, execute=execute)]
 
-    def object_create_many(self, objs: List[Config], execute: bool = True) -> Iterator[str] | Iterator[Command]:
+    def object_create_many(self, objs: List[Config], execute: bool = True) -> Union[Iterator[str], Iterator[Command]]:
         objs.sort(key=get_app_name)
         groups = groupby(objs, key=get_app_name)
         for app_name, configs in groups:

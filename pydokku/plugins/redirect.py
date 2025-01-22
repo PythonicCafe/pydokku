@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from typing import List
+from typing import List, Union
 
 from ..models import App, Command, Redirect
 from .base import DokkuPlugin
@@ -42,14 +42,14 @@ class RedirectPlugin(DokkuPlugin):
         return [Redirect(app_name=app_name, **row) for row in self._parse_list(stdout)]
 
     def set(
-        self, app_name: str, source: str, destination: str, code: int | None = None, execute: bool = True
-    ) -> str | Command:
+        self, app_name: str, source: str, destination: str, code: Union[int, None] = None, execute: bool = True
+    ) -> Union[str, Command]:
         params = [app_name, source, destination]
         if code is not None:
             params.append(str(code))
         return self._evaluate("set", params=params, execute=execute)
 
-    def unset(self, app_name: str, source: str, execute: bool = True) -> str | Command:
+    def unset(self, app_name: str, source: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("unset", params=[app_name, source], execute=execute)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Redirect]:
@@ -58,7 +58,9 @@ class RedirectPlugin(DokkuPlugin):
             result.extend(self.list(app.name))
         return result
 
-    def object_create(self, obj: Redirect, skip_system: bool = False, execute: bool = True) -> List[str] | List[Command]:
+    def object_create(
+        self, obj: Redirect, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         return [
             self.set(
                 app_name=obj.app_name, source=obj.source, destination=obj.destination, code=obj.code, execute=execute
