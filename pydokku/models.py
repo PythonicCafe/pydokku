@@ -271,3 +271,9 @@ class Redirect(BaseModel):
     source: str
     destination: str
     code: int
+
+
+@dataclass
+class Maintenance(BaseModel):
+    app_name: str
+    enabled: bool

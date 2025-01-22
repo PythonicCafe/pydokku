@@ -82,10 +82,10 @@ Currently implemented plugins:
 - (core) `ps`
 - (core) `ssh-keys`
 - (core) `storage`
+- (official) `maintenance`
 - (official) `redirect`
 
 Plugins to be implemented soon:
-- (official) `maintenance`
 - (official) `letsencrypt`
 - (official, service) `postgres`
 - (official, service) `mariadb`
@@ -176,6 +176,8 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
     each storage (if the user has the permission to do so)
   - `dokku.git.host_list` will list all known SSH hosts by reading the file (if the user has the permission to do so)
   - `dokku.git.auth_list` will list all authentication hosts/users/passwords added via `git:auth`
+- Some features were not implemented, like the ones which require huge stdin/stdout traffic, like `git:load-image` and
+  `maintenance:custom-page`.
 
 The extra features require certain permissions to execute, as the information is not directly provided by any Dokku
 command. In these cases, `pydokku` will need to run non-Dokku commands. There are six different scenarios you may run

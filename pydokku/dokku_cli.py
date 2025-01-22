@@ -64,6 +64,7 @@ class Dokku:
             ConfigPlugin,
             DomainsPlugin,
             GitPlugin,
+            MaintenancePlugin,
             NetworkPlugin,
             NginxPlugin,
             PluginPlugin,
@@ -75,12 +76,13 @@ class Dokku:
             StoragePlugin,
         )
 
-        available_plugins = {
+        implemented_plugins = {
             "apps": AppsPlugin,
             "checks": ChecksPlugin,
             "config": ConfigPlugin,
             "domains": DomainsPlugin,
             "git": GitPlugin,
+            "maintenance": MaintenancePlugin,
             "network": NetworkPlugin,
             "nginx": NginxPlugin,
             "plugin": PluginPlugin,
@@ -92,7 +94,10 @@ class Dokku:
             "storage": StoragePlugin,
         }
         self.plugins = {}
-        for name, klass in available_plugins.items():
+        for name, klass in implemented_plugins.items():
+            # TODO: may skip adding plugin as an attribute if Dokku does not have it installed. This would require
+            # running `dokku.plugin.list` here in `__init__`, which would make it very difficult to instantiate this
+            # class on tests in a machine without Dokku installed, so maybe we can delay this action.
             instance = klass(dokku=self)
             setattr(self, name, instance)
             self.plugins[name] = instance

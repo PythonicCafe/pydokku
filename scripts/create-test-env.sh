@@ -104,3 +104,12 @@ sudo dokku plugin:disable elasticsearch 2> /dev/null || echo
 log "redirect"
 dokku redirect:set test-app-8 old.example.net new.example.net
 dokku redirect:set test-app-9 older.example.net new.example.net 302
+
+log "maintenance"
+dokku maintenance:enable test-app-7
+dokku maintenance:disable test-app-8
+# A custom page is currently not extracted by pydokku, but this was added so in the future we may explore this.
+echo '<html><head><title>Under maintenance</title></head><body><p>This website is under maintenance.</p></body></html>' > maintenance.html
+tar -cf maintenance.tar maintenance.html
+cat maintenance.tar | dokku maintenance:custom-page test-app-7
+rm maintenance.tar maintenance.html

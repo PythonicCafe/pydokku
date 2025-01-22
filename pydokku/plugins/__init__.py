@@ -3,6 +3,7 @@ from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
 from .git import GitPlugin  # noqa
+from .maintenance import MaintenancePlugin  # noqa
 from .network import NetworkPlugin  # noqa
 from .nginx import NginxPlugin  # noqa
 from .plugin import PluginPlugin  # noqa
