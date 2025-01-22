@@ -34,7 +34,7 @@ def error_log(*args, **kwargs):
     print(*args, **kwargs)
 
 
-def dokku_dump(json_filename: Path, ssh_config: dict, quiet: bool = False, indent: int = 2):
+def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, indent: int = 2):
     errlog = no_log if quiet else error_log
     dokku = create_dokku_instance(ssh_config=ssh_config)
     data = {
@@ -57,7 +57,7 @@ def dokku_dump(json_filename: Path, ssh_config: dict, quiet: bool = False, inden
         try:
             data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
         except NotImplementedError:
-            errlog(f"WARNING: cannot export data for plugin {repr(name)} (`dump` method not implemened)")
+            errlog(f"WARNING: cannot export data for plugin {repr(name)} (`object_list` method not implemened)")
         else:
             exported_plugins.add(name)
             errlog(f" {len(data[name])} exported.")
@@ -74,7 +74,7 @@ def dokku_dump(json_filename: Path, ssh_config: dict, quiet: bool = False, inden
         json_filename.write_text(json_data)
 
 
-def dokku_load(json_filename: Path, ssh_config: dict, force: bool = False, quiet: bool = False, execute: bool = True):
+def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quiet: bool = False, execute: bool = True):
     errlog = no_log if quiet else error_log
     input_file = json_filename if json_filename.name != "-" else sys.stdin
     with input_file.open() as fobj:
@@ -127,25 +127,24 @@ def main():
 
     subparsers.add_parser("version", help="Show current version of pydokku")
 
-    # TODO: rename `dump` to `export` and `load` to `apply`
-    dump_parser = subparsers.add_parser("dump", help="Export all metadata collected by plugins to JSON")
-    dump_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
-    dump_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
-    dump_parser.add_argument("json_filename", type=Path, help="JSON filename to save data")
+    export_parser = subparsers.add_parser("export", help="Export all metadata collected by plugins to JSON")
+    export_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
+    export_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
+    export_parser.add_argument("json_filename", type=Path, help="JSON filename to save data")
     # TODO: add options for filters (by app or plugin name)
 
-    load_parser = subparsers.add_parser(
-        "load", help="Load a JSON specification and execute all needed operations in a Dokku installation"
+    apply_parser = subparsers.add_parser(
+        "apply", help="Load a JSON specification and execute all needed operations in a Dokku installation"
     )
-    load_parser.add_argument("--force", "-f", action="store_true", help="Force execution even if version mismatches")
-    load_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
-    load_parser.add_argument(
+    apply_parser.add_argument("--force", "-f", action="store_true", help="Force execution even if version mismatches")
+    apply_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
+    apply_parser.add_argument(
         "--print-only",
         "-p",
         action="store_true",
         help="Print the commands to be executed instead of actually executing them",
     )
-    load_parser.add_argument("json_filename", type=Path, help="Filename created by `pydokku dump` command")
+    apply_parser.add_argument("json_filename", type=Path, help="Filename created by `pydokku export` command")
 
     args = parser.parse_args()
     ssh_config = {
@@ -159,15 +158,15 @@ def main():
 
     if args.command == "version":
         print(f"pydokku {__version__}")
-    elif args.command == "dump":
-        dokku_dump(
+    elif args.command == "export":
+        dokku_export(
             json_filename=args.json_filename,
             ssh_config=ssh_config,
             quiet=args.quiet,
             indent=args.indent,
         )
-    elif args.command == "load":
-        dokku_load(
+    elif args.command == "apply":
+        dokku_apply(
             json_filename=args.json_filename,
             force=args.force,
             quiet=args.quiet,

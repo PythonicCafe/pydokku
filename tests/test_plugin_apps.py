@@ -207,5 +207,5 @@ def test_create_rename():
     dokku.apps.destroy(renamed_app_name)
 
 
-# TODO: test dump
+# TODO: test object_list
 # TODO: test object_create

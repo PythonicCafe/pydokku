@@ -188,6 +188,6 @@ def test_clear():
     assert len(final_configs) == 0
 
 
-# TODO: test dump
+# TODO: test object_list
 # TODO: test object_create
 # TODO: test object_create_many

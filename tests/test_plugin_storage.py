@@ -92,5 +92,5 @@ def test_ensure_mount_list_unmount(create_apps):
     # XXX: won't try to delete the `path` here since the test won't be running as the `dokku` user
 
 
-# TODO: test dump
+# TODO: test object_list
 # TODO: test object_create

@@ -2,20 +2,20 @@ import json
 import tempfile
 from pathlib import Path
 
-from pydokku.cli import dokku_dump, dokku_load
+from pydokku.cli import dokku_apply, dokku_export
 from pydokku.utils import execute_command
 from tests.utils import requires_dokku
 
 
-def run_dump():
+def run_export():
     with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
         path = Path(tmp.name)
-        dokku_dump(json_filename=path, ssh_config={}, quiet=True)
+        dokku_export(json_filename=path, ssh_config={}, quiet=True)
         return json.loads(path.read_text())
 
 
 @requires_dokku
-def test_dump_load():
+def test_export_apply():
     current_path = Path(__file__).parent
     scripts_path = current_path.parent / "scripts"
     cleanup_script = str((scripts_path / "cleanup.sh").absolute())
@@ -23,13 +23,13 @@ def test_dump_load():
 
     execute_command([cleanup_script], check=True)
     execute_command([create_test_env_script], check=True)
-    data_1 = run_dump()
+    data_1 = run_export()
     execute_command([cleanup_script], check=True)
     with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
         path = Path(tmp.name)
         path.write_text(json.dumps(data_1, default=str))
-        dokku_load(json_filename=path, ssh_config={}, force=True, quiet=False, execute=True)
-    data_2 = run_dump()
+        dokku_apply(json_filename=path, ssh_config={}, force=True, quiet=True, execute=True)
+    data_2 = run_export()
     execute_command([cleanup_script], check=True)
 
     # Since we run cleanup, some information will not be exactly the same, like `App.created_at` and

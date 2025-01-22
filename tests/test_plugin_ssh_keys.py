@@ -131,5 +131,5 @@ def test_add_remove(temp_file):
     assert len(keys_before) == len(keys_final)
 
 
-# TODO: test dump
+# TODO: test object_list
 # TODO: test object_create

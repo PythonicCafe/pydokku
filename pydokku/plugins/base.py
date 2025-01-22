@@ -41,7 +41,7 @@ class DokkuPlugin:
 
     def object_list(self, apps: List[App], system: bool = True) -> List[T]:
         """List all objects for this specific plugin"""
-        # TODO: should always sort (as network objects are sort in `test_dump_load`?)
+        # TODO: should always sort (as network objects are sort in `test_export_apply`?)
         raise NotImplementedError(f"Method `object_list` not implemented for {self.__class__.__name__}")
 
     def object_deserialize(self, obj: dict) -> T:
