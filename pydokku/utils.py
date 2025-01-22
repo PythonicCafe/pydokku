@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 REGEXP_DOKKU_HEADER = re.compile(r"^\s*=====> ", flags=re.MULTILINE)
+REGEXP_ISO_FORMAT = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})[ T]([0-9]{2}:[0-9]{2}:[0-9]{2})(\.[0-9]+)?(.*)?")
 
 
 def get_app_name(obj: Any) -> Union[str, None]:
@@ -48,10 +49,30 @@ def parse_timestamp(value: Union[str, None]) -> Union[datetime.datetime, None]:
 
 
 def parse_iso_format(value: Union[str, None]) -> Union[datetime.datetime, None]:
+    """
+    >>> parse_iso_format('2024-02-25T01:55:24.275184461Z')
+    datetime.datetime(2024, 2, 25, 1, 55, 24, 275184, tzinfo=datetime.timezone.utc)
+    >>> parse_iso_format('2024-02-25T01:55:24Z')
+    datetime.datetime(2024, 2, 25, 1, 55, 24, tzinfo=datetime.timezone.utc)
+    >>> parse_iso_format('2024-02-25T01:55:24')
+    datetime.datetime(2024, 2, 25, 1, 55, 24)
+    """
+    original_value = value
     value = str(value if value is not None else "")
     if not value:
         return None
-    return datetime.datetime.fromisoformat(value)
+    # Custom parse_iso_format to work on Python 3.10 and below
+    result = REGEXP_ISO_FORMAT.findall(value)
+    if not result:
+        raise ValueError(f"Value {repr(original_value)} is not in ISO datetime format")
+    date, time, microseconds, timezone = result[0]
+    timezone = "+00:00" if timezone.lower() == "z" else timezone
+    dt = datetime.datetime.fromisoformat(f"{date}T{time}{timezone}")
+    if microseconds:
+        dt = dt.replace(microsecond=int(microseconds[1:7]))
+    return dt
+
+
 def parse_timedelta_seconds(value: Union[str, None]) -> Union[datetime.timedelta, None]:
     """
     Parse a seconds value
