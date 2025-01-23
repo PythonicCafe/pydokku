@@ -77,9 +77,7 @@ write_files:
 $(sed 's/^/      /' "$INSTALL_SCRIPT_PATH")
 
 runcmd:
-  - sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/g' /etc/locale.gen
-  - echo 'LANG=en_US.UTF-8' > /etc/default/locale
-  - locale-gen
+  - cloud-init-per once setlocales localectl set-locale en_US.UTF-8
 EOF
 	cat <<EOF > "$CLOUDINIT_META_YAML"
 instance-id: $VM_NAME
