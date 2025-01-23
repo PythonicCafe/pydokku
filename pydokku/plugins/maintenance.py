@@ -56,7 +56,9 @@ class MaintenancePlugin(DokkuPlugin):
         apps_names = [app.name for app in apps]
         return [obj for obj in self.list() if obj.app_name in apps_names]
 
-    def object_create(self, obj: Maintenance, skip_system: bool = False, execute: bool = True) -> Union[List[str], List[Command]]:
+    def object_create(
+        self, obj: Maintenance, skip_system: bool = False, execute: bool = True
+    ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         result = []
         if obj.enabled:

@@ -1,5 +1,6 @@
+from collections import defaultdict
 from itertools import groupby
-from typing import Iterator, List, Tuple, Type, TypeVar, Union
+from typing import Any, Iterator, List, Tuple, Type, TypeVar, Union
 
 from ..models import App, Command
 from ..utils import dataclass_field_set
@@ -78,3 +79,33 @@ class DokkuPlugin:
     # testing this new method in each plugin and a general test with clean + apply + export1 + ensure + export2 + clean
     # + assert)
     # TODO: should implement object_delete?
+
+
+class PluginScheduler:
+    """Resolve dependencies between a list of plugins to ensure the correct order of execution"""
+
+    def __init__(self, plugins: List[Any]):
+        self.plugins = {plugin.name: plugin for plugin in plugins}
+        self.remaining = list(self.plugins.keys())
+        self.completed = set()
+        self.dependency_count = {name: len(plugin.requires) for name, plugin in self.plugins.items()}
+        self.dependents = defaultdict(list)
+        for plugin in plugins:
+            for dep in plugin.requires:
+                self.dependents[dep].append(plugin.name)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        ready = [plugin_name for plugin_name in self.remaining if self.dependency_count[plugin_name] == 0]
+        if not ready:
+            if self.remaining:
+                raise RuntimeError(f"Detected inconsistency in plugin requirements - remaining: {self.remaining}")
+            raise StopIteration
+        for plugin_name in ready:
+            self.remaining.remove(plugin_name)
+            self.completed.add(plugin_name)
+            for dependent in self.dependents[plugin_name]:
+                self.dependency_count[dependent] -= 1
+        return ready

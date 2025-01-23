@@ -7,14 +7,14 @@ smoothly in Python3.8+ installations, so it's useful to grab data about an old s
 to automate some stuff. :)
 
 Goals:
-- Create a well tested tool to interface/control Dokku
+- Create a well tested tool to interface/control Dokku (currently test coverage is ~93%)
 - Fix some of the Dokku weaknesses/missing features when possible
-- Have a cleaner interface and better data model then Dokku by:
-  - Creating a dataclass for each plugin, representing all the information that plugin stores
-  - Avoiding implementing redundant commands from the library's point of view (like `config:export` and `config:show`)
+- Provide a clean and more consistent data model (compared to Dokku) when possible (see "Terminology and
+  Compatibility")
 
-It's not a current goal to support commands which outputs a huge ammount of data (like `postgres:export`) or requires a
-huge amount of data into the command's standard input (like `git:load-image`).
+> Note: it's not a current goal to support commands which outputs a huge ammount of data (like `postgres:export`) or
+> requires a huge amount of data into the command's standard input (like `git:load-image`). We may work on that later.
+
 
 ## Usage
 
@@ -22,10 +22,11 @@ As a command-line tool:
 
 ```shell
 pydokku export mydokku.json
-# Will create the `mydokku.json` file with all information regarding this dokku installation
+# Will create the `mydokku.json` file with all information regarding this dokku installation.
 
 pydokku apply mydokku.json
-# Will execute all specs from the JSON file (create apps, configure plugins etc.)
+# Will execute all specs from the JSON file (create apps, configure plugins etc.). The commands will be executed in a
+# specific order to guarantee consistency between plugin requirements.
 ```
 
 As a Python library:
@@ -99,9 +100,10 @@ Plugins to be implemented soon:
 
 After implementing a comprehensive set of plugins in order to be useful, the focus will be:
 
-- Implement type-checking tools to enforce the declared types are correct
+- Warn the user regarding all data that only will be exported if running locally or via SSH with an user different of
+  `dokku`
+- Implement type-checking tools to enforce the declared types are correct (see `type-check` in `Makefile`)
 - Implement "real" tests for all missing plugin commands
-- List all data that only will be exported if running locally or via SSH with an user different of `dokku`
 - Create an API to `object_ensure` method (similar to `object_create`, but won't raise an error if the object already
   exists)
 - Define the concept of a "recipe", with variables for the context (similar to cookiecutter), the template itself and a
@@ -141,7 +143,7 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
   - `traefik-vhosts`
 
 
-## Terminology and compatibility
+## Terminology and Compatibility
 
 - Each plugin has its own associated dataclasses, representing the objects managed by that plugin. These objects
   correspond to Dokku settings but do not directly map to the "rows" displayed in `dokku <plugin>:report|list`
@@ -168,6 +170,8 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
   "global", call `dokku.domains.set` with `app_name=None`)
 - Commands that can have different behaviors depending on the parameters were split in two methods, like `checks:set`
   (both `dokku.checks.set` and `dokku.checks.unset` were implemented)
+- Redundant or unnecessary commands (from the library's point of view) will not implemented, like
+  `config:export`/`config:show` and `apps:exists`
 - Extra features were add to address some of Dokku's weaknesses and enable `pydokku` to provide a comprehensive view of
   all Dokku-related settings (this helps exporting all settings from a server and apply to another), like:
   - `dokku.ssh_keys.list` will add the actual public key by reading the Dokku SSH authorized keys file (if the user has

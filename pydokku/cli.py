@@ -6,6 +6,7 @@ from pathlib import Path
 from textwrap import indent
 
 from . import __version__
+from .plugins.base import PluginScheduler
 
 
 def create_dokku_instance(ssh_config: dict = None):
@@ -52,22 +53,27 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
     apps = dokku.apps.list()
     errlog(f" {len(apps)} found.")
     exported_plugins = set()
-    for name, plugin in dokku.plugins.items():
-        errlog(f"Listing and serializing objects for plugin {name}...", end="")
-        plugin_name = plugin.plugin_name
-        if plugin_name not in system_plugins:
-            errlog(" not installed, skipping.")
-            continue
-        elif not system_plugins[plugin_name].enabled:
-            errlog(" not enabled, skipping.")
-            continue
-        try:
-            data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
-        except NotImplementedError:
-            errlog(f"WARNING: cannot export data for plugin {repr(name)} (`object_list` method not implemened)")
-        else:
-            exported_plugins.add(name)
-            errlog(f" {len(data[name])} exported.")
+    scheduler = PluginScheduler(plugins=dokku.plugins.values())
+    plugin_batches = list(scheduler)
+    for plugin_batch in plugin_batches:
+        # TODO: make the batch parallel?
+        for name in plugin_batch:
+            plugin = dokku.plugins[name]
+            errlog(f"Listing and serializing objects for plugin {name}...", end="")
+            plugin_name = plugin.plugin_name
+            if plugin_name not in system_plugins:
+                errlog(" not installed, skipping.")
+                continue
+            elif not system_plugins[plugin_name].enabled:
+                errlog(" not enabled, skipping.")
+                continue
+            try:
+                data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
+            except NotImplementedError:
+                errlog(f"WARNING: cannot export data for plugin {repr(name)} (`object_list` method not implemened)")
+            else:
+                exported_plugins.add(plugin_name)
+                errlog(f" {len(data[name])} exported.")
     not_exported = set(system_plugins.keys()) - exported_plugins
     if not_exported:
         plural = "s" if len(system_plugins) != 1 else ""
@@ -86,9 +92,10 @@ def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quie
     input_file = json_filename if json_filename.name != "-" else sys.stdin
     with input_file.open() as fobj:
         data = json.load(fobj)
-    metadata = data.pop("dokku")
+    data.pop("pydokku")
+    dokku_metadata = data.pop("dokku")
     dokku = create_dokku_instance(ssh_config=ssh_config)
-    expected_version = metadata["version"]
+    expected_version = dokku_metadata["version"]
     current_version = dokku.version()
     if current_version != expected_version:
         if not force:
@@ -98,16 +105,24 @@ def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quie
             )
             exit(1)
         errlog(f"WARNING: version mismatch (current: {current_version}, expected: {expected_version}).")
-    # TODO: use a `requires` parameter on each plugin and implement a requirement-solver to make sure the execution is
-    # in the correct order
-    for key, values in sorted(data.items()):
-        prefix = ("# " if not execute else "") + f"[{key}] "
-        if not hasattr(dokku, key):
-            errlog(f"WARNING: skipping unknown plugin {repr(key)}")
-            continue
-        # TODO: what if the plugin is disabled?
+
+    system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}
+
+    def process_plugin(name: str):
+        plugin = dokku.plugins[name]
+        plugin_name = plugin.plugin_name
+        prefix = ("# " if not execute else "") + f"[{name}] "
+        values = data.pop(name, None)
+        if values is None:
+            errlog(f"{prefix}No data found, skipping.")
+            return
+        elif plugin_name not in system_plugins:
+            errlog(f"{prefix}Not found, skipping.")
+            return
+        elif not system_plugins[plugin_name].enabled:
+            errlog(f"{prefix}Disabled, skipping.")
+            return
         errlog(f"{prefix}Reading objects...", end="")
-        plugin = getattr(dokku, key)
         objects = [plugin.object_deserialize(row) for row in values]
         errlog(f" {len(objects)} loaded.")
         errlog(f"{prefix}Creating objects")
@@ -118,6 +133,22 @@ def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quie
                 output = indent(output, "    ")
             print(output)
             # TODO: add option to return output instead of printing
+
+    scheduler = PluginScheduler(plugins=dokku.plugins.values())
+    # Consume the entire scheduler so if there are any loops in the plugin dependency graph the exception will be
+    # raised before doing anything.
+    plugin_batches = list(scheduler)
+    process_plugin("plugin")  # Must install all plugins before anything
+    system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}  # Update after installing new ones
+    for plugin_batch in plugin_batches:
+        # TODO: make the batch parallel?
+        for name in plugin_batch:
+            if name == "plugin":
+                continue  # Done already
+            process_plugin(name)
+    if data:
+        not_executed = list(data.keys())
+        errlog(f"WARNING: remaining plugins not executed: {', '.join(not_executed)}")
 
 
 def main():

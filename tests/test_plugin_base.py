@@ -4,6 +4,7 @@ from pathlib import Path
 
 from pydokku import Dokku
 from pydokku.cli import dokku_apply, dokku_export
+from pydokku.plugins.base import PluginScheduler
 from pydokku.utils import execute_command
 from tests.utils import requires_dokku
 
@@ -13,6 +14,43 @@ def run_export():
         path = Path(tmp.name)
         dokku_export(json_filename=path, ssh_config={}, quiet=True)
         return json.loads(path.read_text())
+
+
+def test_PluginScheduler():
+    class PluginA:
+        name = "a"
+        requires = ()
+
+    class PluginB:
+        name = "b"
+        requires = ("a",)
+
+    class PluginC:
+        name = "c"
+        requires = ("a",)
+
+    class PluginD:
+        name = "d"
+        requires = ("c",)
+
+    class PluginE:
+        name = "e"
+        requires = ("b", "d")
+
+    class PluginF:
+        name = "f"
+        requires = ("c",)
+
+    plugins = [PluginA, PluginB, PluginC, PluginD, PluginE, PluginF]
+    scheduler = PluginScheduler(plugins)
+    result = list(scheduler)
+    expected = [
+        ["a"],
+        ["b", "c"],
+        ["d", "f"],
+        ["e"],
+    ]
+    assert result == expected
 
 
 @requires_dokku
