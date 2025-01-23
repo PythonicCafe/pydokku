@@ -2,6 +2,7 @@ import json
 import tempfile
 from pathlib import Path
 
+from pydokku import Dokku
 from pydokku.cli import dokku_apply, dokku_export
 from pydokku.utils import execute_command
 from tests.utils import requires_dokku
@@ -20,16 +21,22 @@ def test_export_apply():
     scripts_path = current_path.parent / "scripts"
     cleanup_script = str((scripts_path / "cleanup.sh").absolute())
     create_test_env_script = str((scripts_path / "create-test-env.sh").absolute())
+    dokku = Dokku()
+    implemented_plugins = set(dokku.plugins.keys())
 
     execute_command([cleanup_script], check=True)
     execute_command([create_test_env_script], check=True)
     data_1 = run_export()
+    exported_plugins_1 = set(key for key in data_1.keys() if key not in ("pydokku", "dokku"))
+    assert exported_plugins_1 == implemented_plugins
     execute_command([cleanup_script], check=True)
     with tempfile.NamedTemporaryFile(suffix=".json") as tmp:
         path = Path(tmp.name)
         path.write_text(json.dumps(data_1, default=str))
         dokku_apply(json_filename=path, ssh_config={}, force=True, quiet=True, execute=True)
     data_2 = run_export()
+    exported_plugins_2 = set(key for key in data_2.keys() if key not in ("pydokku", "dokku"))
+    assert exported_plugins_2 == implemented_plugins
     execute_command([cleanup_script], check=True)
 
     # Since we run cleanup, some information will not be exactly the same, like `App.created_at` and

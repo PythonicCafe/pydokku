@@ -46,15 +46,20 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
     # `plugin.requires_extra_commands`).
     # TODO: add a progress bar?
     errlog("Finding plugins...", end="")
-    plugins = dokku.plugin.list()
-    errlog(f" {len(plugins)} found.")
+    system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}
+    errlog(f" {len(system_plugins)} found.")
     errlog("Finding apps...", end="")
     apps = dokku.apps.list()
     errlog(f" {len(apps)} found.")
     exported_plugins = set()
     for name, plugin in dokku.plugins.items():
-        # TODO: what if the plugin is disabled?
         errlog(f"Listing and serializing objects for plugin {name}...", end="")
+        if name not in system_plugins:
+            errlog(" not installed, skipping.")
+            continue
+        elif not system_plugins[name].enabled:
+            errlog(" not enabled, skipping.")
+            continue
         try:
             data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
         except NotImplementedError:
@@ -62,9 +67,9 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
         else:
             exported_plugins.add(name)
             errlog(f" {len(data[name])} exported.")
-    not_exported = set(plugin.name for plugin in plugins) - exported_plugins
+    not_exported = set(system_plugins.keys()) - exported_plugins
     if not_exported:
-        plural = "s" if len(plugins) != 1 else ""
+        plural = "s" if len(system_plugins) != 1 else ""
         names = ", ".join(sorted(not_exported))
         errlog(f"WARNING: {len(not_exported)} plugin{plural} were not exported (not implemented): {names}")
     json_data = json.dumps(data, indent=indent, default=str)
