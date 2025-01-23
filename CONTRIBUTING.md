@@ -64,34 +64,43 @@ After having libvirt configured and running, create the virtual machine by execu
 make vm-create # ~2min with a good Internet connection
 ```
 
-The VM's IP address will be shown. After that you can ssh into the machine and install Docker, Dokku and some Dokku
-plugins, so we can run the tests:
+The VM's IP address will be shown. You may want to copy your SSH public key so it's easier to connect:
+
+```shell
+ssh-copy-id debian@$(make vm-ip)
+```
+
+After that you can connect to the VM and install Docker, Dokku and some Dokku plugins so you can run the tests:
 
 ```shell
 ssh debian@$(make vm-ip) sudo /root/install.sh  # ~4min
+```
+
+You may also download and compile other Python versions using pyenv with:
+
+```shell
+ssh debian@$(make vm-ip) bash -i /home/debian/install-pythons.sh  # ~12min
 ```
 
 After that, you may want to create a snapshot of the current disk, so you can easily go back to this fresh install
 state if the tests make the disk dirty:
 
 ```shell
-VM_NAME="debian12-pydokku"
 OVERLAY_QCOW2="/var/lib/libvirt/images/pydokku.qcow2"
 
 make vm-stop
 sudo qemu-img snapshot -c "Docker and Dokku installed" "$OVERLAY_QCOW2"
-sudo virsh start "$VM_NAME"
+make vm-start
 ```
 
 And to return to a specific snapshot:
 
 ```shell
-VM_NAME="debian12-pydokku"
 OVERLAY_QCOW2="/var/lib/libvirt/images/pydokku.qcow2"
 
 make vm-stop
 sudo qemu-img snapshot -a "Docker and Dokku installed" "$OVERLAY_QCOW2"
-sudo virsh start "$VM_NAME"
+make vm-start
 ```
 
 You can list all snapshots by running `sudo qemu-img snapshot -l $OVERLAY_QCOW2`.

@@ -4,6 +4,10 @@ set -e
 
 function log() { echo; echo; echo "[$(date --iso=seconds)] $@"; }
 
+log "Install packages to build Python (useful if using pyenv)"
+apt update
+apt install -y build-essential git libbz2-dev libffi-dev liblzma-dev libncurses-dev libreadline-dev libsqlite3-dev libssl-dev
+
 log "Installing Docker"
 apt remove docker.io docker-doc docker-compose podman-docker containerd runc
 apt update
@@ -33,13 +37,27 @@ apt install -y dokku
 apt clean
 dokku plugin:install-dependencies --core
 adduser debian dokku
+chown -R debian:debian /home/debian
 
 log "Installing Python tools"
 apt install -y python3-venv
 sudo -u debian bash -c 'python3 -m venv /home/debian/venv'
-sudo -u debian bash -c 'cd /home/debian && source venv/bin/activate && pip install coverage ipython pytest'
+sudo -u debian bash -c 'cd /home/debian && source venv/bin/activate && pip install -r /home/debian/requirements-development.txt'
 
 sudo bash -c 'echo "host_shared /shared virtiofs defaults 0 0" >> /etc/fstab'
 sudo systemctl daemon-reload
 sudo mkdir /shared
 sudo mount /shared
+
+log "Installing pyenv"
+BASHRC_PATH="/home/debian/.bashrc"
+PYENV_PATH="/home/debian/.pyenv"
+rm -rf "$PYENV_PATH"
+sudo -u debian git clone https://github.com/pyenv/pyenv.git "$PYENV_PATH"
+sudo -u debian git clone https://github.com/pyenv/pyenv-virtualenv.git "${PYENV_PATH}/plugins/pyenv-virtualenv"
+sudo -u debian touch "$BASHRC_PATH"
+if [[ $(grep PYENV "$BASHRC_PATH" | wc -l) = 0 ]]; then
+  echo 'export PYENV_ROOT="$HOME/.pyenv"' >> "$BASHRC_PATH"
+  echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> "$BASHRC_PATH"
+  echo 'eval "$(pyenv init - bash)"' >> "$BASHRC_PATH"
+fi

@@ -9,10 +9,14 @@ PROJECT_NAME="pydokku"
 DEBIAN_QCOW2_URL="https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
 DEBIAN_QCOW2="/var/lib/libvirt/images/$(basename $DEBIAN_QCOW2_URL)"
 OVERLAY_QCOW2="/var/lib/libvirt/images/${PROJECT_NAME}.qcow2"
-OVERLAY_DISK_SIZE="10G"
+OVERLAY_DISK_SIZE="40G"
 CLOUDINIT_USER_YAML="/var/lib/libvirt/images/${PROJECT_NAME}-cloud-init-user.yaml"
 CLOUDINIT_META_YAML="/var/lib/libvirt/images/${PROJECT_NAME}-cloud-init-meta.yaml"
 INSTALL_SCRIPT_PATH="$(dirname "$0")/install.sh"
+INSTALL_PYTHONS_SCRIPT_PATH="$(dirname "$0")/install-pythons.sh"
+REPO_PATH="$(dirname "$(dirname "$0")")"
+REQUIREMENTS_PATH="${REPO_PATH}/requirements.txt"
+REQUIREMENTS_DEVELOPMENT_PATH="${REPO_PATH}/requirements-development.txt"
 DEFAULT_USERNAME="debian"
 DEFAULT_PASSWORD="password"
 TMP_PATH=$(mktemp -d)
@@ -71,10 +75,22 @@ users:
     passwd: "$(echo $DEFAULT_PASSWORD | mkpasswd --method=SHA-512 --stdin)"
 
 write_files:
+  - path: /home/debian/requirements.txt
+    permissions: '0755'
+    content: |
+$(sed 's/^/      /' "$REQUIREMENTS_PATH")
+  - path: /home/debian/requirements-development.txt
+    permissions: '0755'
+    content: |
+$(sed 's/^/      /' "$REQUIREMENTS_DEVELOPMENT_PATH")
   - path: /root/install.sh
     permissions: '0755'
     content: |
 $(sed 's/^/      /' "$INSTALL_SCRIPT_PATH")
+  - path: /home/debian/install-pythons.sh
+    permissions: '0755'
+    content: |
+$(sed 's/^/      /' "$INSTALL_PYTHONS_SCRIPT_PATH")
 
 runcmd:
   - cloud-init-per once setlocales localectl set-locale en_US.UTF-8
