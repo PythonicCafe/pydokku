@@ -40,7 +40,10 @@ class GitPlugin(DokkuPlugin):
     """
 
     name = "git"
+    subcommand = "git"
+    plugin_name = "git"
     object_classes = (SSHKey, Auth, Git)
+    requires = ("apps",)
 
     @lru_cache
     def _get_rows_parser(self):

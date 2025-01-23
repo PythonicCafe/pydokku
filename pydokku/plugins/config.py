@@ -23,7 +23,10 @@ class ConfigPlugin(DokkuPlugin):
     """
 
     name = "config"
+    subcommand = "config"
+    plugin_name = "config"
     object_classes = (Config,)
+    requires = ("apps",)
 
     def get(
         self, app_name: Union[str, None], merged: bool = False, hide_internal: bool = True, as_dict: bool = False

@@ -24,7 +24,10 @@ class NetworkPlugin(DokkuPlugin):
     """
 
     name = "network"
+    subcommand = "network"
+    plugin_name = "network"
     object_classes = (Network, AppNetwork)
+    requires = ("apps",)
 
     def create(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("create", params=[name], execute=execute)

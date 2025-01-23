@@ -16,7 +16,10 @@ class ProxyPlugin(DokkuPlugin):
     """
 
     name = "proxy"
+    subcommand = "proxy"
+    plugin_name = "proxy"
     object_classes = (Proxy,)
+    requires = ("apps",)
 
     @lru_cache
     def _get_rows_parser(self):

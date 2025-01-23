@@ -66,7 +66,7 @@ def test_unset_command():
     assert command.sudo is False
 
 
-#def test_set_unset():
+# def test_set_unset():
 #    plugin_name = "redirect"
 #    dokku._execute(Command(["dokku", "plugin:install", f"file:///var/lib/dokku/tmp/dokku-copy-{plugin_name}/.git", "--name", plugin_name], sudo=True, check=False))
 # TODO: test object_list

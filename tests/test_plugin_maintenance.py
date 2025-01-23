@@ -68,7 +68,19 @@ def test_enable_disable_list_set_unset(create_apps):
     dokku, apps_names = create_apps
     plugin_name = "maintenance"
     # TODO: create util function `ensure_plugin`
-    dokku._execute(Command(["dokku", "plugin:install", f"file:///var/lib/dokku/tmp/dokku-copy-{plugin_name}/.git", "--name", plugin_name], sudo=True, check=False))
+    dokku._execute(
+        Command(
+            [
+                "dokku",
+                "plugin:install",
+                f"file:///var/lib/dokku/tmp/dokku-copy-{plugin_name}/.git",
+                "--name",
+                plugin_name,
+            ],
+            sudo=True,
+            check=False,
+        )
+    )
 
     before = {obj.app_name: obj for obj in dokku.maintenance.list() if obj.app_name in apps_names}
     assert len(before) == len(apps_names)

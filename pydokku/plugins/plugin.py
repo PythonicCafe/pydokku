@@ -44,6 +44,8 @@ class PluginPlugin(DokkuPlugin):
     """
 
     name = "plugin"
+    subcommand = "plugin"
+    plugin_name = "plugin"
     object_classes = (Plugin,)
     requires = ()
 

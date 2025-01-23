@@ -23,7 +23,10 @@ class DomainsPlugin(DokkuPlugin):
     """
 
     name = "domains"
+    subcommand = "domains"
+    plugin_name = "domains"
     object_classes = (Domain,)
+    requires = ("apps",)
 
     @lru_cache
     def _get_rows_parser(self):

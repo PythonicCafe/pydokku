@@ -17,7 +17,10 @@ class MaintenancePlugin(DokkuPlugin):
     """
 
     name = "maintenance"
+    subcommand = "maintenance"
+    plugin_name = "maintenance"
     object_classes = (Maintenance,)
+    requires = ("plugin", "apps")
 
     @lru_cache
     def _get_rows_parser(self):

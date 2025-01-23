@@ -25,7 +25,10 @@ class NginxPlugin(DokkuPlugin):
     """
 
     name = "nginx"
+    subcommand = "nginx"
+    plugin_name = "nginx-vhosts"
     object_classes = (Nginx,)
+    requires = ("apps", "domains", "ports", "proxy", "redirect")
 
     @lru_cache
     def _get_rows_parser(self):

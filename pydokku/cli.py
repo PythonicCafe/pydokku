@@ -54,10 +54,11 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
     exported_plugins = set()
     for name, plugin in dokku.plugins.items():
         errlog(f"Listing and serializing objects for plugin {name}...", end="")
-        if name not in system_plugins:
+        plugin_name = plugin.plugin_name
+        if plugin_name not in system_plugins:
             errlog(" not installed, skipping.")
             continue
-        elif not system_plugins[name].enabled:
+        elif not system_plugins[plugin_name].enabled:
             errlog(" not enabled, skipping.")
             continue
         try:

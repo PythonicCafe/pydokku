@@ -8,9 +8,13 @@ T = TypeVar("T")
 
 
 class DokkuPlugin:
-    name: str = None
+    name: str = None  # This is pydokku internal name for the plugin. Use `_` instead of `-`
+    subcommand: str = None  # Dokku subcommand related to this plugin. Usually equals to name.replace("_", "-")
+    plugin_name: str = (
+        None  # Name Dokku shows in `plugin:list` - could be different from plugin_name (like with a "-vhosts" suffix)
+    )
     object_classes: List[Type[T]] = []
-    # TODO: add `requires` so we have a plugin hierarchy and can define the restore order
+    requires: Tuple[str] = None  # Name of the plugins required by this one (property `name` of the dependencies)
 
     def __init__(self, dokku):
         self.dokku = dokku
@@ -25,7 +29,7 @@ class DokkuPlugin:
         execute: bool = True,
         full_return: bool = False,
     ) -> Union[str, Command, Tuple[int, str, str]]:
-        subcommand = f"{self.name}:{operation}" if operation is not None else self.name
+        subcommand = f"{self.subcommand}:{operation}" if operation is not None else self.subcommand
         cmd = Command(
             command=["dokku", subcommand] + (params if params is not None else []),
             stdin=stdin,

@@ -18,7 +18,10 @@ class ChecksPlugin(DokkuPlugin):
     """
 
     name = "checks"
+    subcommand = "checks"
+    plugin_name = "checks"
     object_classes = (Check,)
+    requires = ("apps",)
 
     @lru_cache
     def _get_rows_parser(self):

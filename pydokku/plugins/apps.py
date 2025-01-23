@@ -22,7 +22,10 @@ class AppsPlugin(DokkuPlugin):
     """
 
     name = "apps"
+    subcommand = "apps"
+    plugin_name = "apps"
     object_classes = (App,)
+    requires = ("plugin",)
 
     @lru_cache
     def _get_rows_parser(self):

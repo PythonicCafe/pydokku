@@ -20,7 +20,10 @@ class PortsPlugin(DokkuPlugin):
     """
 
     name = "ports"
+    subcommand = "ports"
+    plugin_name = "ports"
     object_classes = (Port,)
+    requires = ("apps", "domains")
 
     @lru_cache
     def _get_rows_parser(self):

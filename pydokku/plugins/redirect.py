@@ -14,7 +14,10 @@ class RedirectPlugin(DokkuPlugin):
     """
 
     name = "redirect"
+    subcommand = "redirect"
+    plugin_name = "redirect"
     object_classes = (Redirect,)
+    requires = ("apps", "domains")
 
     def _parse_list(self, stdout: str) -> List[dict]:
         lines = stdout.splitlines()
