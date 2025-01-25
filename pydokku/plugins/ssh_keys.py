@@ -36,10 +36,10 @@ class SSHKeysPlugin(DokkuPlugin):
     """
 
     name = "ssh_keys"
-    subcommand = "ssh-keys"
-    plugin_name = "ssh-keys"
     object_classes = (SSHKey,)
     requires = ()
+    requires_extra_commands = True
+    subcommand = plugin_name = "ssh-keys"
 
     def _read_authorized_keys(self):
         """

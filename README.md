@@ -100,8 +100,6 @@ Plugins to be implemented soon:
 
 After implementing a comprehensive set of plugins in order to be useful, the focus will be:
 
-- Warn the user regarding all data that only will be exported if running locally or via SSH with an user different of
-  `dokku`
 - Implement type-checking tools to enforce the declared types are correct (see `type-check` in `Makefile`)
 - Implement "real" tests for all missing plugin commands
 - Create an API to `object_ensure` method (similar to `object_create`, but won't raise an error if the object already

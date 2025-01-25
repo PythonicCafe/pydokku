@@ -39,11 +39,10 @@ class GitPlugin(DokkuPlugin):
     - `git:set`: was split in `set()` and `unset()` methods
     """
 
-    name = "git"
-    subcommand = "git"
-    plugin_name = "git"
+    name = subcommand = plugin_name = "git"
     object_classes = (SSHKey, Auth, Git)
     requires = ("apps",)
+    requires_extra_commands = True
 
     @lru_cache
     def _get_rows_parser(self):

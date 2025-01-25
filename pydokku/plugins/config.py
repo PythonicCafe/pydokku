@@ -22,11 +22,10 @@ class ConfigPlugin(DokkuPlugin):
     - `get()`: hide internal Dokku env vars (keys starting with `DOKKU_`)
     """
 
-    name = "config"
-    subcommand = "config"
-    plugin_name = "config"
+    name = subcommand = plugin_name = "config"
     object_classes = (Config,)
     requires = ("apps",)
+    requires_extra_commands = False
 
     def get(
         self, app_name: Union[str, None], merged: bool = False, hide_internal: bool = True, as_dict: bool = False

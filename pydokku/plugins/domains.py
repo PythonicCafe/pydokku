@@ -22,11 +22,10 @@ class DomainsPlugin(DokkuPlugin):
     - `list()`: will execute `domains:report` both for global and for all apps
     """
 
-    name = "domains"
-    subcommand = "domains"
-    plugin_name = "domains"
+    name = subcommand = plugin_name = "domains"
     object_classes = (Domain,)
     requires = ("apps",)
+    requires_extra_commands = False
 
     @lru_cache
     def _get_rows_parser(self):

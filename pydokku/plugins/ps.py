@@ -22,11 +22,10 @@ class PsPlugin(DokkuPlugin):
     - `ps:scale`: was split in `get_scale()` and `set_scale()` methods
     """
 
-    name = "ps"
-    subcommand = "ps"
-    plugin_name = "ps"
+    name = subcommand = plugin_name = "ps"
     object_classes = (ProcessInfo,)
     requires = ("apps", "git")
+    requires_extra_commands = False
 
     def inspect(self, app_name: str, execute: bool = True) -> List[dict]:
         result = self._evaluate("inspect", [app_name], execute=execute)

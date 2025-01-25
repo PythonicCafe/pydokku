@@ -43,11 +43,10 @@ class PluginPlugin(DokkuPlugin):
     - `list` will add the actual git remote and reference reading files inside `.git` for each non-core plugin.
     """
 
-    name = "plugin"
-    subcommand = "plugin"
-    plugin_name = "plugin"
+    name = subcommand = plugin_name = "plugin"
     object_classes = (Plugin,)
     requires = ()
+    requires_extra_commands = True
 
     def _parse_list(self, stdout: str) -> List[Plugin]:
         result = []

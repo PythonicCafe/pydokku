@@ -24,11 +24,11 @@ class NginxPlugin(DokkuPlugin):
     - `list()` will add a global object
     """
 
-    name = "nginx"
-    subcommand = "nginx"
+    name = subcommand = "nginx"
     plugin_name = "nginx-vhosts"
     object_classes = (Nginx,)
     requires = ("apps", "domains", "ports", "proxy", "redirect")
+    requires_extra_commands = False
 
     @lru_cache
     def _get_rows_parser(self):

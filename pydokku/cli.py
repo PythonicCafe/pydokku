@@ -42,9 +42,6 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
         "pydokku": {"version": __version__},
         "dokku": {"version": dokku.version()},
     }
-    # TODO: if for some reason a plugin cannot export the data completely (eg: storage running via SSH as dokku user,
-    # or ssh-keys running via SSH as dokku user), then print a warning on stderr (use
-    # `plugin.requires_extra_commands`).
     # TODO: add a progress bar?
     errlog("Finding plugins...", end="")
     system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}
@@ -55,6 +52,7 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
     exported_plugins = set()
     scheduler = PluginScheduler(plugins=dokku.plugins.values())
     plugin_batches = list(scheduler)
+    required_cmd_warnings = []
     for plugin_batch in plugin_batches:
         # TODO: make the batch parallel?
         for name in plugin_batch:
@@ -74,11 +72,19 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
             else:
                 exported_plugins.add(plugin_name)
                 errlog(f" {len(data[name])} exported.")
+                if not dokku.can_execute_regular_commands and len(data[name]) > 0 and plugin.requires_extra_commands:
+                    required_cmd_warnings.append(name)
     not_exported = set(system_plugins.keys()) - exported_plugins
     if not_exported:
         plural = "s" if len(system_plugins) != 1 else ""
         names = ", ".join(sorted(not_exported))
         errlog(f"WARNING: {len(not_exported)} plugin{plural} were not exported (not implemented): {names}")
+    if required_cmd_warnings:
+        plural = "s" if len(required_cmd_warnings) != 1 else ""
+        names = ", ".join(sorted(required_cmd_warnings))
+        errlog(
+            f"WARNING: {len(required_cmd_warnings)} plugin{plural} were not completely exported because this user don't have enough access: {names}"
+        )
     json_data = json.dumps(data, indent=indent, default=str)
     if json_filename.name == "-":
         print(json_data)

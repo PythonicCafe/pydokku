@@ -23,11 +23,10 @@ class NetworkPlugin(DokkuPlugin):
     - `rebuild` and `rebuildall` merged into `rebuild()`
     """
 
-    name = "network"
-    subcommand = "network"
-    plugin_name = "network"
+    name = subcommand = plugin_name = "network"
     object_classes = (Network, AppNetwork)
     requires = ("apps",)
+    requires_extra_commands = False
 
     def create(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("create", params=[name], execute=execute)

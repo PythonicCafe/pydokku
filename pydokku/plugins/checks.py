@@ -17,11 +17,10 @@ class ChecksPlugin(DokkuPlugin):
     - `checks:set`: was split in `set()` and `unset()` methods
     """
 
-    name = "checks"
-    subcommand = "checks"
-    plugin_name = "checks"
+    name = subcommand = plugin_name = "checks"
     object_classes = (Check,)
     requires = ("apps",)
+    requires_extra_commands = False
 
     @lru_cache
     def _get_rows_parser(self):

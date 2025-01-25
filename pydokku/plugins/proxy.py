@@ -15,11 +15,10 @@ class ProxyPlugin(DokkuPlugin):
     Extra features: none.
     """
 
-    name = "proxy"
-    subcommand = "proxy"
-    plugin_name = "proxy"
+    name = subcommand = plugin_name = "proxy"
     object_classes = (Proxy,)
     requires = ("apps",)
+    requires_extra_commands = False
 
     @lru_cache
     def _get_rows_parser(self):

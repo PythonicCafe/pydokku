@@ -16,6 +16,9 @@ class DokkuPlugin:
     )
     object_classes: List[Type[T]] = []
     requires: Tuple[str] = None  # Name of the plugins required by this one (property `name` of the dependencies)
+    requires_extra_commands: bool = (
+        None  # Requires extra commands to be executed to export all data required to recreate the same environment
+    )
 
     def __init__(self, dokku):
         self.dokku = dokku

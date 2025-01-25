@@ -21,11 +21,10 @@ class AppsPlugin(DokkuPlugin):
     Extra features: none.
     """
 
-    name = "apps"
-    subcommand = "apps"
-    plugin_name = "apps"
+    name = subcommand = plugin_name = "apps"
     object_classes = (App,)
     requires = ("plugin",)
+    requires_extra_commands = False
 
     @lru_cache
     def _get_rows_parser(self):

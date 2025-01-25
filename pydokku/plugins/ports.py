@@ -19,11 +19,10 @@ class PortsPlugin(DokkuPlugin):
     Extra features: none.
     """
 
-    name = "ports"
-    subcommand = "ports"
-    plugin_name = "ports"
+    name = subcommand = plugin_name = "ports"
     object_classes = (Port,)
     requires = ("apps", "domains")
+    requires_extra_commands = False
 
     @lru_cache
     def _get_rows_parser(self):

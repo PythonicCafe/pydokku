@@ -16,11 +16,10 @@ class MaintenancePlugin(DokkuPlugin):
     EXTRA features: none.
     """
 
-    name = "maintenance"
-    subcommand = "maintenance"
-    plugin_name = "maintenance"
+    name = subcommand = plugin_name = "maintenance"
     object_classes = (Maintenance,)
     requires = ("plugin", "apps")
+    requires_extra_commands = False
 
     @lru_cache
     def _get_rows_parser(self):

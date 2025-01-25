@@ -34,11 +34,10 @@ class StoragePlugin(DokkuPlugin):
       (if the user has the permission to do so)
     """
 
-    name = "storage"
-    subcommand = "storage"
-    plugin_name = "storage"
+    name = subcommand = plugin_name = "storage"
     object_classes = (Storage,)
     requires = ("apps",)
+    requires_extra_commands = True
 
     # TODO: create helper method to get a storage's size
 

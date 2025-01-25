@@ -13,11 +13,10 @@ class RedirectPlugin(DokkuPlugin):
     Extra features: none.
     """
 
-    name = "redirect"
-    subcommand = "redirect"
-    plugin_name = "redirect"
+    name = subcommand = plugin_name = "redirect"
     object_classes = (Redirect,)
     requires = ("apps", "domains")
+    requires_extra_commands = False
 
     def _parse_list(self, stdout: str) -> List[dict]:
         lines = stdout.splitlines()
