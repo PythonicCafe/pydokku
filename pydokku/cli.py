@@ -157,6 +157,17 @@ def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quie
         errlog(f"WARNING: remaining plugins not executed: {', '.join(not_executed)}")
 
 
+def dependency_graph(output_filename: Path, ssh_config: dict, indent: int = 2):
+    dokku = create_dokku_instance(ssh_config=ssh_config)
+    scheduler = PluginScheduler(plugins=dokku.plugins.values())
+    data = scheduler.graph()
+    if output_filename.name == "-":
+        print(data)
+    else:
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        output_filename.write_text(data)
+
+
 def main():
     # TODO: deal with `DOKKU_HOST` and git remotes on the current working directory, as Dokku does
     # <https://dokku.com/docs/deployment/remote-commands/>
@@ -178,6 +189,10 @@ def main():
     export_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
     export_parser.add_argument("json_filename", type=Path, help="JSON filename to save data")
     # TODO: add options for filters (by app or plugin name)
+
+    graph_parser = subparsers.add_parser("dependency-graph", help="Export a plugin dependency graph in graphviz (DOT) format")
+    graph_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
+    graph_parser.add_argument("output_filename", type=Path, help="Filename to save the graph representation")
 
     apply_parser = subparsers.add_parser(
         "apply", help="Load a JSON specification and execute all needed operations in a Dokku installation"
@@ -218,6 +233,12 @@ def main():
             quiet=args.quiet,
             execute=not args.print_only,
             ssh_config=ssh_config,
+        )
+    elif args.command == "dependency-graph":
+        dependency_graph(
+            output_filename=args.output_filename,
+            ssh_config=ssh_config,
+            indent=args.indent,
         )
 
 

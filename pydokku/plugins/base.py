@@ -112,3 +112,26 @@ class PluginScheduler:
             for dependent in self.dependents[plugin_name]:
                 self.dependency_count[dependent] -= 1
         return ready
+
+    def graph(self, indent: int = 2):
+        """Generates a GraphViz representation of plugin dependencies"""
+        scheduler = PluginScheduler(plugins=list(self.plugins.values()))
+        stages = list(scheduler)
+        level = " " * indent
+        dot = [
+            "digraph {",
+            f"{level}rankdir=LR;",
+            f'{level}label="pydokku plugin dependency";',
+            f"{level}node [shape=box];",
+        ]
+        for i, stage in enumerate(stages):
+            dot.append(f"{level}subgraph cluster_{i} {{")
+            dot.append(f"{level}{level}style=invis;")
+            dot.append(f"{level}{level}rank=same;")
+            dot.extend(f'{level}{level}"{name}";' for name in stage)
+            dot.append(f"{level}}}")
+        for plugin in self.plugins.values():
+            for dependency in plugin.requires:
+                dot.append(f'{level}"{dependency}" -> "{plugin.name}";')
+        dot.append("}")
+        return "\n".join(dot)
