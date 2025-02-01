@@ -28,8 +28,7 @@ class StoragePlugin(DokkuPlugin):
     """
     dokku store core plugin
 
-    EXTRA features:
-
+    Extra features:
     - `list` will add the storage permissions (created using `storage:ensure-directory --chown=xxx`) for each storage
       (if the user has the permission to do so)
     """

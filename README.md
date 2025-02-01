@@ -106,6 +106,8 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
   exists)
 - Define the concept of a "recipe", with variables for the context (similar to cookiecutter), the template itself and a
   "render" method. The CLI commands would be: `recipe-apply`, `recipe-render`, `recipe-ensure`.
+- Replace `pathlib.Path` with `pathlib.PosixPath` when describing paths related to Dokku machine (if running remote on
+  Windows, `Path` will not be `PosixPath`).
 - Implement other official plugins:
   - `00_dokku-standard`
   - `20_events`

@@ -2,8 +2,8 @@ import getpass
 import hashlib
 import tempfile
 from functools import cached_property
-from pathlib import Path
-from typing import Tuple, Union
+from pathlib import Path, PosixPath
+from typing import Dict, Tuple, Union
 
 from . import ssh
 from .models import Command
@@ -17,6 +17,7 @@ class Dokku:
 
     def __init__(
         self,
+        lib_root: PosixPath = PosixPath("/var/lib/dokku"),
         ssh_host: Union[str, None] = None,
         ssh_port: int = 22,
         ssh_private_key: Union[Path, str, None] = None,
@@ -24,6 +25,7 @@ class Dokku:
         ssh_key_password: Union[str, None] = None,
         ssh_mux: bool = True,
     ):
+        self.lib_root = lib_root
         self._ssh_prefix = []
         self.__files_to_delete = []
         self.local_user = getpass.getuser()
@@ -160,3 +162,23 @@ class Dokku:
     def version(self) -> str:
         _, stdout, _ = self._execute(Command(["dokku", "version"]))
         return stdout.strip().split()[2]
+
+    def plugin_app_config(self, plugin_name: str, app_name: str) -> Dict:
+        """Read raw plugin config data for an app (requires execution of extra commands)
+
+        This method is useful to get information regarding a plugin that it won't show in :list/:report commands, such
+        as values configured using `letsencrypt:set`.
+        """
+        plugin_config_path = self.lib_root / "config" / plugin_name
+        plugin_app_config_path = plugin_config_path / app_name
+        _, stdout, stderr = self._execute(Command(["ls", str(plugin_app_config_path)], check=False, sudo=self.requires_sudo))
+        if "No such file or directory" in stderr:  # Directory does not exist, so no config set
+            return {}
+        elif stderr:
+            raise RuntimeError(f"Cannot get plugin config for app: {stderr}")
+        filenames = stdout.splitlines()
+        data = {}
+        for filename in sorted(filenames):
+            _, stdout, _ = self._execute(Command(["cat", str(plugin_app_config_path / filename)], check=False, sudo=self.requires_sudo))
+            data[filename] = stdout
+        return data

@@ -13,7 +13,7 @@ class MaintenancePlugin(DokkuPlugin):
     Subommands NOT implemented:
     - `custom-page`: huge stdin input is currently not a priority
 
-    EXTRA features: none.
+    Extra features: none.
     """
 
     name = subcommand = plugin_name = "maintenance"

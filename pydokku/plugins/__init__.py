@@ -14,15 +14,6 @@ from .redirect import RedirectPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-# TODO: implement redirect <app>                           Display the redirects set on app
-# TODO: implement redirect:set <app> <src> <dest> [<code>] Set a redirect from <src> domain to <dest> domain
-# TODO: implement redirect:unset <app> <src>               Unset a redirect from <source>
-
-# TODO: implement maintenance:enable <app>              Enable app maintenance mode
-# TODO: implement maintenance:disable <app>             Disable app maintenance mode
-# TODO: implement maintenance:report [<app>] [<flag>]   Displays an maintenance report for one or more apps
-# TODO: implement maintenance:custom-page <app>         Imports a tarball from stdin; should contain at least maintenance.html
-
 # TODO: implement letsencrypt:active <app>                     Verify if letsencrypt is active for an app
 # TODO: implement letsencrypt:auto-renew [<app>]               Auto-renew app if renewal is necessary
 # TODO: implement letsencrypt:cleanup <app>                    Remove stale certificate directories for app

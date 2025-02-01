@@ -30,7 +30,7 @@ class SSHKeysPlugin(DokkuPlugin):
     """
     dokku ssh-keys core plugin
 
-    EXTRA features:
+    Extra features:
     - `list` will add the actual public key by reading the Dokku SSH authorized keys file (if the user has the
       permission to do so)
     """

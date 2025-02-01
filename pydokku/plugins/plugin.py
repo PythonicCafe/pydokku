@@ -39,7 +39,7 @@ class PluginPlugin(DokkuPlugin):
 
     Subcommands NOT implemented: none.
 
-    EXTRA features:
+    Extra features:
     - `list` will add the actual git remote and reference reading files inside `.git` for each non-core plugin.
     """
 

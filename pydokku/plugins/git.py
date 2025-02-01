@@ -29,7 +29,7 @@ class GitPlugin(DokkuPlugin):
     WARNING: if you have a deploy key (created via `git:generate-deploy-key`) it WON'T be exported by this plugin,
     since it would require reading the PRIVATE key. The PUBLIC key is exported since it can be useful.
 
-    EXTRA features:
+    Extra features:
     - `host_list` method: read known hosts file (which is populated by `git:allow-host` subcommand)
     - `auth_list` method: read netrc file (which is populated by `git:auth` subcommand)
 
