@@ -2,8 +2,10 @@ import argparse
 import json
 import os
 import sys
+from copy import deepcopy
 from pathlib import Path
 from textwrap import indent
+from typing import Dict
 
 from . import __version__
 from .plugins.base import PluginScheduler
@@ -36,7 +38,7 @@ def error_log(*args, **kwargs):
     print(*args, **kwargs)
 
 
-def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, indent: int = 2):
+def dokku_export(ssh_config: dict, quiet: bool = False) -> Dict:
     errlog = no_log if quiet else error_log
     dokku = create_dokku_instance(ssh_config=ssh_config)
     data = {
@@ -86,24 +88,17 @@ def dokku_export(json_filename: Path, ssh_config: dict, quiet: bool = False, ind
         errlog(
             f"WARNING: {len(required_cmd_warnings)} plugin{plural} were not completely exported because this user don't have enough access: {names}"
         )
-    json_data = json.dumps(data, indent=indent, default=str)
-    if json_filename.name == "-":
-        print(json_data)
-    else:
-        json_filename.parent.mkdir(parents=True, exist_ok=True)
-        json_filename.write_text(json_data)
+    return data
 
 
-def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quiet: bool = False, execute: bool = True):
+def dokku_apply(data: Dict, ssh_config: dict, force: bool = False, quiet: bool = False, execute: bool = True):
     errlog = no_log if quiet else error_log
-    input_file = json_filename if json_filename.name != "-" else sys.stdin
-    with input_file.open() as fobj:
-        data = json.load(fobj)
+    data = deepcopy(data)
     data.pop("pydokku")
     dokku_metadata = data.pop("dokku")
     dokku = create_dokku_instance(ssh_config=ssh_config)
     expected_version = dokku_metadata["version"]
-    current_version = dokku.version()
+    current_version = list(dokku.version())
     if current_version != expected_version:
         if not force:
             print(
@@ -158,15 +153,11 @@ def dokku_apply(json_filename: Path, ssh_config: dict, force: bool = False, quie
         errlog(f"WARNING: remaining plugins not executed: {', '.join(not_executed)}")
 
 
-def dependency_graph(output_filename: Path, ssh_config: dict, indent: int = 2):
+def dependency_graph(ssh_config: dict, indent: int = 2):
     dokku = create_dokku_instance(ssh_config=ssh_config)
     scheduler = PluginScheduler(plugins=dokku.plugins.values())
-    data = scheduler.graph()
-    if output_filename.name == "-":
-        print(data)
-    else:
-        output_filename.parent.mkdir(parents=True, exist_ok=True)
-        output_filename.write_text(data)
+    data = scheduler.graph(indent=indent)
+    return data
 
 
 def main():
@@ -224,26 +215,41 @@ def main():
         print(f"pydokku {__version__}")
 
     elif args.command == "export":
-        dokku_export(
-            json_filename=args.json_filename,
+        data = dokku_export(
             ssh_config=ssh_config,
             quiet=args.quiet,
-            indent=args.indent,
         )
+        json_data = json.dumps(data, indent=args.indent, default=str)
+        json_filename = args.json_filename
+        if json_filename.name == "-":
+            print(json_data)
+        else:
+            json_filename.parent.mkdir(parents=True, exist_ok=True)
+            json_filename.write_text(json_data)
+
     elif args.command == "apply":
+        json_filename = args.json_filename
+        if json_filename.name != "-":
+            json_encoded_data = json_filename.read_text()
+        else:
+            json_encoded_data = sys.stdin.read()
+        data = json.loads(json_encoded_data)
         dokku_apply(
-            json_filename=args.json_filename,
+            data=data,
             force=args.force,
             quiet=args.quiet,
             execute=not args.print_only,
             ssh_config=ssh_config,
         )
+
     elif args.command == "dependency-graph":
-        dependency_graph(
-            output_filename=args.output_filename,
-            ssh_config=ssh_config,
-            indent=args.indent,
-        )
+        output_filename = args.output_filename
+        data = dependency_graph(ssh_config=ssh_config, indent=args.indent)
+        if output_filename.name == "-":
+            print(data)
+        else:
+            output_filename.parent.mkdir(parents=True, exist_ok=True)
+            output_filename.write_text(data)
 
 
 if __name__ == "__main__":
