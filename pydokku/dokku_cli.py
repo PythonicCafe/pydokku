@@ -26,6 +26,7 @@ class Dokku:
         ssh_mux: bool = True,
         ssh_mux_timeout: int = 600,
     ):
+        self._dokku_version = None  # Variable meant to cache Dokku version on the first run of `version()`
         self.lib_root = lib_root
         self._ssh_prefix = []
         self.__files_to_delete = []
@@ -163,9 +164,13 @@ class Dokku:
         # TODO: may add a debugging log call here with the full command to be executed
         return execute_command(command=cmd, stdin=command.stdin, check=command.check)
 
-    def version(self) -> str:
-        _, stdout, _ = self._execute(Command(["dokku", "version"]))
-        return stdout.strip().split()[2]
+    def version(self) -> Tuple[int, int, int]:
+        """Execute `dokku version` and caches the value for this instance"""
+        if self._dokku_version is None:
+            _, stdout, _ = self._execute(Command(["dokku", "version"]))
+            version = stdout.strip().split()[2]
+            self._dokku_version = tuple(int(item) for item in version.split("."))
+        return self._dokku_version
 
     def plugin_app_config(self, plugin_name: str, app_name: str) -> Dict:
         """Read raw plugin config data for an app (requires execution of extra commands)

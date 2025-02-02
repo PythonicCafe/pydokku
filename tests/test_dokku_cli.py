@@ -12,7 +12,8 @@ from tests.utils import requires_dokku, requires_ssh_keygen
 def test_version():
     dokku = Dokku()
     version = dokku.version()
-    assert re.match(r"[0-9]+\.[0-9]+\.[0-9]+", version) is not None
+    assert isinstance(version, tuple)
+    assert len(version) == 3
 
 
 @requires_ssh_keygen
