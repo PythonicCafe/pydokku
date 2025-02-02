@@ -16,7 +16,7 @@ def command(
     port: int = 22,
     mux: bool = False,
     mux_filename: Union[Path, str, None] = None,
-    mux_timeout: int = 60,
+    mux_timeout: int = 600,
 ) -> List[str]:
     cmd = [
         "ssh",

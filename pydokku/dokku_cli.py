@@ -24,6 +24,7 @@ class Dokku:
         ssh_user: str = "dokku",
         ssh_key_password: Union[str, None] = None,
         ssh_mux: bool = True,
+        ssh_mux_timeout: int = 600,
     ):
         self.lib_root = lib_root
         self._ssh_prefix = []
@@ -56,6 +57,7 @@ class Dokku:
                 private_key=self.ssh_private_key,
                 mux=ssh_mux,
                 mux_filename=mux_filename,
+                mux_timeout=ssh_mux_timeout,
             ) + ["--"]
 
         # Instantiate default plugins
