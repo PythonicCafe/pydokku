@@ -218,13 +218,13 @@ class Nginx(BaseModel):
 @dataclass
 class Network(BaseModel):
     name: str
-    id: str
-    created_at: datetime.datetime
-    driver: str
-    scope: str
-    internal: bool
-    ipv6: bool
-    labels: Dict[str, str]
+    id: Union[str, None] = None
+    created_at: Union[datetime.datetime, None] = None
+    driver: Union[str, None] = None
+    scope: Union[str, None] = None
+    internal: Union[bool, None] = None
+    ipv6: Union[bool, None] = None
+    labels: Union[Dict[str, str], None] = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "Network":

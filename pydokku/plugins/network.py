@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Any, List, Union
 
 from ..models import App, AppNetwork, Command, Network
-from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_comma_separated_list
+from ..utils import REGEXP_DOKKU_HEADER, clean_stderr, get_stdout_rows_parser, parse_bool, parse_comma_separated_list
 from .base import DokkuPlugin
 
 
@@ -26,7 +26,7 @@ class NetworkPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "network"
     object_classes = (Network, AppNetwork)
     requires = ("apps",)
-    requires_extra_commands = False
+    requires_extra_commands = True
 
     def create(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("create", params=[name], execute=execute)
@@ -42,8 +42,38 @@ class NetworkPlugin(DokkuPlugin):
         return [Network.from_dict(row) for row in json.loads(data)]
 
     def list(self) -> List[Network]:
-        stdout = self._evaluate("list", params=["--format", "json"], execute=True)
-        return self._parse_list_json(stdout)
+        if self.dokku.version() >= (0, 35, 3):
+            # Support for `--format json` was added on 0.35.3: <https://github.com/dokku/dokku/releases/tag/v0.35.3>
+            stdout = self._evaluate("list", params=["--format", "json"], execute=True)
+            return self._parse_list_json(stdout)
+        else:
+            # For older versions the `network:list` command only provides the names of the networks. If we want to get
+            # more data, we need to run `docker network inspect`.
+            stdout = self._evaluate("list", params=[], execute=True)
+            network_names = REGEXP_DOKKU_HEADER.split(stdout.strip())[1:][0].splitlines()[1:]
+            if not network_names:  # Would be weird (since Docker has default networks), but better check
+                rows = []
+            elif self.dokku.can_execute_regular_commands:
+                command = Command(["docker", "network", "inspect"] + network_names, sudo=self.dokku.requires_sudo)
+                _, stdout, _ = self.dokku._execute(command)  # will execute using SSH connection, if configured to
+                data = json.loads(stdout)
+                rows = [
+                    {
+                        "Name": row["Name"],
+                        "ID": row["Id"],
+                        "Driver": row["Driver"],
+                        "Scope": row["Scope"],
+                        "CreatedAt": row["Created"],
+                        "Internal": row["Internal"],
+                        "IPv6": row["EnableIPv6"],
+                        "Labels": row["Labels"],
+                    }
+                    for row in data
+                ]
+            else:
+                # Worst case: there are networks and we can't execute `docker network inspect` to get additional data
+                rows = [{"Name": name} for name in network_names]
+            return [Network.from_dict(row) for row in rows]
 
     def set(self, app_name: Union[str, None], key: str, value: Any, execute: bool = True) -> Union[str, Command]:
         return self.set_many(app_name=app_name, key=key, values=[value], execute=execute)

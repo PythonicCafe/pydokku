@@ -200,6 +200,13 @@ command. In these cases, `pydokku` will need to run non-Dokku commands. There ar
 > features" will not be extracted.
 
 
+### Dokku versions
+
+pydokku is being developed using the latest version of Dokku as of 2025-02-02 (0.35.15) but may work on older versions.
+Note that some features may not be available, like complete network information on versions before 0.35.3 (if the user
+running cannot execute other commands than Dokku).
+
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
