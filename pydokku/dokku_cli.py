@@ -25,6 +25,7 @@ class Dokku:
         ssh_key_password: Union[str, None] = None,
         ssh_mux: bool = True,
         ssh_mux_timeout: int = 600,
+        interactive: bool = False,
     ):
         self._dokku_version = None  # Variable meant to cache Dokku version on the first run of `version()`
         self.lib_root = lib_root
@@ -32,18 +33,22 @@ class Dokku:
         self.__files_to_delete = []
         self.local_user = getpass.getuser()
         self.ssh_host, self.ssh_port, self.ssh_user = None, None, None
+        self.interactive = interactive
         if ssh_host:
             self.ssh_host, self.ssh_port, self.ssh_user = ssh_host, ssh_port, ssh_user
             self.ssh_private_key = (
                 Path(ssh_private_key).expanduser().absolute() if ssh_private_key is not None else None
             )
             if ssh_private_key is None:
-                raise ValueError("`ssh_private_key` must be provided to ensure the execution is non-interactive")
+                if not interactive:
+                    raise ValueError("`ssh_private_key` must be provided to ensure the execution is non-interactive")
             elif ssh.key_requires_password(self.ssh_private_key):
                 if ssh_key_password is None:
-                    raise ValueError("`ssh_key_password` must be provided so the execution is non-interactive")
-                self.ssh_private_key = ssh.key_unlock(self.ssh_private_key, ssh_key_password)
-                self.__files_to_delete.append(self.ssh_private_key)
+                    if not interactive:
+                        raise ValueError("`ssh_key_password` must be provided so the execution is non-interactive")
+                else:
+                    self.ssh_private_key = ssh.key_unlock(self.ssh_private_key, ssh_key_password)
+                    self.__files_to_delete.append(self.ssh_private_key)
             mux_filename = None
             if ssh_mux:
                 # TODO: create temp file hash (ssh host, ssh port, ssh user, ssh key path) and add to _files_to_delete

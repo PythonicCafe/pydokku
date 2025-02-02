@@ -20,6 +20,7 @@ def create_dokku_instance(ssh_config: dict = None):
         ssh_private_key=ssh_config.get("private_key"),
         ssh_key_password=ssh_config.get("key_password"),
         ssh_mux=ssh_config.get("mux"),
+        interactive=True,
     )
 
 
@@ -221,6 +222,7 @@ def main():
 
     if args.command == "version":
         print(f"pydokku {__version__}")
+
     elif args.command == "export":
         dokku_export(
             json_filename=args.json_filename,
