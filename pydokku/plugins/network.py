@@ -26,7 +26,10 @@ class NetworkPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "network"
     object_classes = (Network, AppNetwork)
     requires = ("apps",)
-    requires_extra_commands = True
+
+    @property
+    def requires_extra_commands(self):
+        return self.dokku.version() < (0, 35, 3)
 
     def create(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("create", params=[name], execute=execute)
