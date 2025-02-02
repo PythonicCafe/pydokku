@@ -108,6 +108,12 @@ class StoragePlugin(DokkuPlugin):
             raise RuntimeError(f"Cannot unmount storage for {storage.app_name}: {clean_stderr(stderr)}")
         return stdout
 
+    def size(self, storage: Storage) -> int:
+        if not self.dokku.can_execute_regular_commands:
+            raise RuntimeError("storage.size: this Dokku instance cannot execute regular commands")
+        _, stdout, _ = self.dokku._execute(Command(["du", "-bs", storage.host_path], sudo=True))
+        return int(stdout.split("\t")[0])
+
     def object_list(self, apps: List[App], system: bool = True) -> List[Storage]:
         return [obj for app in apps for obj in self.list(app.name)]
 

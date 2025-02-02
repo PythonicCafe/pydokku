@@ -158,7 +158,7 @@ class GitPlugin(DokkuPlugin):
         The actual hostname will be in SSHKey's name field
         """
         if not self.dokku.can_execute_regular_commands:
-            raise RuntimeError("Cannot execute regular commands")
+            raise RuntimeError("git.host_list: this Dokku instance cannot execute regular commands")
         known_hosts_path = "/home/dokku/.ssh/known_hosts"
         command = Command(["touch", known_hosts_path], sudo=self.dokku.requires_sudo)  # ensure it exists
         self.dokku._execute(command)  # will execute using SSH connection, if configured to

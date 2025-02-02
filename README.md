@@ -66,6 +66,27 @@ dokku.config.set_many_dict("myapp2", {"key1": "val1", "key2": "val2"})
 dokku.ps.set_scale("myapp1", {"web": 2, "worker": 3})
 # '-----> Scaling myapp1 processes: web=2 worker=3\n'
 
+# Now let's create some storage for the apps
+from pydokku.models import Storage
+from pydokku.utils import human_readable_size
+
+host_path, (user_id, group_id) = dokku.storage.ensure_directory("myapp1-storage", chown="heroku")
+storage_1 = Storage(app_name="myapp1", host_path=host_path, container_path="/data", user_id=user_id, group_id=group_id)
+host_path, (user_id, group_id) = dokku.storage.ensure_directory("myapp2-storage", chown="heroku")
+storage_2 = Storage(app_name="myapp2", host_path=host_path, container_path="/data", user_id=user_id, group_id=group_id)
+dokku.storage.mount(storage_1)
+dokku.storage.mount(storage_2)
+
+# With the storage mounted, let's create some files so then we can check how much each directory have
+(storage_1.host_path / "myfile.txt").write_text("some content" * 100_000)
+(storage_2.host_path / "myfile.txt").write_text("some content" * 1_000_000)
+for app in dokku.apps.list():
+    for storage in dokku.storage.list(app.name):
+        size = dokku.storage.size(storage)  # Requires extra commands to be executed
+        print(f"{storage.host_path} ({app.name}): {human_readable_size(size)}")
+# /var/lib/dokku/data/storage/myapp1-storage (myapp1): 1.15 MB
+# /var/lib/dokku/data/storage/myapp2-storage (myapp2): 11.45 MB
+
 # Access other plugins via `dokku.<plugin_name>`
 ```
 

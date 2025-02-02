@@ -262,3 +262,39 @@ def execute_command(command: List[str], stdin: Union[str, None] = None, check: b
             f"Command {command} exited with status {result} (stdout: {repr(stdout)}, stderr: {repr(stderr)})"
         )
     return result, stdout, stderr
+
+
+def human_readable_size(size, separator=" ", divider=1024):
+    """
+    >>> human_readable_size(100)
+    '100 B'
+    >>> human_readable_size(1023)
+    '1023 B'
+    >>> human_readable_size(1024)
+    '1 kB'
+    >>> human_readable_size(1.5 * 1024)
+    '1.50 kB'
+    >>> human_readable_size(1.5 * 1024, separator='')
+    '1.50kB'
+    >>> human_readable_size(1024 * 1024)
+    '1 MB'
+    >>> human_readable_size(1024 * 1024 * 1024)
+    '1 GB'
+    >>> human_readable_size(1024 * 1024 * 1024 * 1024)
+    '1 TB'
+    >>> human_readable_size(1024 * 1024 * 1024 * 1024 * 1024)
+    '1 PB'
+    >>> human_readable_size(1024 * 1024 * 1024 * 1024 * 1024 * 1024)
+    '1 EB'
+    >>> human_readable_size(1024 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024)
+    '1024 EB'
+    """
+    multipliers = list("kMGTPE")
+    multiplier = ""
+    while size >= divider and multipliers:
+        size /= divider
+        multiplier = multipliers.pop(0)
+    if size - int(size) > 0:
+        return f"{size:4.2f}{separator}{multiplier}B".strip()
+    else:
+        return f"{int(size):4}{separator}{multiplier}B".strip()
