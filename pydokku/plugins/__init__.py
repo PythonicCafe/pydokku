@@ -3,6 +3,7 @@ from .checks import ChecksPlugin  # noqa
 from .config import ConfigPlugin  # noqa
 from .domains import DomainsPlugin  # noqa
 from .git import GitPlugin  # noqa
+from .letsencrypt import LetsEncryptPlugin  # noqa
 from .maintenance import MaintenancePlugin  # noqa
 from .network import NetworkPlugin  # noqa
 from .nginx import NginxPlugin  # noqa
@@ -14,16 +15,6 @@ from .redirect import RedirectPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
-# TODO: implement letsencrypt:active <app>                     Verify if letsencrypt is active for an app
-# TODO: implement letsencrypt:auto-renew [<app>]               Auto-renew app if renewal is necessary
-# TODO: implement letsencrypt:cleanup <app>                    Remove stale certificate directories for app
-# TODO: implement letsencrypt:cron-job [--add --remove]        Add or remove a cron job that periodically calls auto-renew.
-# TODO: implement letsencrypt:disable <app>                    Disable letsencrypt for an app
-# TODO: implement letsencrypt:enable <app>                     Enable or renew letsencrypt for an app
-# TODO: implement letsencrypt:help                             Display letsencrypt help
-# TODO: implement letsencrypt:list                             List letsencrypt-secured apps with certificate expiry times
-# TODO: implement letsencrypt:revoke <app>                     Revoke letsencrypt certificate for app
-# TODO: implement letsencrypt:set <app> <property> (<value>)   Set or clear a letsencrypt property for an app
 
 # Service plugins - maybe add service:links (service:info is per service and costly)
 

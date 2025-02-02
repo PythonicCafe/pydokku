@@ -113,3 +113,6 @@ echo '<html><head><title>Under maintenance</title></head><body><p>This website i
 tar -cf maintenance.tar maintenance.html
 cat maintenance.tar | dokku maintenance:custom-page test-app-7
 rm maintenance.tar maintenance.html
+
+log "letsencrypt"
+dokku letsencrypt:set --global email infra@example.net

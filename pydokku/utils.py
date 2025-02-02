@@ -38,7 +38,15 @@ def clean_stderr(value: str) -> str:
 
 @lru_cache
 def get_system_tzinfo() -> datetime.timezone:
+    # TODO: check whether the current method is better than:
+    # seconds_diff = time.altzone if time.altzone is not None else time.timezone
+    # tz_delta = datetime.timedelta(seconds=-seconds_diff)
+    # return datetime.timezone(offset=tz_delta)
     return datetime.datetime.now().astimezone().tzinfo
+
+
+def now_with_timezone() -> datetime.datetime:
+    return datetime.datetime.now().replace(tzinfo=get_system_tzinfo())
 
 
 def parse_timestamp(value: Union[str, None]) -> Union[datetime.datetime, None]:
@@ -55,6 +63,8 @@ def parse_iso_format(value: Union[str, None]) -> Union[datetime.datetime, None]:
     >>> parse_iso_format('2024-02-25T01:55:24Z')
     datetime.datetime(2024, 2, 25, 1, 55, 24, tzinfo=datetime.timezone.utc)
     >>> parse_iso_format('2024-02-25T01:55:24')
+    datetime.datetime(2024, 2, 25, 1, 55, 24)
+    >>> parse_iso_format('2024-02-25 01:55:24')
     datetime.datetime(2024, 2, 25, 1, 55, 24)
     """
     original_value = value
@@ -90,6 +100,22 @@ def parse_timedelta_seconds(value: Union[str, None]) -> Union[datetime.timedelta
     if not value:
         return None
     return datetime.timedelta(seconds=int(value))
+
+
+def parse_timedelta(value: Union[str, None]) -> Union[datetime.timedelta, None]:
+    """
+    >>> parse_timedelta('65d, 23h, 52m, 53s')
+    datetime.timedelta(days=65, seconds=85973)
+    """
+    value = str(value if value is not None else "").lower()
+    if not value:
+        return None
+    parts = value.split(", ")
+    params = {}
+    for part in parts:
+        key = {"d": "days", "h": "hours", "m": "minutes", "s": "seconds"}[part[-1]]
+        params[key] = int(part[:-1])
+    return datetime.timedelta(**params)
 
 
 def parse_int(value: Union[str, None]) -> Union[int, None]:

@@ -85,9 +85,9 @@ Currently implemented plugins:
 - (core) `storage`
 - (official) `maintenance`
 - (official) `redirect`
+- (official) `letsencrypt`
 
 Plugins to be implemented soon:
-- (official) `letsencrypt`
 - (official, service) `postgres`
 - (official, service) `mariadb`
 - (official, service) `mysql`

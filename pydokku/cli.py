@@ -190,7 +190,9 @@ def main():
     export_parser.add_argument("json_filename", type=Path, help="JSON filename to save data")
     # TODO: add options for filters (by app or plugin name)
 
-    graph_parser = subparsers.add_parser("dependency-graph", help="Export a plugin dependency graph in graphviz (DOT) format")
+    graph_parser = subparsers.add_parser(
+        "dependency-graph", help="Export a plugin dependency graph in graphviz (DOT) format"
+    )
     graph_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
     graph_parser.add_argument("output_filename", type=Path, help="Filename to save the graph representation")
 

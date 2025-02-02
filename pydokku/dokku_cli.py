@@ -68,6 +68,7 @@ class Dokku:
             ConfigPlugin,
             DomainsPlugin,
             GitPlugin,
+            LetsEncryptPlugin,
             MaintenancePlugin,
             NetworkPlugin,
             NginxPlugin,
@@ -86,6 +87,7 @@ class Dokku:
             ConfigPlugin,
             DomainsPlugin,
             GitPlugin,
+            LetsEncryptPlugin,
             MaintenancePlugin,
             NetworkPlugin,
             NginxPlugin,
@@ -173,7 +175,9 @@ class Dokku:
         """
         plugin_config_path = self.lib_root / "config" / plugin_name
         plugin_app_config_path = plugin_config_path / app_name
-        _, stdout, stderr = self._execute(Command(["ls", str(plugin_app_config_path)], check=False, sudo=self.requires_sudo))
+        _, stdout, stderr = self._execute(
+            Command(["ls", str(plugin_app_config_path)], check=False, sudo=self.requires_sudo)
+        )
         if "No such file or directory" in stderr:  # Directory does not exist, so no config set
             return {}
         elif stderr:
@@ -181,6 +185,8 @@ class Dokku:
         filenames = stdout.splitlines()
         data = {}
         for filename in sorted(filenames):
-            _, stdout, _ = self._execute(Command(["cat", str(plugin_app_config_path / filename)], check=False, sudo=self.requires_sudo))
+            _, stdout, _ = self._execute(
+                Command(["cat", str(plugin_app_config_path / filename)], check=False, sudo=self.requires_sudo)
+            )
             data[filename] = stdout
         return data

@@ -65,6 +65,8 @@ def test_export_apply():
     execute_command([cleanup_script], check=True)
     execute_command([create_test_env_script], check=True)
     data_1 = run_export()
+    # Since it requires a real domain name/IP to execute some letsencrypt commands, it's completely skipped here
+    data_1["letsencrypt"] = []
     exported_plugins_1 = set(key for key in data_1.keys() if key not in ("pydokku", "dokku"))
     assert exported_plugins_1 == implemented_plugins
     execute_command([cleanup_script], check=True)
@@ -73,6 +75,7 @@ def test_export_apply():
         path.write_text(json.dumps(data_1, default=str))
         dokku_apply(json_filename=path, ssh_config={}, force=True, quiet=True, execute=True)
     data_2 = run_export()
+    data_2["letsencrypt"] = []
     exported_plugins_2 = set(key for key in data_2.keys() if key not in ("pydokku", "dokku"))
     assert exported_plugins_2 == implemented_plugins
     execute_command([cleanup_script], check=True)

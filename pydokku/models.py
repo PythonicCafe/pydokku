@@ -277,3 +277,12 @@ class Redirect(BaseModel):
 class Maintenance(BaseModel):
     app_name: str
     enabled: bool
+
+
+@dataclass
+class LetsEncrypt(BaseModel):
+    app_name: Union[str, None]
+    enabled: bool
+    expires_at: Union[datetime.datetime, None]
+    renewals_at: Union[datetime.timedelta, None]
+    options: Union[Dict, None] = None
