@@ -12,19 +12,15 @@ REGEXP_SSH_PUBLIC_KEY = re.compile(f"(ssh-(?:{'|'.join(KEY_TYPES)}) AAAA[a-zA-Z0
 def command(
     user: str,
     host: str,
-    private_key: Union[Path, str],
+    private_key: Union[Path, str, None] = None,
     port: int = 22,
     mux: bool = False,
     mux_filename: Union[Path, str, None] = None,
     mux_timeout: int = 600,
 ) -> List[str]:
-    cmd = [
-        "ssh",
-        "-i",
-        str(Path(private_key).expanduser().absolute()),
-        "-p",
-        str(port),
-    ]
+    cmd = ["ssh", "-p", str(port)]
+    if private_key is not None:
+        cmd.extend(["-i", str(Path(private_key).expanduser().absolute())])
     if mux:
         mux_filename = Path(mux_filename).expanduser().absolute()
         cmd.extend(

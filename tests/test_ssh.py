@@ -11,7 +11,7 @@ def test_command():
     relative_key_path = ".ssh/id_rsa"
     result = ssh.command(user="dokku", host="example.net", port=2222, private_key=relative_key_path)
     full_key_path = str((Path(__file__).parent.parent / relative_key_path).absolute())
-    expected = ["ssh", "-i", full_key_path, "-p", "2222", "dokku@example.net"]
+    expected = ["ssh", "-p", "2222", "-i", full_key_path, "dokku@example.net"]
     assert expected == result
 
 
