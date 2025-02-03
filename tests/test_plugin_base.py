@@ -97,8 +97,8 @@ def test_export_apply():
         else:  # AppNetwork
             return (
                 1,
-                obj["app_name"] if obj["app_name"] is not None else "",
-                obj["initial_network"] if obj["initial_network"] is not None else "",
+                obj.get("app_name") or "",
+                obj.get("initial_network") or "",
                 obj["attach_post_create"],
                 obj["attach_post_deploy"],
             )

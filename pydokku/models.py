@@ -65,9 +65,9 @@ class App(BaseModel):
 
 @dataclass
 class Config(BaseModel):
-    app_name: Union[str, None]
     key: str
-    value: Union[str, None]
+    value: Union[str, None] = None
+    app_name: Union[str, None] = None
 
 
 @dataclass
@@ -88,18 +88,18 @@ class Storage(BaseModel):
 
 @dataclass
 class Domain(BaseModel):
-    app_name: Union[str, None]
     enabled: bool
     domains: List[str]
+    app_name: Union[str, None] = None
 
 
 @dataclass
 class Check(BaseModel):
-    app_name: Union[str, None]
     process: str
-    status: Union[Literal["enabled"], Literal["disabled"], Literal["skipped"], None]
-    app_wait_to_retire: Union[int, None]
-    global_wait_to_retire: Union[int, None]
+    app_name: Union[str, None] = None
+    status: Union[Literal["enabled"], Literal["disabled"], Literal["skipped"], None] = None
+    app_wait_to_retire: Union[int, None] = None
+    global_wait_to_retire: Union[int, None] = None
 
     @property
     def wait_to_retire(self) -> Union[int, None]:
@@ -110,7 +110,7 @@ class Check(BaseModel):
 class Process(BaseModel):
     type: str
     id: int
-    status: Union[Literal["running"], Literal["exited"], None]
+    status: Union[Literal["running"], Literal["exited"], None] = None
     container_id: Union[str, None] = None
 
 
@@ -168,15 +168,15 @@ class Proxy(BaseModel):
 
 @dataclass
 class Port(BaseModel):
-    app_name: Union[str, None]
     scheme: str
     host_port: int
-    container_port: Union[int, None]
+    app_name: Union[str, None] = None
+    container_port: Union[int, None] = None
 
 
 @dataclass
 class Nginx(BaseModel):
-    app_name: Union[str, None]
+    app_name: Union[str, None] = None
     access_log_format: Union[str, None] = None
     access_log_path: Union[Path, None] = None
     bind_address_ipv4: Union[str, None] = None
@@ -242,10 +242,10 @@ class Network(BaseModel):
 
 @dataclass
 class AppNetwork(BaseModel):
-    app_name: str
     attach_post_create: List[str]
     attach_post_deploy: List[str]
     bind_all_interfaces: bool
+    app_name: Union[str, None] = None
     initial_network: Union[str, None] = None
     static_web_listener: Union[str, None] = None
     tld: Union[str, None] = None
@@ -281,8 +281,8 @@ class Maintenance(BaseModel):
 
 @dataclass
 class LetsEncrypt(BaseModel):
-    app_name: Union[str, None]
     enabled: bool
-    expires_at: Union[datetime.datetime, None]
-    renewals_at: Union[datetime.timedelta, None]
+    app_name: Union[str, None] = None
+    expires_at: Union[datetime.datetime, None] = None
+    renewals_at: Union[datetime.timedelta, None] = None
     options: Union[Dict, None] = None
