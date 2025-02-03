@@ -5,6 +5,11 @@ set -e
 
 function log() { echo; echo; echo "[$(date --iso=seconds)] Creating: $@"; }
 
+OLD_DOKKU=false
+if dpkg --compare-versions $(dokku version | sed 's/dokku version //') lt 0.31.0; then
+	OLD_DOKKU=true
+fi
+
 log "domains - part 1"
 dokku domains:set-global dokku.example.net
 
@@ -50,7 +55,9 @@ log "ps"
 dokku ps:scale test-app-9 web=2 worker=3
 
 log "git"
-dokku git:generate-deploy-key
+if [[ "$OLD_DOKKU" == "false" ]]; then
+	dokku git:generate-deploy-key
+fi
 dokku git:allow-host github.com
 dokku git:auth github.com user8 pass8
 dokku git:auth gitlab.com user9 pass9
@@ -61,19 +68,28 @@ dokku git:set test-app-7 source-image nginx:1.27.3-alpine-perl
 dokku git:from-image test-app-8 nginx:1.27.3-alpine-perl
 
 log "proxy"
-dokku proxy:set --global caddy
+if [[ "$OLD_DOKKU" == "false" ]]; then
+	dokku proxy:set --global caddy
+fi
 dokku proxy:set test-app-8 nginx
 dokku proxy:disable test-app-7
 
 log "ports"
-dokku ports:set test-app-7 http:80:3000 https:443:3000
-dokku ports:add test-app-9 http:8080:5000 https:8081:5000
+if [[ "$OLD_DOKKU" == "false" ]]; then
+	dokku ports:set test-app-7 http:80:3000 https:443:3000
+	dokku ports:add test-app-9 http:8080:5000 https:8081:5000
+else
+	dokku proxy:ports-set test-app-7 http:80:3000 https:443:3000
+	dokku proxy:ports-add test-app-9 http:8080:5000 https:8081:5000
+fi
 
 log "nginx"
-dokku nginx:set --global client-max-body-size 123456
-dokku nginx:set --global error-log-path
+if [[ "$OLD_DOKKU" == "false" ]]; then
+	dokku nginx:set --global client-max-body-size 123456
+	dokku nginx:set --global error-log-path
+	dokku nginx:set test-app-7 send-timeout 120s
+fi
 dokku nginx:set test-app-8 hsts-max-age 84600
-dokku nginx:set test-app-7 send-timeout 120s
 
 log "network"
 for network in $(seq 1 3); do
