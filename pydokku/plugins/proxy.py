@@ -35,7 +35,7 @@ class ProxyPlugin(DokkuPlugin):
             },
         )
 
-    def list(self, app_name: Union[str, None] = None) -> Union[List[Proxy], Proxy]:
+    def list(self, app_name: Union[str, None] = None) -> Union[List[Proxy]]:
         """Get the list of proxy configs for each app. If `app_name` is `None`, the report includes all apps"""
         # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
@@ -81,7 +81,7 @@ class ProxyPlugin(DokkuPlugin):
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Proxy]:
         apps_names = [app.name for app in apps]
-        return [self.list(app_name)[0] for app_name in apps_names]
+        return [proxy for proxy in self.list() if proxy.app_name in apps_names]
 
     def object_create(
         self, obj: Proxy, skip_system: bool = False, execute: bool = True

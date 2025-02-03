@@ -132,7 +132,10 @@ class PortsPlugin(DokkuPlugin):
         if system:
             return [obj for obj in self.list() if obj.app_name in [None] + apps_names]
         else:
-            return [self.list(app_name=app_name) for app_name in apps_names]
+            result = []
+            for app_name in apps_names:
+                result.extend(self.list(app_name=app_name))
+            return result
 
     def object_create(
         self, obj: Port, skip_system: bool = False, execute: bool = True

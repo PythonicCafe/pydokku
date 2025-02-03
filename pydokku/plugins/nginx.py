@@ -161,7 +161,20 @@ class NginxPlugin(DokkuPlugin):
         if system:
             return [obj for obj in self.list() if obj.app_name in [None] + apps_names]
         else:
-            return [self.list(app_name=app_name) for app_name in apps_names]
+            result = []
+            for app_name in apps_names:
+                for obj in self.list(app_name=app_name):
+                    if obj.app_name == app_name:
+                        serialized = obj.serialize()
+                        # Filter out "empty" objects (log paths will always be filled with default values)
+                        distinct_values = set(
+                            value
+                            for key, value in serialized.items()
+                            if key not in ("app_name", "access_log_path", "error_log_path")
+                        )
+                        if distinct_values != {None}:
+                            result.append(obj)
+            return result
 
     def object_create(
         self, obj: Nginx, skip_system: bool = False, execute: bool = True

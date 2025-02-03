@@ -255,13 +255,15 @@ class GitPlugin(DokkuPlugin):
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Union[Git, SSHKey, Auth]]:
         result = []
-        if self.dokku.can_execute_regular_commands:
-            result.extend(self.host_list())
-            result.extend(self.auth_list())
-        key = self.public_key()
-        if key is not None:
-            result.append(key)
-        result.extend(self.list())
+        if system:
+            if self.dokku.can_execute_regular_commands:
+                result.extend(self.host_list())
+                result.extend(self.auth_list())
+            key = self.public_key()
+            if key is not None:
+                result.append(key)
+        for app in apps:
+            result.extend(self.list(app_name=app.name))
         return result
 
     def object_create(

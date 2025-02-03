@@ -168,13 +168,28 @@ class NetworkPlugin(DokkuPlugin):
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Union[Network, AppNetwork]]:
         apps_names = [app.name for app in apps]
-        result = []
-        result.extend(self.list())
+        networks = self.list()
         if system:
-            result.extend([obj for obj in self.report() if obj.app_name in [None] + apps_names])
+            return networks + [obj for obj in self.report() if obj.app_name in [None] + apps_names]
         else:
-            result.extend([self.report(app_name=app_name) for app_name in apps_names])
-        return result
+            app_networks = []
+            required_networks = set()
+            for app_name in apps_names:
+                for app_network in self.report(app_name=app_name):
+                    app_networks.append(app_network)
+                    if app_network.attach_post_create:
+                        required_networks.update(app_network.attach_post_create)
+                    if app_network.attach_post_deploy:
+                        required_networks.update(app_network.attach_post_deploy)
+                    if app_network.initial_network is not None:
+                        required_networks.add(app_network.initial_network)
+            # Export only Dokku-created required networks
+            result_networks = [
+                net
+                for net in networks
+                if net.name in required_networks and net.labels is not None and "com.dokku.network-name" in net.labels
+            ]
+            return result_networks + app_networks
 
     def object_create(
         self, obj: Union[Network, AppNetwork], skip_system: bool = False, execute: bool = True

@@ -107,7 +107,7 @@ class SSHKeysPlugin(DokkuPlugin):
         return self._evaluate("remove", params=params, sudo=True, execute=execute)
 
     def object_list(self, apps: List[App], system: bool = True) -> List[SSHKey]:
-        return self.list()
+        return self.list() if system else []
 
     def object_create(
         self, obj: SSHKey, skip_system: bool = False, execute: bool = True
