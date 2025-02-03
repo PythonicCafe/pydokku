@@ -1,6 +1,6 @@
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from itertools import groupby
-from typing import Iterator, List, Union
+from typing import Dict, Iterator, List, Union
 
 from ..models import App, Command, Port
 from ..utils import clean_stderr, get_app_name, get_stdout_rows_parser, parse_space_separated_list
@@ -19,10 +19,18 @@ class PortsPlugin(DokkuPlugin):
     Extra features: none.
     """
 
-    name = subcommand = plugin_name = "ports"
+    name = plugin_name = "ports"
     object_classes = (Port,)
     requires = ("apps", "domains")
     requires_extra_commands = False
+
+    @cached_property
+    def subcommand(self):
+        return "ports" if self.dokku.version() >= (0, 31, 0) else "proxy"
+
+    @cached_property
+    def _operation_prefix(self):
+        return "" if self.dokku.version() >= (0, 31, 0) else "ports-"
 
     @lru_cache
     def _get_rows_parser(self):
@@ -58,28 +66,62 @@ class PortsPlugin(DokkuPlugin):
                 result.append(self._parse_port_string(app_name=row["app_name"], value=port))
         return result
 
+    def _parse_old_row(self, stdout: str) -> Dict:
+        app_name = None
+        app_map = []
+        for line in stdout.splitlines():
+            line = line.strip()
+            if line.startswith("-----> Port mappings for"):
+                app_name = line.split(" for ")[1]
+            if line.startswith("----->"):
+                continue
+            app_map.append(":".join(line.split()))
+        return {"app_name": app_name, "app_map": app_map, "global_map": None}
+
     def list(self, app_name: Union[str, None] = None) -> List[Port]:
         # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
-        _, stdout, stderr = self._evaluate(
-            "report",
-            params=[] if system else [app_name],
-            check=False,
-            full_return=True,
-            execute=True,
-        )
-        stderr = clean_stderr(stderr)
-        if "You haven't deployed any applications yet" in stderr:
-            return []
-        elif stderr:
-            raise RuntimeError(f"Error executing ports:report: {stderr}")
-        rows_parser = self._get_rows_parser()
-        parsed_rows = rows_parser(stdout)
-        return self._convert_rows(parsed_rows, skip_system=app_name is not None)
+        if self.dokku.version() >= (0, 31, 0):
+            _, stdout, stderr = self._evaluate(
+                "report",
+                params=[] if system else [app_name],
+                check=False,
+                full_return=True,
+                execute=True,
+            )
+            stderr = clean_stderr(stderr)
+            if "You haven't deployed any applications yet" in stderr:
+                return []
+            elif stderr:
+                raise RuntimeError(f"Error executing {self._operation_prefix}report: {stderr}")
+            rows_parser = self._get_rows_parser()
+            parsed_rows = rows_parser(stdout)
+            return self._convert_rows(parsed_rows, skip_system=app_name is not None)
+        else:
+            if system:
+                apps_names = [app.name for app in self.dokku.apps.list()]
+            else:
+                apps_names = [app_name]
+            result = []
+            for app_name in apps_names:
+                _, stdout, stderr = self._evaluate(
+                    "ports",
+                    params=[app_name],
+                    check=False,
+                    full_return=True,
+                    execute=True,
+                )
+                stderr = clean_stderr(stderr)
+                if "No port mappings configured" in stderr:
+                    continue
+                elif stderr:
+                    raise RuntimeError(f"Error executing {self._operation_prefix}report: {stderr}")
+                result.extend(self._convert_rows([self._parse_old_row(stdout)], skip_system=True))
+            return result
 
     def clear(self, app_name: str, execute: bool = True) -> Union[str, Command]:
-        return self._evaluate("clear", params=[app_name], execute=execute)
+        return self._evaluate(f"{self._operation_prefix}clear", params=[app_name], execute=execute)
 
     def add(self, ports: List[Port], execute: bool = True) -> Union[List[str], List[Command]]:
         result = []
@@ -91,7 +133,7 @@ class PortsPlugin(DokkuPlugin):
                     params.append(f"{port.scheme}:{port.host_port}:{port.container_port}")
                 else:
                     params.append(f"{port.scheme}:{port.host_port}")
-            app_result = self._evaluate("add", params=params, execute=execute)
+            app_result = self._evaluate(f"{self._operation_prefix}add", params=params, execute=execute)
             if execute and "No port set" in app_result:
                 app_title = "global" if app_name is None else f"app {app_name}"
                 raise RuntimeError(f"Cannot add port to {app_title}: {app_result}")
@@ -108,7 +150,7 @@ class PortsPlugin(DokkuPlugin):
                     params.append(f"{port.scheme}:{port.host_port}:{port.container_port}")
                 else:
                     params.append(f"{port.scheme}:{port.host_port}")
-            app_result = self._evaluate("set", params=params, execute=execute)
+            app_result = self._evaluate(f"{self._operation_prefix}set", params=params, execute=execute)
             if execute and "No port set" in app_result:
                 app_title = "global" if app_name is None else f"app {app_name}"
                 raise RuntimeError(f"Cannot set port to {app_title}: {app_result}")
@@ -125,7 +167,7 @@ class PortsPlugin(DokkuPlugin):
                     params.append(f"{port.scheme}:{port.host_port}:{port.container_port}")
                 else:
                     params.append(f"{port.scheme}:{port.host_port}")
-            result.append(self._evaluate("remove", params=params, execute=execute))
+            result.append(self._evaluate(f"{self._operation_prefix}remove", params=params, execute=execute))
         return result
 
     def object_list(self, apps: List[App], system: bool = True) -> List[Port]:

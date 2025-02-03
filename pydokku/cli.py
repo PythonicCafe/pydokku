@@ -8,6 +8,7 @@ from textwrap import indent
 from typing import Dict, List, Union
 
 from . import __version__
+from .models import Plugin
 from .plugins.base import PluginScheduler
 
 
@@ -50,6 +51,13 @@ def dokku_export(ssh_config: dict, apps_names: Union[List[str], None] = None, qu
     errlog("Finding plugins...", end="")
     system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}
     errlog(f" {len(system_plugins)} found", end="")
+    if dokku.version() < (0, 31, 0):
+        system_plugins["ports"] = Plugin(
+            name="ports",
+            version=system_plugins["proxy"].version,
+            enabled=system_plugins["proxy"].enabled,
+            description=system_plugins["proxy"].description.replace("proxy", "ports"),
+        )
     implemented_plugins = dokku.plugins.values()
     errlog(f", {len(implemented_plugins)} implemented.")
     errlog("Finding apps...", end="")

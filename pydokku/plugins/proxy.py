@@ -45,6 +45,9 @@ class ProxyPlugin(DokkuPlugin):
             raise RuntimeError(f"Error executing proxy:report: {stderr}")
         rows_parser = self._get_rows_parser()
         parsed_rows = rows_parser(stdout)
+        if self.dokku.version() < (0, 31, 0):
+            for row in parsed_rows:
+                del row["port_map"]
         return [Proxy(**row) for row in parsed_rows]
 
     def enable(self, app_name: str, execute: bool = True) -> Union[str, Command]:
