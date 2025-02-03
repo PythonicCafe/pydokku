@@ -1,19 +1,39 @@
 # pydokku
 
 pydokku is a Python library and command-line tool to interface with Dokku. It makes it pretty easy to get structured
-data regarding a Dokku server and also to easily setup apps and its configurations. It supports interfacing with a
-local Dokku command or via SSH (using a multiplexed connection for speed). It's developed in Python 3.11 but may run
-smoothly in Python3.8+ installations, so it's useful to grab data about an old server and migrate to a new one and also
-to automate some stuff. :)
+data regarding a Dokku server and also to easily inspect and setup apps and its configurations. It supports interfacing
+with a local Dokku or via SSH (using a multiplexed connection for speed). Dokku is an awesome project but has some
+caveats in the user experience - pydokku can help improve it!
 
 Goals:
-- Create a well tested tool to interface/control Dokku (currently test coverage is ~93%)
-- Fix some of the Dokku weaknesses/missing features when possible
-- Provide a clean and more consistent data model (compared to Dokku) when possible (see "Terminology and
+- Create a well tested tool to interface/control Dokku (currently test coverage is ~85%)
+- Fix some of the Dokku [annoying weaknesses](https://github.com/dokku/dokku/issues/7470#issuecomment-2629073346),
+  [missing features](https://github.com/dokku/dokku/issues/1558), [lack of
+  standards](https://github.com/dokku/dokku/issues/7454) when possible (no
+  [footguns](https://github.com/dokku/dokku/issues/7438) allowed here)
+- Provide a clean and more consistent data model (compared to Dokku's) whenever possible (see "Terminology and
   Compatibility")
 
 > Note: it's not a current goal to support commands which outputs a huge ammount of data (like `postgres:export`) or
 > requires a huge amount of data into the command's standard input (like `git:load-image`). We may work on that later.
+
+
+## Python and Dokku versions
+
+pydokku is developed mainly in Python 3.11 but may run smoothly in Python 3.8+ installations, so it'll be useful to
+grab data about that old Dokku running on Ubuntu 20.04. :)
+
+pydokku is being tested on the latest version of Dokku as of 2025-02-02 (0.35.15) but may work on older versions.  Some
+support was added to help exporting data from old Dokku installations, like the ones before 0.31.0 where the `ports`
+plugin didn't exist (the commands were `proxy:ports-*`) - even in those cases, the extracted data will be in a format
+totally equivalent to newer Dokku installations, which makes migrations easier (use pydokku to export a JSON
+representation of an old Dokku server and use that JSON with pydokku to apply those configurations in a new Dokku
+installation).
+
+> Note: some features may not be available for older Dokku versions, like complete network information on versions
+> before 0.35.3 (if the user running cannot execute other commands than Dokku) and global port configuration (didn't
+> exist before 0.31.0). The general recommendation is to upgrade Dokku as soon as possible, since maintaing code
+> compatible with older/buggy versions is very costly.
 
 
 ## Usage
@@ -24,9 +44,17 @@ As a command-line tool:
 pydokku export mydokku.json
 # Will create the `mydokku.json` file with all information regarding this dokku installation.
 
+pydokku export --app myapp mydokku-app.json
+# Will create the `mydokku-app.json` file with all information regarding the app, including required plugins.
+
 pydokku apply mydokku.json
 # Will execute all specs from the JSON file (create apps, configure plugins etc.). The commands will be executed in a
 # specific order to guarantee consistency between plugin requirements.
+# Not sure about what the command above will execute? Run:
+
+pydokku apply --print-only mydokku.json
+# Will read the `mydokku.json` file, transform each specification in a list of Dokku commands and print the commands to
+# stdout, without executing them.
 ```
 
 As a Python library:
@@ -108,60 +136,16 @@ Currently implemented plugins:
 - (official) `redirect`
 - (official) `letsencrypt`
 
-Plugins to be implemented soon:
+Plugins to be implemented soon (hopefully before 0.1.0):
+- (core) `docker-options`
+- (core) `logs`
+- (core) `run`
 - (official, service) `postgres`
 - (official, service) `mariadb`
 - (official, service) `mysql`
 - (official, service) `redis`
 - (official, service) `elasticsearch`
 - (official, service) `rabbitmq`
-
-
-## Next steps
-
-After implementing a comprehensive set of plugins in order to be useful, the focus will be:
-
-- Implement type-checking tools to enforce the declared types are correct (see `type-check` in `Makefile`)
-- Implement "real" tests for all missing plugin commands
-- Create an API to `object_ensure` method (similar to `object_create`, but won't raise an error if the object already
-  exists). Or transform `apply`/`object_create` into "ensure".
-- Define the concept of a "recipe", with variables for the context (similar to cookiecutter), the template itself and a
-  "render" method. The CLI commands would be: `recipe-apply`, `recipe-render`, `recipe-ensure`.
-- Replace `pathlib.Path` with `pathlib.PosixPath` when describing paths related to Dokku machine (if running remote on
-  Windows, `Path` will not be `PosixPath`).
-- Implement other official plugins:
-  - `00_dokku-standard`
-  - `20_events`
-  - `app-json`
-  - `builder-dockerfile`
-  - `builder-herokuish`
-  - `builder-lambda`
-  - `builder-nixpacks`
-  - `builder-null`
-  - `builder-pack`
-  - `builder`
-  - `buildpacks`
-  - `caddy-vhosts`
-  - `certs`
-  - `common`
-  - `cron`
-  - `docker-options`
-  - `enter`
-  - `haproxy-vhosts`
-  - `logs`
-  - `nginx-vhosts`
-  - `openresty-vhosts`
-  - `registry`
-  - `repo`
-  - `resource`
-  - `run`
-  - `scheduler-docker-local`
-  - `scheduler-k3s`
-  - `scheduler-null`
-  - `scheduler`
-  - `shell`
-  - `trace`
-  - `traefik-vhosts`
 
 
 ## Terminology and Compatibility
@@ -221,11 +205,50 @@ command. In these cases, `pydokku` will need to run non-Dokku commands. There ar
 > features" will not be extracted.
 
 
-### Dokku versions
+## Next steps
 
-pydokku is being developed using the latest version of Dokku as of 2025-02-02 (0.35.15) but may work on older versions.
-Note that some features may not be available, like complete network information on versions before 0.35.3 (if the user
-running cannot execute other commands than Dokku).
+After implementing a comprehensive set of plugins in order to be useful, the focus will be:
+
+- Implement type-checking tools to enforce the declared types are correct (see `type-check` in `Makefile`)
+- Implement "real" tests for all missing plugin commands
+- Create an API to `object_ensure` method (similar to `object_create`, but won't raise an error if the object already
+  exists). Or transform `apply`/`object_create` into "ensure".
+- Define the concept of a "recipe", with variables for the context (similar to cookiecutter), the template itself and a
+  "render" method. The CLI commands would be: `recipe-apply`, `recipe-render`, `recipe-ensure`.
+- Replace `pathlib.Path` with `pathlib.PosixPath` when describing paths related to Dokku machine (if running remote on
+  Windows, `Path` will not be `PosixPath`).
+- Implement other official plugins:
+  - `00_dokku-standard`
+  - `20_events`
+  - `app-json`
+  - `builder-dockerfile`
+  - `builder-herokuish`
+  - `builder-lambda`
+  - `builder-nixpacks`
+  - `builder-null`
+  - `builder-pack`
+  - `builder`
+  - `buildpacks`
+  - `caddy-vhosts`
+  - `certs`
+  - `common`
+  - `cron`
+  - `enter`
+  - `haproxy-vhosts`
+  - `nginx-vhosts`
+  - `openresty-vhosts`
+  - `registry`
+  - `repo`
+  - `resource`
+  - `scheduler-docker-local`
+  - `scheduler-k3s`
+  - `scheduler-null`
+  - `scheduler`
+  - `shell`
+  - `trace`
+  - `traefik-vhosts`
+- Support for commands with long stdin/stdout (where we can't just store everything in RAM and would need a streaming
+  approach)
 
 
 ## Contributing
