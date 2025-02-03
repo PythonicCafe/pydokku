@@ -124,7 +124,7 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
 - Implement type-checking tools to enforce the declared types are correct (see `type-check` in `Makefile`)
 - Implement "real" tests for all missing plugin commands
 - Create an API to `object_ensure` method (similar to `object_create`, but won't raise an error if the object already
-  exists)
+  exists). Or transform `apply`/`object_create` into "ensure".
 - Define the concept of a "recipe", with variables for the context (similar to cookiecutter), the template itself and a
   "render" method. The CLI commands would be: `recipe-apply`, `recipe-render`, `recipe-ensure`.
 - Replace `pathlib.Path` with `pathlib.PosixPath` when describing paths related to Dokku machine (if running remote on

@@ -55,10 +55,19 @@ class DokkuPlugin:
 
     def object_deserialize(self, obj: dict) -> T:
         obj_keys = set(obj.keys())
+        possible_dataclasses = []
         for DataClass in self.object_classes:
-            if obj_keys == dataclass_field_set(DataClass):
-                return DataClass(**obj)
-        raise ValueError(f"Cannot deserialize object in {self.name}: {repr(obj)}")
+            if obj_keys.issubset(dataclass_field_set(DataClass)):
+                possible_dataclasses.append(DataClass)
+        if len(possible_dataclasses) == 0:
+            raise ValueError(f"Cannot deserialize object in {self.name}, no dataclasses found: {repr(obj)}")
+        elif len(possible_dataclasses) > 1:
+            dataclasses_names = ", ".join(DataClass.__name__ for DataClass in possible_dataclasses)
+            raise ValueError(
+                f"Cannot deserialize object in {self.name}, "
+                f"multiple dataclasses found ({dataclasses_names}): {repr(obj)}"
+            )
+        return possible_dataclasses[0](**obj)
 
     def object_create(self, obj: T, skip_system: bool = False, execute: bool = True) -> Union[List[str], List[Command]]:
         """Create an object for this specific plugin or return list of commands to do it"""

@@ -5,7 +5,7 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 from textwrap import indent
-from typing import Dict
+from typing import Dict, List, Union
 
 from . import __version__
 from .plugins.base import PluginScheduler
@@ -38,22 +38,35 @@ def error_log(*args, **kwargs):
     print(*args, **kwargs)
 
 
-def dokku_export(ssh_config: dict, quiet: bool = False) -> Dict:
+def dokku_export(ssh_config: dict, apps_names: Union[List[str], None] = None, quiet: bool = False) -> Dict:
     errlog = no_log if quiet else error_log
+    system = apps_names is None
     dokku = create_dokku_instance(ssh_config=ssh_config)
     data = {
-        "pydokku": {"version": __version__},
-        "dokku": {"version": dokku.version()},
+        "pydokku": {"version": ".".join(str(part) for part in __version__)},
+        "dokku": {"version": ".".join(str(part) for part in dokku.version())},
     }
     # TODO: add a progress bar?
     errlog("Finding plugins...", end="")
     system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}
-    errlog(f" {len(system_plugins)} found.")
+    errlog(f" {len(system_plugins)} found", end="")
+    implemented_plugins = dokku.plugins.values()
+    errlog(f", {len(implemented_plugins)} implemented.")
     errlog("Finding apps...", end="")
     apps = dokku.apps.list()
-    errlog(f" {len(apps)} found.")
+    errlog(f" {len(apps)} found", end="")
+    if apps_names is not None:
+        apps = [app for app in apps if app.name in apps_names]
+        found_apps_names = set(app.name for app in apps)
+        not_found_apps_names = set(apps_names) - found_apps_names
+        if not_found_apps_names:
+            not_found_apps_names_str = ", ".join(sorted(not_found_apps_names))
+            raise ValueError(
+                f"App{'s' if len(not_found_apps_names) != 1 else ''} not found: {not_found_apps_names_str}"
+            )
+    errlog(f", {len(apps)} selected.")
     exported_plugins = set()
-    scheduler = PluginScheduler(plugins=dokku.plugins.values())
+    scheduler = PluginScheduler(plugins=implemented_plugins)
     plugin_batches = list(scheduler)
     required_cmd_warnings = []
     for plugin_batch in plugin_batches:
@@ -68,13 +81,19 @@ def dokku_export(ssh_config: dict, quiet: bool = False) -> Dict:
             elif not system_plugins[plugin_name].enabled:
                 errlog(" not enabled, skipping.")
                 continue
+            data[name] = []
             try:
-                data[name] = [obj.serialize() for obj in plugin.object_list(apps, system=True)]
+                for obj in plugin.object_list(apps, system=system):
+                    data[name].append({key: value for key, value in obj.serialize().items() if value is not None})
             except NotImplementedError:
+                del data[name]
                 errlog(f"WARNING: cannot export data for plugin {repr(name)} (`object_list` method not implemened)")
             else:
                 exported_plugins.add(plugin_name)
-                errlog(f" {len(data[name])} exported.")
+                if name == "plugin" and not system:
+                    errlog(f" {len(data[name])} serialized (not all of them may be exported).")
+                else:
+                    errlog(f" {len(data[name])} exported.")
                 if not dokku.can_execute_regular_commands and len(data[name]) > 0 and plugin.requires_extra_commands:
                     required_cmd_warnings.append(name)
     not_exported = set(system_plugins.keys()) - exported_plugins
@@ -88,6 +107,19 @@ def dokku_export(ssh_config: dict, quiet: bool = False) -> Dict:
         errlog(
             f"WARNING: {len(required_cmd_warnings)} plugin{plural} were not completely exported because this user don't have enough access: {names}"
         )
+    if apps_names is not None:  # Export only the plugins which have some information related to the selected apps
+        data = {key: value for key, value in data.items() if value}  # Filter out plugins with no data
+        # Then, clean up list of plugins (only the ones with data will be in "plugin" list)
+        required_plugin_names = set(name for name in data.keys() if name not in ("dokku", "pydokku"))
+        dokku_to_pydokku_map = {plugin.plugin_name: plugin.name for plugin in implemented_plugins}
+        data["plugin"] = [
+            plugin
+            for plugin in data["plugin"]
+            if dokku_to_pydokku_map.get(plugin["name"]) in required_plugin_names
+            and not system_plugins[plugin["name"]].is_core
+        ]
+        if not data["plugin"]:
+            del data["plugin"]
     return data
 
 
@@ -97,7 +129,7 @@ def dokku_apply(data: Dict, ssh_config: dict, force: bool = False, quiet: bool =
     data.pop("pydokku")
     dokku_metadata = data.pop("dokku")
     dokku = create_dokku_instance(ssh_config=ssh_config)
-    expected_version = dokku_metadata["version"]
+    expected_version = [int(part) for part in dokku_metadata["version"].split(".")]
     current_version = list(dokku.version())
     if current_version != expected_version:
         if not force:
@@ -177,10 +209,10 @@ def main():
     subparsers.add_parser("version", help="Show current version of pydokku")
 
     export_parser = subparsers.add_parser("export", help="Export all metadata collected by plugins to JSON")
+    export_parser.add_argument("--app", "-a", type=str, action="append", help="Filter which app(s) to export")
     export_parser.add_argument("--indent", "-i", type=int, default=2, help="Indentation level (in spaces)")
     export_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
     export_parser.add_argument("json_filename", type=Path, help="JSON filename to save data")
-    # TODO: add options for filters (by app or plugin name)
 
     graph_parser = subparsers.add_parser(
         "dependency-graph", help="Export a plugin dependency graph in graphviz (DOT) format"
@@ -217,6 +249,7 @@ def main():
     elif args.command == "export":
         data = dokku_export(
             ssh_config=ssh_config,
+            apps_names=args.app or None,
             quiet=args.quiet,
         )
         json_data = json.dumps(data, indent=args.indent, default=str)
