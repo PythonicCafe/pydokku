@@ -229,10 +229,10 @@ def get_stdout_rows_parser(
                 key, value = line[:stop], line[stop + 1 :]
                 if normalize_keys:
                     key = key.lower().replace(" ", separator)
-                if renames is not None and key in renames:
-                    key = renames[key]
                 if remove_prefix is not None and key.startswith(remove_prefix):
                     key = key[len(remove_prefix) :]
+                if renames is not None and key in renames:
+                    key = renames[key]
                 if discards is not None and key in discards:
                     continue
                 value = value.strip()

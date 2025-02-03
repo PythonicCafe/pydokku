@@ -26,14 +26,14 @@ class ChecksPlugin(DokkuPlugin):
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
             normalize_keys=True,
+            remove_prefix="checks_",
             renames={
-                "checks_disabled_list": "disabled",
-                "checks_skipped_list": "skipped",
-                "checks_global_wait_to_retire": "global_wait_to_retire",
-                "checks_wait_to_retire": "app_wait_to_retire",
+                "disabled_list": "disabled",
+                "skipped_list": "skipped",
+                "wait_to_retire": "app_wait_to_retire",
             },
             discards=[
-                "checks_computed_wait_to_retire",
+                "computed_wait_to_retire",
             ],
             parsers={
                 "global_wait_to_retire": parse_int,

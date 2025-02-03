@@ -31,11 +31,10 @@ class DomainsPlugin(DokkuPlugin):
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
             normalize_keys=True,
+            remove_prefix="domains_",
             renames={
-                "domains_app_enabled": "app_enabled",
-                "domains_app_vhosts": "app_domains",
-                "domains_global_enabled": "global_enabled",
-                "domains_global_vhosts": "global_domains",
+                "app_vhosts": "app_domains",
+                "global_vhosts": "global_domains",
             },
             parsers={
                 "app_enabled": parse_bool,

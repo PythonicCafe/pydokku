@@ -48,14 +48,9 @@ class GitPlugin(DokkuPlugin):
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
             normalize_keys=True,
+            remove_prefix="git_",
             renames={
-                "git_deploy_branch": "deploy_branch",
-                "git_global_deploy_branch": "global_deploy_branch",
-                "git_keep_git_dir": "keep_git_path",
-                "git_rev_env_var": "rev_env_var",
-                "git_sha": "sha",
-                "git_source_image": "source_image",
-                "git_last_updated_at": "last_updated_at",
+                "keep_git_dir": "keep_git_path",
             },
             parsers={
                 "keep_git_path": parse_bool,

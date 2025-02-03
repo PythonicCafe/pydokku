@@ -23,16 +23,11 @@ class ProxyPlugin(DokkuPlugin):
     @lru_cache
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
-            normalize_keys=False,
-            discards=["Proxy computed type"],
-            renames={
-                "Proxy enabled": "enabled",
-                "Proxy global type": "global_type",
-                "Proxy type": "app_type",
-            },
-            parsers={
-                "enabled": parse_bool,
-            },
+            normalize_keys=True,
+            remove_prefix="proxy_",
+            discards=["computed_type"],
+            renames={"type": "app_type"},
+            parsers={"enabled": parse_bool},
         )
 
     def list(self, app_name: Union[str, None] = None) -> Union[List[Proxy]]:

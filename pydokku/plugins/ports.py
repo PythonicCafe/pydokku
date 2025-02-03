@@ -27,11 +27,12 @@ class PortsPlugin(DokkuPlugin):
     @lru_cache
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
-            normalize_keys=False,
+            normalize_keys=True,
+            remove_prefix="ports_",
             discards=[],
             renames={
-                "Ports map": "app_map",
-                "Ports map detected": "global_map",
+                "map": "app_map",
+                "map_detected": "global_map",
             },
             parsers={
                 "app_map": parse_space_separated_list,

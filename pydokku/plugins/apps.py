@@ -30,14 +30,8 @@ class AppsPlugin(DokkuPlugin):
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
             normalize_keys=True,
-            renames={
-                "app_name": "name",
-                "app_created_at": "created_at",
-                "app_deploy_source": "deploy_source",
-                "app_deploy_source_metadata": "deploy_source_metadata",
-                "app_dir": "path",
-                "app_locked": "locked",
-            },
+            remove_prefix="app_",
+            renames={"dir": "path", "app_name": "name"},
             parsers={
                 "path": parse_path,
                 "locked": parse_bool,
