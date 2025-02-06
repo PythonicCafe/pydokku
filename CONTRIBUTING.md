@@ -22,8 +22,15 @@ pip install -r requirements-development.txt
 Then:
 
 ```shell
-make test  # Use `make test-v` for the verbose option
+make test
 ```
+
+You can pass other pytest parameters via `TEST_ARGS` environment variable. Some useful examples:
+- Use `TEST_ARGS="--pdb" make test` to automatically open pdb++ when an assert fails
+  ([pdbpp](https://pypi.org/project/pdbpp/) is installed from `requirements-development.txt`)
+- Use `TEST_ARGS="-x" make test` to stop test running after the first assert fails
+- Use `TEST_ARGS="-k test_plugin_network" make test` to only run tests which match `test_plugin_network` (for more
+  details, check [pytest CLI docs](https://docs.pytest.org/en/stable/reference/reference.html#command-line-flags))
 
 
 ### With Dokku installed

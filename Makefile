@@ -12,11 +12,6 @@ test:					# Execute `pytest` and coverage report
 	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest --doctest-modules -vvvs tests/ pydokku/ $(TEST_ARGS)
 	coverage report
 
-test-x:					# Execute `pytest` with `-x` option and coverage report
-	./scripts/cleanup.sh
-	PYTHONPATH=. coverage run --include="pydokku/*" -m pytest --doctest-modules -vvvsx tests/ pydokku/ $(TEST_ARGS)
-	coverage report
-
 type-check:				# Run mypy in the project
 	mypy pydokku/ tests/
 
@@ -38,4 +33,4 @@ vm-start:				# Starts the virtual machine and waits for it to be turned on
 vm-stop:				# Sends the shutdown signal to the virtual machine and wait for it to be turned off
 	@./scripts/vm.sh stop
 
-.PHONY: help lint test test-x type-check vm-create vm-delete vm-ip vm-ssh vm-start vm-stop
+.PHONY: help lint test type-check vm-create vm-delete vm-ip vm-ssh vm-start vm-stop
