@@ -307,9 +307,10 @@ def test_deploy_key():
     dokku = Dokku()
     key = dokku.git.public_key()
     assert key is None  # No deploy key created
-    created_key = dokku.git.generate_deploy_key()
-    read_key = dokku.git.public_key()
-    assert created_key == read_key
+    if dokku.version() >= (0, 31, 0):  # Old versions don't have the subcommand to generate key
+        created_key = dokku.git.generate_deploy_key()
+        read_key = dokku.git.public_key()
+        assert created_key == read_key
 
 
 # TODO: implement real test (@requires_dokku) for from_archive
