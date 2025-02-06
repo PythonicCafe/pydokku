@@ -15,6 +15,30 @@ from .redirect import RedirectPlugin  # noqa
 from .ssh_keys import SSHKeysPlugin  # noqa
 from .storage import StoragePlugin  # noqa
 
+# Core plugins
+
+# TODO: example: dokku docker-options:add $APP_NAME build '--build-arg ENV_TYPE=staging'
+# TODO: implement docker-options:add <app> <phase(s)> OPTION      Add Docker option to app for phase (comma separated phase list)
+# TODO: implement docker-options:clear <app> [phase(s)]           Clear a docker options from application with an optional phase (comma separated phase list)
+# TODO: implement docker-options:remove <app> <phase(s)> OPTION   Remove Docker option from app for phase (comma separated phase list)
+# TODO: implement docker-options:report [<app>] [<flag>]          Displays a docker options report for one or more apps
+
+# TODO: example: dokku logs -p worker -n 5000 $APP_NAME
+# TODO: implement logs [-h|--help] [-t|--tail] [-n|--num num] [-q|--quiet] [-p|--ps process] <app>  Display recent log output
+# TODO: implement logs:failed [--all|<app>]                                                         Shows the last failed deploy logs
+# TODO: implement logs:report [<app>] [<flag>]                                                      Displays a logs report for one or more apps
+# TODO: implement logs:set [--global|<app>] <key> <value>                                           Set or clear a logs property for an app
+# TODO: implement logs:vector-logs [--num num] [--tail]                                             Display vector log output
+# TODO: implement logs:vector-start                                                                 Start the vector logging container
+# TODO: implement logs:vector-stop                                                                  Stop the vector logging container
+
+# TODO: example: dokku run $APP_NAME python manage.py migrate
+# TODO: implement run:detached [-e|-env KEY=VALUE] [--force-tty] <app> <cmd>     Run a command in a new detached container using the current app image
+# TODO: implement run [-e|--env KEY=VALUE] [--no-tty] <app> <cmd>                Run a command in a new container using the current app image
+# TODO: implement run:list [--format json|stdout] <app>                          List all run containers for an app
+# TODO: implement run:logs <app|--container CONTAINER> [-h] [-t] [-n num] [-q]   Display recent log output for run containers
+# TODO: implement run:stop <app|--container CONTAINER>                           Stops all run containers for an app or a specified run container
+
 
 # Service plugins - maybe add service:links (service:info is per service and costly)
 

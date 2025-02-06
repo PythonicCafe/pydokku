@@ -152,3 +152,23 @@ git fetch origin
 git reset --hard origin/develop # WARNING: this will REMOVE all changes made in the VM repository!
 make test
 ```
+
+
+## git branches
+
+This project follows the [git flow](https://nvie.com/posts/a-successful-git-branching-model/) branching strategy. In
+summary:
+- **Bug in a released version**: start your branch from the git tag where the problem was found and name it
+  `hotfix/short-description`
+- **Bug in a unreleased version**: start your branch from the `develop` branch and name it `fix/short-description`
+- **New feature**: start your branch from the `develop` branch and name it `feature/short-description`
+- **Small enhancement (not a full feature)**: start your branch from the `develop` branch and name it
+  `enhancement/short-description`
+
+Other considerations:
+- **Keep branch names concise**: avoid using spaces in `short-description` and keep it brief. This makes it easier for
+  others to quickly understand the branch's purpose by just reading its name.
+- **Keep your branch in sync**: if the base branch (e.g., `develop` or `main`) has received new commits, rebase your
+  branch onto the latest version. Do NOT merge the base branch into yours (avoid unneeded commits). This helps avoiding
+  merge conflicts and keeps your commit history clean.
+- **Write clear, short but descriptive commit messages**, referencing issue numbers if applicable (e.g., `fix #123`)
