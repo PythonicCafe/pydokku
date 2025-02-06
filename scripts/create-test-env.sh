@@ -95,7 +95,7 @@ log "network"
 for network in $(seq 1 3); do
     dokku network:create "test-net-${network}"
 done
-dokku network:set --global initial-network test-net-1
+dokku network:set --global attach-post-deploy test-net-1
 dokku network:set test-app-6 bind-all-interfaces false
 dokku network:set test-app-6 tld svc.cluster.local
 dokku network:set test-app-7 attach-post-deploy test-net-2
