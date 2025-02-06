@@ -42,6 +42,7 @@ class GitPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "git"
     object_classes = (SSHKey, Auth, Git)
     requires = ("apps",)
+    # TODO: network requires git or git requires network? More info: <https://github.com/dokku/dokku/issues/7520>
     requires_extra_commands = True
 
     @lru_cache

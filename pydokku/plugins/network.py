@@ -26,6 +26,7 @@ class NetworkPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "network"
     object_classes = (Network, AppNetwork)
     requires = ("apps",)
+    # TODO: network requires git or git requires network? More info: <https://github.com/dokku/dokku/issues/7520>
 
     @property
     def requires_extra_commands(self):
@@ -79,21 +80,29 @@ class NetworkPlugin(DokkuPlugin):
             return [Network.from_dict(row) for row in rows]
 
     def set(self, app_name: Union[str, None], key: str, value: Any, execute: bool = True) -> Union[str, Command]:
+        """Set one network value for a given key in an app (if you want to set multiple values, use `set_many` instead)"""
         return self.set_many(app_name=app_name, key=key, values=[value], execute=execute)
 
     def set_many(
         self, app_name: Union[str, None], key: str, values: List[str], execute: bool = True
     ) -> Union[str, Command]:
+        """Set multiple network values for a given key in an app"""
+        dokku_version = self.dokku.version()
+        if len(values) > 1 and dokku_version < (0, 31, 0):
+            raise RuntimeError(
+                f"Cannot set multiple networks in this Dokku version ({'.'.join(map(str, dokku_version))})"
+            )
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         params = [app_parameter, key]
+        serialized_values = []
         for value in values:
             if isinstance(value, bool):  # bind-all-interfaces
                 value = str(value).lower()
             else:
                 value = str(value)
-            params.append(value)
-        return self._evaluate("set", params=params, execute=execute)
+            serialized_values.append(value)
+        return self._evaluate("set", params=params + serialized_values, execute=execute)
 
     def unset(self, app_name: Union[str, None], key: str, execute: bool = True) -> Union[str, Command]:
         system = app_name is None

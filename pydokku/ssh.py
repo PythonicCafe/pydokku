@@ -68,7 +68,9 @@ def key_requires_password(filename: Union[Path, str], timeout: float = 5.0) -> b
     return process.returncode != 0
 
 
-def key_create(filename: Union[Path, str], key_type: str, password: Union[str, None] = None, timeout: float = 10.0) -> str:
+def key_create(
+    filename: Union[Path, str], key_type: str, password: Union[str, None] = None, timeout: float = 10.0
+) -> str:
     """Use `ssh-keygen` to create a new SSH key"""
     if key_type not in KEY_TYPES:
         raise ValueError(f"Invalid SSH key type: {repr(key_type)}")

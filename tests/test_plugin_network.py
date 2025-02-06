@@ -1,6 +1,8 @@
 import datetime
 import random
 
+import pytest
+
 from pydokku.dokku_cli import Dokku
 from pydokku.models import AppNetwork, Network
 from pydokku.utils import execute_command
@@ -9,11 +11,13 @@ from tests.utils import random_alphanum, requires_dokku
 
 def test_object_classes():
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     assert dokku.network.object_classes == (Network, AppNetwork)
 
 
 def test_create_command():
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     network_name = "test-network"
     command = dokku.network.create(name=network_name, execute=False)
     assert command.command == ["dokku", "network:create", network_name]
@@ -24,6 +28,7 @@ def test_create_command():
 
 def test_destroy_command():
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     network_name = "test-network"
     command = dokku.network.destroy(name=network_name, execute=False)
     assert command.command == ["dokku", "network:destroy", network_name]
@@ -149,12 +154,14 @@ def test_list_parser():
         ),
     ]
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     result = dokku.network._parse_list_json(json_data)
     assert result == expected
 
 
 def test_set_command():
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     app_name = "test-app-1"
     network_name = "test-net-1"
     command = dokku.network.set(app_name=app_name, key="attach-post-create", value=network_name, execute=False)
@@ -171,6 +178,7 @@ def test_set_command():
 
 def test_set_many_command():
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     app_name = "test-app-1"
     network_names = ["test-net-1", "test-net-2"]
     command = dokku.network.set_many(app_name=app_name, key="attach-post-create", values=network_names, execute=False)
@@ -184,9 +192,15 @@ def test_set_many_command():
     assert command.check is True
     assert command.sudo is False
 
+    dokku._dokku_version = (0, 30, 10)
+    with pytest.raises(RuntimeError):
+        # Setting many networks is not supported on versions older than 0.31.0
+        dokku.network.set_many(app_name=None, key="attach-post-create", values=network_names, execute=False)
+
 
 def test_unset_command():
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     app_name = "test-app-1"
     command = dokku.network.unset(app_name=app_name, key="attach-post-create", execute=False)
     assert command.command == ["dokku", "network:set", app_name, "attach-post-create"]
@@ -202,6 +216,7 @@ def test_unset_command():
 
 def test_rebuild_commands():
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     app_name = "test-app-1"
     command = dokku.network.rebuild(app_name=app_name, execute=False)
     assert command.command == ["dokku", "network:rebuild", app_name]
@@ -285,6 +300,7 @@ def test_parse_report():
         },
     ]
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     rows_parser = dokku.network._get_rows_parser()
     result = rows_parser(stdout)
     assert result == expected
@@ -350,6 +366,7 @@ def test_convert_report_rows():
         ),
     ]
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     result = dokku.network._convert_rows(input_data, skip_system=False)
     assert result == expected
     result_2 = dokku.network._convert_rows(input_data, skip_system=True)
@@ -419,19 +436,29 @@ def test_set_unset_report(create_apps):
         apps_nets[app_name] = {}
         # TODO: remove other nets of the same app
         if app_name is None:  # Global network
-            app_nets = list(random.sample(network_names, random.randint(1, len(network_names) // 3)))
+            app_nets = list(random.sample(network_names, random.randint(3, len(network_names) // 3)))
         else:  # Should not add networks already set as global
             global_networks = apps_nets[None]["attach-post-create"] + apps_nets[None]["attach-post-deploy"]
             possible_networks = [name for name in network_names if name not in global_networks]
             app_nets = list(random.sample(possible_networks, random.randint(3, len(possible_networks))))
         apps_nets[app_name]["attach-post-create"] = app_nets[:2]
-        dokku.network.set_many(
-            app_name=app_name, key="attach-post-create", values=apps_nets[app_name]["attach-post-create"]
-        )
+        if dokku.version() >= (0, 31, 0):
+            dokku.network.set_many(
+                app_name=app_name, key="attach-post-create", values=apps_nets[app_name]["attach-post-create"]
+            )
+        else:  # Only one network is allowed in older versions
+            dokku.network.set(
+                app_name=app_name, key="attach-post-create", value=apps_nets[app_name]["attach-post-create"][0]
+            )
         apps_nets[app_name]["attach-post-deploy"] = app_nets[2:]
-        dokku.network.set_many(
-            app_name=app_name, key="attach-post-deploy", values=apps_nets[app_name]["attach-post-deploy"]
-        )
+        if dokku.version() >= (0, 31, 0):
+            dokku.network.set_many(
+                app_name=app_name, key="attach-post-deploy", values=apps_nets[app_name]["attach-post-deploy"]
+            )
+        else:  # Only one network is allowed in older versions
+            dokku.network.set(
+                app_name=app_name, key="attach-post-deploy", value=apps_nets[app_name]["attach-post-deploy"][0]
+            )
         apps_nets[app_name]["tld"] = f"test-{random_alphanum(16)}.example.net"
         dokku.network.set(app_name=app_name, key="tld", value=apps_nets[app_name]["tld"])
         apps_nets[app_name]["bind-all-interfaces"] = random.choice([True, False])
@@ -454,13 +481,25 @@ def test_set_unset_report(create_apps):
         result_appnet = after[app_name]
         for key, value in keys_values.items():
             result_value = getattr(result_appnet, key.replace("-", "_"))
-            assert result_value == value
+            if not isinstance(result_value, list):  # Other attributes than a list of networks
+                assert result_value == value
+            else:
+                if dokku.version() >= (0, 31, 0):
+                    assert result_value == value
+                else:  # Only one network is allowed in older versions
+                    assert result_value == [value[0]]
 
     # Reset values
     for name in network_names:
         dokku.network.destroy(name=name)
-    dokku.network.set_many(app_name=None, key="attach-post-create", values=before[None].attach_post_create)
-    dokku.network.set_many(app_name=None, key="attach-post-deploy", values=before[None].attach_post_deploy)
+    if dokku.version() >= (0, 31, 0):
+        dokku.network.set_many(app_name=None, key="attach-post-create", values=before[None].attach_post_create)
+        dokku.network.set_many(app_name=None, key="attach-post-deploy", values=before[None].attach_post_deploy)
+    else:
+        if before[None].attach_post_create:
+            dokku.network.set(app_name=None, key="attach-post-create", value=before[None].attach_post_create[0])
+        if before[None].attach_post_deploy:
+            dokku.network.set(app_name=None, key="attach-post-deploy", value=before[None].attach_post_deploy[0])
     dokku.network.set(app_name=None, key="tld", value=before[None].tld)
     dokku.network.set(app_name=None, key="bind-all-interfaces", value=before[None].bind_all_interfaces)
     dokku.network.set(app_name=None, key="initial-network", value=before[None].initial_network)

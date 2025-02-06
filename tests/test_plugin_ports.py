@@ -393,7 +393,9 @@ def test_list_add_remove_set_clear(create_apps):
             host_port=80,
             container_port=5000,
         )
-        assert sorted(after_app_creation + [new_ports[2], default_port], key=sort_ports) == sorted(after_clear, key=sort_ports)
+        assert sorted(after_app_creation + [new_ports[2], default_port], key=sort_ports) == sorted(
+            after_clear, key=sort_ports
+        )
 
 
 # TODO: test object_create
