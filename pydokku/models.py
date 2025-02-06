@@ -142,7 +142,7 @@ class Git(BaseModel):
     keep_git_path: bool
     deploy_branch: str
     rev_env_var: str
-    sha: str
+    sha: Union[str, None] = None
     source_image: Union[str, None] = None
     last_updated_at: Union[datetime.datetime, None] = None
 
