@@ -96,11 +96,6 @@ dokku network:set --global tld
 dokku network:set --global attach-post-deploy
 dokku network:set --global attach-post-create
 
-log "letsencrypt"
-if [[ "$OLD_DOKKU" == "false" ]]; then
-	dokku letsencrypt:set --global email
-fi
-
 log "plugin properties"
 # Remove all apps plugin properties to avoid a bug on Dokku that persists plugin properties even when the app is
 # destroyed. More info: <https://github.com/dokku/dokku/issues/7443>
