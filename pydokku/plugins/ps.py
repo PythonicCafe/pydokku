@@ -89,10 +89,15 @@ class PsPlugin(DokkuPlugin):
             execute=True,
         )
         stderr = clean_stderr(stderr)
-        if "You haven't deployed any applications yet" in stderr:
-            return []
-        elif stderr:
-            raise RuntimeError(f"Error executing ps:report: {stderr}")
+        if stderr:
+            lines = [line.strip() for line in stderr.splitlines() if line.strip()]
+            for line in lines:
+                if "You haven't deployed any applications yet" in line:
+                    return []
+                elif line.startswith("Error: No such object: "):  # Ignore error of missing containers
+                    continue
+                else:
+                    raise RuntimeError(f"Error executing ps:report: {stderr}")
         rows_parser = self._get_rows_parser()
         parsed_rows = rows_parser(stdout)
         return self._convert_rows(parsed_rows)

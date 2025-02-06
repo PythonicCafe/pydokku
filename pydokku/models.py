@@ -97,7 +97,7 @@ class Domain(BaseModel):
 class Check(BaseModel):
     process: str
     app_name: Union[str, None] = None
-    status: Union[Literal["enabled"], Literal["disabled"], Literal["skipped"], None] = None
+    status: Union[Literal["enabled"], Literal["disabled"], Literal["skipped"], Literal["missing"], None] = None
     app_wait_to_retire: Union[int, None] = None
     global_wait_to_retire: Union[int, None] = None
 
