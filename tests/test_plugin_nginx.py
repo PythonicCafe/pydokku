@@ -334,11 +334,13 @@ def test_convert_rows():
 def test_set_command():
     app_name = "test-app-1"
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     command = dokku.nginx.set(app_name=app_name, key="some-key", value=True, execute=False)
     assert command.command == ["dokku", "nginx:set", app_name, "some-key", "true"]
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is False
+    # Old versions don't support setting some configs globally
     command = dokku.nginx.set(app_name=None, key="some-key", value=123, execute=False)
     assert command.command == ["dokku", "nginx:set", "--global", "some-key", "123"]
     assert command.stdin is None
@@ -354,11 +356,13 @@ def test_set_command():
 def test_unset_command():
     app_name = "test-app-1"
     dokku = Dokku()
+    dokku._dokku_version = (0, 35, 15)
     command = dokku.nginx.unset(app_name=app_name, key="some-key", execute=False)
     assert command.command == ["dokku", "nginx:set", app_name, "some-key"]
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is False
+    # Old versions don't support setting some configs globally
     command = dokku.nginx.unset(app_name=None, key="some-key", execute=False)
     assert command.command == ["dokku", "nginx:set", "--global", "some-key"]
     assert command.stdin is None
@@ -406,16 +410,27 @@ def test_set_unset_list(create_apps):
     before = [obj for obj in dokku.nginx.list() if obj.app_name in [None] + apps_names]
     assert len(before) == len(apps_names) + 1  # apps + global
 
-    dokku.nginx.set(app_name=None, key="client-max-body-size", value="500m")
-    dokku.nginx.set(app_name=apps_names[0], key="hsts-max-age", value=84600)
-    dokku.nginx.set(app_name=apps_names[1], key="send-timeout", value="120s")
-    after = [obj for obj in dokku.nginx.list() if obj.app_name in [None] + apps_names]
-    assert after[0].app_name is None
-    assert before[0].client_max_body_size != "500m"
-    assert after[0].client_max_body_size == "500m"
-    assert after[1].app_name == apps_names[0]
-    assert before[1].hsts_max_age != datetime.timedelta(seconds=84600)
-    assert after[1].hsts_max_age == datetime.timedelta(seconds=84600)
-    assert after[2].app_name == apps_names[1]
-    assert before[2].send_timeout != "120s"
-    assert after[2].send_timeout == "120s"
+    if dokku.version() >= (0, 31, 0):
+        dokku.nginx.set(app_name=None, key="client-max-body-size", value="500m")
+        dokku.nginx.set(app_name=apps_names[0], key="hsts-max-age", value=84600)
+        dokku.nginx.set(app_name=apps_names[1], key="send-timeout", value="120s")
+        after = [obj for obj in dokku.nginx.list() if obj.app_name in [None] + apps_names]
+        assert after[0].app_name is None
+        assert before[0].client_max_body_size != "500m"
+        assert after[0].client_max_body_size == "500m"
+        assert after[1].app_name == apps_names[0]
+        assert before[1].hsts_max_age != datetime.timedelta(seconds=84600)
+        assert after[1].hsts_max_age == datetime.timedelta(seconds=84600)
+        assert after[2].app_name == apps_names[1]
+        assert before[2].send_timeout != "120s"
+        assert after[2].send_timeout == "120s"
+    else:
+        # Old versions don't support setting some configs globally
+        dokku.nginx.set(app_name=apps_names[0], key="hsts-max-age", value=84600)
+        after = [obj for obj in dokku.nginx.list() if obj.app_name in [None] + apps_names]
+        assert after[0].app_name is None
+        assert before[0].client_max_body_size is None
+        assert after[0].client_max_body_size is None
+        assert after[1].app_name == apps_names[0]
+        assert before[1].hsts_max_age != datetime.timedelta(seconds=84600)
+        assert after[1].hsts_max_age == datetime.timedelta(seconds=84600)
