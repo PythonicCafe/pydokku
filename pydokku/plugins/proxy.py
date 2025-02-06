@@ -86,9 +86,9 @@ class ProxyPlugin(DokkuPlugin):
     ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         result = []
-        if not skip_system:
+        if not skip_system and obj.global_type is not None and self.dokku.version() >= (0, 31, 0):
             result.append(self.set(app_name=None, proxy_type=obj.global_type, execute=execute))
-        if obj.app_type:
+        if obj.app_type is not None:
             result.append(self.set(app_name=app_name, proxy_type=obj.app_type, execute=execute))
         if obj.enabled:
             result.append(self.enable(app_name=app_name, execute=execute))

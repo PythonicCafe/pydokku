@@ -17,6 +17,10 @@ from .storage import StoragePlugin  # noqa
 
 # Core plugins
 
+# TODO: implement     registry:login [--password-stdin] <server> <username> [<password>]  Login to a docker registry
+# TODO: implement     registry:report [<app>] [<flag>]                                    Displays a registry report for one or more apps
+# TODO: implement     registry:set <app> <property> (<value>)                             Set or clear a registry property for an app
+
 # TODO: example: dokku docker-options:add $APP_NAME build '--build-arg ENV_TYPE=staging'
 # TODO: implement docker-options:add <app> <phase(s)> OPTION      Add Docker option to app for phase (comma separated phase list)
 # TODO: implement docker-options:clear <app> [phase(s)]           Clear a docker options from application with an optional phase (comma separated phase list)

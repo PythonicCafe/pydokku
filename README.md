@@ -137,6 +137,7 @@ Currently implemented plugins:
 - (official) `letsencrypt`
 
 Plugins to be implemented soon (hopefully before 0.1.0):
+- (core) `registry`
 - (core) `docker-options`
 - (core) `logs`
 - (core) `run`
@@ -237,7 +238,6 @@ After implementing a comprehensive set of plugins in order to be useful, the foc
   - `haproxy-vhosts`
   - `nginx-vhosts`
   - `openresty-vhosts`
-  - `registry`
   - `repo`
   - `resource`
   - `scheduler-docker-local`
