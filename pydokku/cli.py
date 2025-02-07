@@ -5,11 +5,11 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, List, Union
+from typing import Callable, Dict, List, Type, Union
 
 from . import __version__
 from .models import Plugin
-from .plugins.base import PluginScheduler
+from .plugins.base import DokkuPlugin, PluginScheduler
 
 
 def create_dokku_instance(ssh_config: dict = None):
@@ -131,66 +131,120 @@ def dokku_export(ssh_config: dict, apps_names: Union[List[str], None] = None, qu
     return data
 
 
-def dokku_apply(data: Dict, ssh_config: dict, force: bool = False, quiet: bool = False, execute: bool = True):
+def plugin_apply(
+    plugin: Type[DokkuPlugin],
+    system_plugin: Union[Plugin, None],
+    values: List[Dict],
+    errlog: Callable,
+    execute: bool = True,
+):
+    plugin.plugin_name
+    prefix = ("# " if not execute else "") + f"[{plugin.name}] "
+    if values is None:
+        errlog(f"{prefix}No data found, skipping.")
+        return
+    elif system_plugin is None:
+        errlog(f"{prefix}Not found, skipping.")
+        return
+    elif not system_plugin.enabled:
+        errlog(f"{prefix}Disabled, skipping.")
+        return
+    errlog(f"{prefix}Reading objects...", end="")
+    objects = [plugin.object_deserialize(row) for row in values]
+    errlog(f" {len(objects)} loaded.")
+    errlog(f"{prefix}Creating objects")
+    for result in plugin.object_create_many(objects, execute=execute):
+        # `result` will be command's stdout (if execute) or Command object (if not execute)
+        output = str(result).strip()
+        if execute:
+            output = indent(output, "    ")
+        print(output)
+        # TODO: add option to return output instead of printing
+
+
+def dokku_apply(
+    data: Dict,
+    ssh_config: dict,
+    force: bool = False,
+    quiet: bool = False,
+    target_version: Union[List[int], None] = None,
+    execute: bool = True,
+):
     errlog = no_log if quiet else error_log
     data = deepcopy(data)
-    data.pop("pydokku")
-    dokku_metadata = data.pop("dokku")
+    try:
+        data.pop("pydokku")
+        dokku_metadata = data.pop("dokku")
+    except KeyError as exp:
+        raise ValueError(f"Key not found in JSON file: {exp.args[0]}")
     dokku = create_dokku_instance(ssh_config=ssh_config)
+    implemented_plugins = list(dokku.plugins.values())
+    try:
+        current_version = list(dokku.version())
+    except FileNotFoundError:
+        current_version = [0, 35, 15]
     expected_version = [int(part) for part in dokku_metadata["version"].split(".")]
-    current_version = list(dokku.version())
-    if current_version != expected_version:
-        if not force:
-            print(
-                f"ERROR: version mismatch (current: {current_version}, expected: {expected_version}). Use `--force` if you want to continue",
-                file=sys.stderr,
+    if execute:
+        if current_version != expected_version:
+            if not force:
+                print(
+                    f"ERROR: version mismatch (current: {current_version}, expected: {expected_version}). Use `--force` if you want to continue",
+                    file=sys.stderr,
+                )
+                exit(1)
+            errlog(
+                f"{'# ' if not execute else ''}WARNING: version mismatch (current: {current_version}, expected: {expected_version})."
             )
-            exit(1)
-        errlog(f"WARNING: version mismatch (current: {current_version}, expected: {expected_version}).")
-
-    system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}
-
-    def process_plugin(name: str):
-        plugin = dokku.plugins[name]
-        plugin_name = plugin.plugin_name
-        prefix = ("# " if not execute else "") + f"[{name}] "
-        values = data.pop(name, None)
-        if values is None:
-            errlog(f"{prefix}No data found, skipping.")
-            return
-        elif plugin_name not in system_plugins:
-            errlog(f"{prefix}Not found, skipping.")
-            return
-        elif not system_plugins[plugin_name].enabled:
-            errlog(f"{prefix}Disabled, skipping.")
-            return
-        errlog(f"{prefix}Reading objects...", end="")
-        objects = [plugin.object_deserialize(row) for row in values]
-        errlog(f" {len(objects)} loaded.")
-        errlog(f"{prefix}Creating objects")
-        for result in plugin.object_create_many(objects, execute=execute):
-            # `result` will be command's stdout (if execute) or Command object (if not execute)
-            output = str(result).strip()
-            if execute:
-                output = indent(output, "    ")
-            print(output)
-            # TODO: add option to return output instead of printing
-
-    scheduler = PluginScheduler(plugins=dokku.plugins.values())
+        system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}
+    else:
+        if target_version is not None:
+            dokku._dokku_version = tuple(target_version)
+            errlog(f"# Using target Dokku version: {'.'.join(map(str, target_version))}")
+        # Create fake instances of all plugins since it won't execute. The `system_plugins` are populated with Dokku
+        # plugin names, but the `data` has its keys represented as pydokku plugin names, so we need to map.
+        pydokku_to_dokku_map = {plugin.name: plugin.plugin_name for plugin in implemented_plugins}
+        system_plugins_list = [
+            Plugin(
+                name=pydokku_to_dokku_map.get(name, name),
+                enabled=True,
+                version="0.35.15",
+                description=f"dokku {name} plugin",
+            )
+            for name in data.keys()
+        ]
+        system_plugins = {plugin.name: plugin for plugin in system_plugins_list}
+    scheduler = PluginScheduler(plugins=implemented_plugins)
     # Consume the entire scheduler so if there are any loops in the plugin dependency graph the exception will be
     # raised before doing anything.
     plugin_batches = list(scheduler)
-    process_plugin("plugin")  # Must install all plugins before anything
-    system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}  # Update after installing new ones
+    if execute:
+        # Must install all plugins before anything
+        plugin_apply(
+            plugin=dokku.plugins["plugin"],
+            system_plugin=system_plugins.get("plugin"),
+            values=data.pop("plugin", None),
+            errlog=errlog,
+            execute=execute,
+        )
+        system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}  # Update after installing new ones
+    else:
+        data.pop("plugin", None)
     for plugin_batch in plugin_batches:
         # TODO: make the batch parallel?
         for name in plugin_batch:
             if name == "plugin":
                 continue  # Done already
-            process_plugin(name)
+            plugin = dokku.plugins[name]
+            plugin_apply(
+                plugin=plugin,
+                system_plugin=system_plugins.get(plugin.plugin_name),
+                values=data.pop(name, None),
+                errlog=errlog,
+                execute=execute,
+            )
     if data:
         not_executed = list(data.keys())
-        errlog(f"WARNING: remaining plugins not executed: {', '.join(not_executed)}")
+        errlog(f"{'# ' if not execute else ''}WARNING: remaining plugins not executed: {', '.join(not_executed)}")
 
 
 def dependency_graph(ssh_config: dict, indent: int = 2):
@@ -231,6 +285,9 @@ def main():
     apply_parser = subparsers.add_parser(
         "apply", help="Load a JSON specification and execute all needed operations in a Dokku installation"
     )
+    apply_parser.add_argument(
+        "--target-version", "-t", type=str, help="Target Dokku version to create commands (requires `--print-only`)"
+    )
     apply_parser.add_argument("--force", "-f", action="store_true", help="Force execution even if version mismatches")
     apply_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
     apply_parser.add_argument(
@@ -269,17 +326,31 @@ def main():
             json_filename.write_text(json_data)
 
     elif args.command == "apply":
+        execute = not args.print_only
+        target_version = args.target_version
+        if execute and target_version is not None:
+            print(
+                "ERROR: --target-version must be only provided when --print-only is set. If --print-only is not set, the Dokku target will be the Dokku installation version",
+                file=sys.stderr,
+            )
+            exit(4)
         json_filename = args.json_filename
         if json_filename.name != "-":
             json_encoded_data = json_filename.read_text()
         else:
             json_encoded_data = sys.stdin.read()
         data = json.loads(json_encoded_data)
+        if not execute:
+            if target_version is not None:
+                target_version = [int(part) for part in target_version.split(".")]
+            else:
+                target_version = [0, 35, 15]
         dokku_apply(
             data=data,
             force=args.force,
             quiet=args.quiet,
-            execute=not args.print_only,
+            execute=execute,
+            target_version=target_version,
             ssh_config=ssh_config,
         )
 

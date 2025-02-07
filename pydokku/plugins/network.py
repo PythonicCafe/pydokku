@@ -87,11 +87,12 @@ class NetworkPlugin(DokkuPlugin):
         self, app_name: Union[str, None], key: str, values: List[str], execute: bool = True
     ) -> Union[str, Command]:
         """Set multiple network values for a given key in an app"""
-        dokku_version = self.dokku.version()
-        if len(values) > 1 and dokku_version < (0, 31, 0):
-            raise RuntimeError(
-                f"Cannot set multiple networks in this Dokku version ({'.'.join(map(str, dokku_version))})"
-            )
+        if len(values) > 1:
+            dokku_version = self.dokku.version()
+            if dokku_version < (0, 31, 0):
+                raise RuntimeError(
+                    f"Cannot set multiple networks in this Dokku version ({'.'.join(map(str, dokku_version))})"
+                )
         system = app_name is None
         app_parameter = app_name if not system else "--global"
         params = [app_parameter, key]
