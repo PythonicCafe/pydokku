@@ -226,7 +226,7 @@ class PsPlugin(DokkuPlugin):
     ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         result = []
-        if not skip_system:
+        if not skip_system and obj.global_procfile_path is not None and self.dokku.version() >= (0, 31, 0):
             result.append(self.set(app_name=None, key="procfile-path", value=obj.global_procfile_path, execute=execute))
         if obj.app_procfile_path is not None:
             result.append(
