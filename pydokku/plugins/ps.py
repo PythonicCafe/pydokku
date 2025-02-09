@@ -4,7 +4,7 @@ from collections import Counter
 from functools import lru_cache
 from typing import Dict, List, Union
 
-from ..models import App, Command, Process, ProcessInfo
+from ..models import App, Command, Feature, Process, ProcessInfo
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_path
 from .base import DokkuPlugin
 
@@ -25,7 +25,15 @@ class PsPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "ps"
     object_classes = (ProcessInfo,)
     requires = ("apps", "git")
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+        Feature(
+            name="global_settings",
+            is_available=Feature.from_version,
+            dokku_version=(0, 34, 2),
+            dokku_git_commit="2516c79264cec54d1ef752a608d47371adcc5449",
+        ),
+    ]
 
     def inspect(self, app_name: str, execute: bool = True) -> List[dict]:
         result = self._evaluate("inspect", [app_name], execute=execute)
@@ -226,7 +234,8 @@ class PsPlugin(DokkuPlugin):
     ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         result = []
-        if not skip_system and obj.global_procfile_path is not None and self.dokku.version() >= (0, 31, 0):
+        if not skip_system and obj.global_procfile_path is not None and self.has("global_settings"):
+            # Old versions do not support setting global config for this plugin
             result.append(self.set(app_name=None, key="procfile-path", value=obj.global_procfile_path, execute=execute))
         if obj.app_procfile_path is not None:
             result.append(

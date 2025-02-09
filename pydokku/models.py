@@ -3,7 +3,7 @@ import datetime
 import shlex
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Literal, Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 from .utils import parse_iso_format
 
@@ -286,3 +286,30 @@ class LetsEncrypt(BaseModel):
     expires_at: Union[datetime.datetime, None] = None
     renewals_at: Union[datetime.timedelta, None] = None
     options: Union[Dict, None] = None
+
+
+@dataclass
+class Feature:
+    """Represents a capability or requirement a plugin could have"""
+
+    name: str
+    is_available: Callable[[Tuple[int, int, int], Tuple[int, int, int]], bool]
+    dokku_version: Optional[Tuple[int, int, int]] = None
+    dokku_git_commit: Optional[str] = None
+    description: Optional[str] = None
+
+    @staticmethod
+    def always(target_version: Tuple[int, int, int], current_version: Tuple[int, int, int]) -> bool:
+        return True
+
+    @staticmethod
+    def never(target_version: Tuple[int, int, int], current_version: Tuple[int, int, int]) -> bool:
+        return False
+
+    @staticmethod
+    def from_version(target_version: Tuple[int, int, int], current_version: Tuple[int, int, int]) -> bool:
+        return current_version >= target_version
+
+    @staticmethod
+    def before_version(target_version: Tuple[int, int, int], current_version: Tuple[int, int, int]) -> bool:
+        return current_version < target_version

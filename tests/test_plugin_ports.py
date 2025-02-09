@@ -4,17 +4,20 @@ from pydokku import Dokku
 from pydokku.models import Port
 from tests.utils import requires_dokku
 
+NEWEST_VERSION = (0, 35, 15)
+OLD_VERSION = (0, 30, 10)
+
 
 def test_object_classes():
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     assert dokku.ports.object_classes == (Port,)
 
 
 def test_clear_command():
     app_name = "test-app-1"
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     command = dokku.ports.clear(app_name=app_name, execute=False)
     assert command.command == ["dokku", "ports:clear", app_name]
     assert command.stdin is None
@@ -25,7 +28,8 @@ def test_clear_command():
 def test_clear_command_old():
     app_name = "test-app-1"
     dokku = Dokku()
-    dokku._dokku_version = (0, 30, 10)
+    dokku._dokku_version = OLD_VERSION
+    assert not dokku.ports.has("own_plugin")
     command = dokku.ports.clear(app_name=app_name, execute=False)
     assert command.command == ["dokku", "proxy:ports-clear", app_name]
     assert command.stdin is None
@@ -37,7 +41,7 @@ def test_add_command():
     app_name_1 = "test-app-1"
     app_name_2 = "test-app-2"
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     ports = [
         Port(app_name=app_name_1, scheme="http", host_port=80, container_port=5000),
         Port(app_name=app_name_1, scheme="https", host_port=443, container_port=None),
@@ -68,7 +72,7 @@ def test_add_command_old():
     app_name_1 = "test-app-1"
     app_name_2 = "test-app-2"
     dokku = Dokku()
-    dokku._dokku_version = (0, 30, 10)
+    dokku._dokku_version = OLD_VERSION
     ports = [
         Port(app_name=app_name_1, scheme="http", host_port=80, container_port=5000),
         Port(app_name=app_name_1, scheme="https", host_port=443, container_port=None),
@@ -99,7 +103,7 @@ def test_set_command():
     app_name_1 = "test-app-1"
     app_name_2 = "test-app-2"
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     ports = [
         Port(app_name=app_name_1, scheme="http", host_port=80, container_port=5000),
         Port(app_name=app_name_1, scheme="https", host_port=443, container_port=None),
@@ -130,7 +134,7 @@ def test_set_command_old():
     app_name_1 = "test-app-1"
     app_name_2 = "test-app-2"
     dokku = Dokku()
-    dokku._dokku_version = (0, 30, 10)
+    dokku._dokku_version = OLD_VERSION
     ports = [
         Port(app_name=app_name_1, scheme="http", host_port=80, container_port=5000),
         Port(app_name=app_name_1, scheme="https", host_port=443, container_port=None),
@@ -161,7 +165,7 @@ def test_remove_command():
     app_name_1 = "test-app-1"
     app_name_2 = "test-app-2"
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     ports = [
         Port(app_name=app_name_1, scheme="http", host_port=80, container_port=5000),
         Port(app_name=app_name_1, scheme="https", host_port=443, container_port=None),
@@ -192,7 +196,7 @@ def test_remove_command_old():
     app_name_1 = "test-app-1"
     app_name_2 = "test-app-2"
     dokku = Dokku()
-    dokku._dokku_version = (0, 30, 10)
+    dokku._dokku_version = OLD_VERSION
     ports = [
         Port(app_name=app_name_1, scheme="http", host_port=80, container_port=5000),
         Port(app_name=app_name_1, scheme="https", host_port=443, container_port=None),
@@ -234,7 +238,7 @@ def test_parse_list():
     """
     ).strip()
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     rows_parser = dokku.ports._get_rows_parser()
     result = rows_parser(stdout)
     expected = [
@@ -267,7 +271,7 @@ def test_parse_list_old():
     """
     ).strip()
     dokku = Dokku()
-    dokku._dokku_version = (0, 30, 10)
+    dokku._dokku_version = OLD_VERSION
     result = dokku.ports._parse_old_row(stdout)
     expected = {
         "app_name": "test-app-7",
@@ -322,7 +326,7 @@ def test_convert_rows():
         ),
     ]
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     result = dokku.ports._convert_rows(input_data)
     assert result == expected
 
@@ -336,10 +340,10 @@ def test_list_add_remove_set_clear(create_apps):
 
     # Default behavior
     after_app_creation = [obj for obj in dokku.ports.list() if obj.app_name in [None] + apps_names]
-    if dokku.version() >= (0, 31, 0):
+    if dokku.ports.has("global_settings"):
         expected_global = Port(app_name=None, scheme="http", host_port=80, container_port=5000)
         assert [expected_global] == after_app_creation
-    else:  # "Global" port object doesn't exist prior to 0.31.0
+    else:  # "Global" port object doesn't exist prior to Dokku 0.31.0
         assert [] == after_app_creation
 
     # add/set/remove/clear
@@ -384,7 +388,7 @@ def test_list_add_remove_set_clear(create_apps):
     )
     dokku.ports.clear(app_name="test-app-1", execute=True)
     after_clear = [obj for obj in dokku.ports.list() if obj.app_name in [None] + apps_names]
-    if dokku.version() >= (0, 31, 0):
+    if dokku.ports.has("own_plugin"):
         assert sorted(after_app_creation + [new_ports[2]], key=sort_ports) == sorted(after_clear, key=sort_ports)
     else:  # proxy:ports-clear will add `http:80:5000` to app
         default_port = Port(

@@ -2,7 +2,7 @@ import configparser
 import re
 from typing import List, Union
 
-from ..models import App, Command, Plugin
+from ..models import App, Command, Feature, Plugin
 from .base import DokkuPlugin
 
 REGEXP_PLUGIN_LIST = re.compile(r"^\s*([^ ]+)\s+([^ ]+)?\s*(enabled|disabled)\s+(.*)$")
@@ -46,7 +46,13 @@ class PluginPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "plugin"
     object_classes = (Plugin,)
     requires = ()
-    requires_extra_commands = True
+    features = [
+        Feature(
+            name="requires_extra_commands",
+            is_available=Feature.always,
+            description="Required to get git remote URL and reference (commit, branch, tag etc.) from non-core installed plugins",
+        ),
+    ]
 
     def _parse_list(self, stdout: str) -> List[Plugin]:
         result = []

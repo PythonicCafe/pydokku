@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import List, Union
 
-from ..models import App, Check, Command
+from ..models import App, Check, Command, Feature
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_comma_separated_list, parse_int
 from .base import DokkuPlugin
 
@@ -20,7 +20,9 @@ class ChecksPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "checks"
     object_classes = (Check,)
     requires = ("apps",)
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+    ]
 
     @lru_cache
     def _get_rows_parser(self):

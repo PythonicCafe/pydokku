@@ -1,8 +1,9 @@
 from collections import defaultdict
+from functools import cached_property
 from itertools import groupby
-from typing import Any, Iterator, List, Tuple, Type, TypeVar, Union
+from typing import Any, Iterator, List, Set, Tuple, Type, TypeVar, Union
 
-from ..models import App, Command
+from ..models import App, Command, Feature
 from ..utils import dataclass_field_set
 
 T = TypeVar("T")
@@ -14,10 +15,13 @@ class DokkuPlugin:
     plugin_name: str = (
         None  # Name Dokku shows in `plugin:list` - could be different from plugin_name (like with a "-vhosts" suffix)
     )
-    object_classes: List[Type[T]] = []
+    object_classes: Union[List[Type[T]], None] = None
     requires: Tuple[str] = None  # Name of the plugins required by this one (property `name` of the dependencies)
     requires_extra_commands: bool = (
         None  # Requires extra commands to be executed to export all data required to recreate the same environment
+    )
+    features: Union[List[Feature], None] = (
+        None  # List of plugin features (capabilities or requirements) based on Dokku versions
     )
 
     def __init__(self, dokku):
@@ -48,6 +52,18 @@ class DokkuPlugin:
     def _execute(self, command: Command) -> Tuple[int, str, str]:
         return self.dokku._execute(command)
 
+    @cached_property
+    def computed_features(self) -> Set[str]:
+        dokku_version = self.dokku.version()
+        return {
+            feature.name
+            for feature in self.features or []
+            if feature.is_available(current_version=dokku_version, target_version=feature.dokku_version)
+        }
+
+    def has(self, feature_name: str) -> bool:
+        return feature_name in self.computed_features
+
     def object_list(self, apps: List[App], system: bool = True) -> List[T]:
         """List all objects for this specific plugin"""
         # TODO: should always sort (as network objects are sort in `test_export_apply`?)
@@ -56,7 +72,7 @@ class DokkuPlugin:
     def object_deserialize(self, obj: dict) -> T:
         obj_keys = set(obj.keys())
         possible_dataclasses = []
-        for DataClass in self.object_classes:
+        for DataClass in self.object_classes or []:
             if obj_keys.issubset(dataclass_field_set(DataClass)):
                 possible_dataclasses.append(DataClass)
         if len(possible_dataclasses) == 0:
@@ -81,7 +97,7 @@ class DokkuPlugin:
         # global command, so it's faster.
         # Since a plugin can have many object types, we batch the execution for each type, this way each of them can
         # properly receive the `skip_system` parameter. The order of `object_classes` parameter is respected.
-        type_order = {type_: index for index, type_ in enumerate(self.object_classes)}
+        type_order = {type_: index for index, type_ in enumerate(self.object_classes or [])}
         objs.sort(key=lambda obj: type_order[type(obj)])
         for _, group_objs in groupby(objs, key=type):
             for index, obj in enumerate(group_objs):

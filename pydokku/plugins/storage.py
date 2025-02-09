@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import List, Literal, Tuple, Union
 
-from ..models import App, Command, Storage
+from ..models import App, Command, Feature, Storage
 from ..utils import clean_stderr
 from .base import DokkuPlugin
 
@@ -36,7 +36,13 @@ class StoragePlugin(DokkuPlugin):
     name = subcommand = plugin_name = "storage"
     object_classes = (Storage,)
     requires = ("apps",)
-    requires_extra_commands = True
+    features = [
+        Feature(
+            name="requires_extra_commands",
+            is_available=Feature.always,
+            description="Required to get storage ownership to have enough information to run `ensure_directory` and space used by a storage (the latter is an extra feature)",
+        ),
+    ]
 
     # TODO: create helper method to get a storage's size
 

@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List, Tuple, Union
 
-from ..models import App, Auth, Command, Git, SSHKey
+from ..models import App, Auth, Command, Feature, Git, SSHKey
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_timestamp
 from .base import DokkuPlugin
 
@@ -43,7 +43,13 @@ class GitPlugin(DokkuPlugin):
     object_classes = (SSHKey, Auth, Git)
     requires = ("apps",)
     # TODO: network requires git or git requires network? More info: <https://github.com/dokku/dokku/issues/7520>
-    requires_extra_commands = True
+    features = [
+        Feature(
+            name="requires_extra_commands",
+            is_available=Feature.always,
+            description="Required to list allowed hosts, auth settings and generated deploy key",
+        ),
+    ]
 
     @lru_cache
     def _get_rows_parser(self):

@@ -2,7 +2,7 @@ import re
 from functools import lru_cache
 from typing import List, Union
 
-from ..models import App, Command
+from ..models import App, Command, Feature
 from ..utils import get_stdout_rows_parser, parse_bool, parse_path, parse_timestamp
 from .base import DokkuPlugin
 
@@ -24,7 +24,9 @@ class AppsPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "apps"
     object_classes = (App,)
     requires = ("plugin",)
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+    ]
 
     @lru_cache
     def _get_rows_parser(self):

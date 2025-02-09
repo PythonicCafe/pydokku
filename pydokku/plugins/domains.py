@@ -3,7 +3,7 @@ import string
 from functools import lru_cache
 from typing import List, Union
 
-from ..models import App, Command, Domain
+from ..models import App, Command, Domain, Feature
 from ..utils import get_stdout_rows_parser, parse_bool, parse_space_separated_list
 from .base import DokkuPlugin
 
@@ -25,7 +25,9 @@ class DomainsPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "domains"
     object_classes = (Domain,)
     requires = ("apps",)
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+    ]
 
     @lru_cache
     def _get_rows_parser(self):

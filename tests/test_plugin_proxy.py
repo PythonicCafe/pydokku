@@ -133,7 +133,7 @@ def test_list_set_disable_enable(create_apps):
     # Default behavior
     after_app_creation = dokku.proxy.list()
     old_proxy = after_app_creation[0].global_type
-    if dokku.version() >= (0, 31, 0):
+    if dokku.version() >= (0, 31, 0):  # TODO: check capability
         expected_default = [
             Proxy(app_name=app_name, enabled=True, app_type=None, global_type=old_proxy) for app_name in apps_names
         ]
@@ -145,7 +145,8 @@ def test_list_set_disable_enable(create_apps):
     result = [proxy for proxy in after_app_creation if proxy.app_name in apps_names]
     assert sorted(result, key=sort_proxy) == sorted(expected_default, key=sort_proxy)
 
-    if dokku.version() >= (0, 31, 0):  # Old versions don't allow changing global
+    if dokku.version() >= (0, 31, 0):  # TODO: check capability
+        # Old versions don't allow changing global
         # Changing global will impact new apps
         new_proxy = "caddy" if old_proxy == "nginx" else "nginx"
         dokku.proxy.set(app_name=None, proxy_type=new_proxy)

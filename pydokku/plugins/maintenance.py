@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import List, Union
 
-from ..models import App, Command, Maintenance
+from ..models import App, Command, Feature, Maintenance
 from ..utils import get_stdout_rows_parser, parse_bool
 from .base import DokkuPlugin
 
@@ -19,7 +19,9 @@ class MaintenancePlugin(DokkuPlugin):
     name = subcommand = plugin_name = "maintenance"
     object_classes = (Maintenance,)
     requires = ("plugin", "apps")
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+    ]
 
     @lru_cache
     def _get_rows_parser(self):

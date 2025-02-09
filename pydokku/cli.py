@@ -102,7 +102,11 @@ def dokku_export(ssh_config: dict, apps_names: Union[List[str], None] = None, qu
                     errlog(f" {len(data[name])} serialized (not all of them may be exported).")
                 else:
                     errlog(f" {len(data[name])} exported.")
-                if not dokku.can_execute_regular_commands and len(data[name]) > 0 and plugin.requires_extra_commands:
+                if (
+                    not dokku.can_execute_regular_commands
+                    and len(data[name]) > 0
+                    and plugin.has("requires_extra_commands")
+                ):
                     required_cmd_warnings.append(name)
     not_exported = set(system_plugins.keys()) - exported_plugins
     if not_exported:

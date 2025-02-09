@@ -2,7 +2,7 @@ import json
 from functools import lru_cache
 from typing import Any, List, Union
 
-from ..models import App, AppNetwork, Command, Network
+from ..models import App, AppNetwork, Command, Feature, Network
 from ..utils import REGEXP_DOKKU_HEADER, clean_stderr, get_stdout_rows_parser, parse_bool, parse_comma_separated_list
 from .base import DokkuPlugin
 
@@ -27,10 +27,22 @@ class NetworkPlugin(DokkuPlugin):
     object_classes = (Network, AppNetwork)
     requires = ("apps",)
     # TODO: network requires git or git requires network? More info: <https://github.com/dokku/dokku/issues/7520>
-
-    @property
-    def requires_extra_commands(self):
-        return self.dokku.version() < (0, 35, 3)
+    features = [
+        Feature(
+            name="requires_extra_commands",
+            is_available=Feature.before_version,
+            dokku_version=(0, 35, 3),
+            dokku_git_commit="61b7752cce3b84bc40961bcf85684ec0835bff2c",
+            description="Required to run `docker network inspect` to get information `network:list` would not provide",
+        ),
+        Feature(
+            name="set_multiple_networks",
+            is_available=Feature.from_version,
+            dokku_version=(0, 31, 0),
+            dokku_git_commit="60b343470b6a3d5d82c32ab79108a2851fb41bbf",
+            description="Before this version Dokku did not support setting multiple networks for a specific app phase",
+        ),
+    ]
 
     def create(self, name: str, execute: bool = True) -> Union[str, Command]:
         return self._evaluate("create", params=[name], execute=execute)
@@ -46,7 +58,7 @@ class NetworkPlugin(DokkuPlugin):
         return [Network.from_dict(row) for row in json.loads(data)]
 
     def list(self) -> List[Network]:
-        if self.dokku.version() >= (0, 35, 3):
+        if not self.has("requires_extra_commands"):
             # Support for `--format json` was added on 0.35.3: <https://github.com/dokku/dokku/releases/tag/v0.35.3>
             stdout = self._evaluate("list", params=["--format", "json"], execute=True)
             return self._parse_list_json(stdout)
@@ -88,10 +100,9 @@ class NetworkPlugin(DokkuPlugin):
     ) -> Union[str, Command]:
         """Set multiple network values for a given key in an app"""
         if len(values) > 1:
-            dokku_version = self.dokku.version()
-            if dokku_version < (0, 31, 0):
+            if not self.has("set_multiple_networks"):
                 raise RuntimeError(
-                    f"Cannot set multiple networks in this Dokku version ({'.'.join(map(str, dokku_version))})"
+                    f"Cannot set multiple networks in this Dokku version ({'.'.join(map(str, self.dokku.version()))})"
                 )
         system = app_name is None
         app_parameter = app_name if not system else "--global"

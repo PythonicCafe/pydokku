@@ -5,6 +5,8 @@ from pydokku import Dokku
 from pydokku.models import Nginx
 from tests.utils import requires_dokku
 
+NEWEST_VERSION = (0, 35, 15)
+
 
 def test_object_classes():
     dokku = Dokku()
@@ -334,13 +336,14 @@ def test_convert_rows():
 def test_set_command():
     app_name = "test-app-1"
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     command = dokku.nginx.set(app_name=app_name, key="some-key", value=True, execute=False)
     assert command.command == ["dokku", "nginx:set", app_name, "some-key", "true"]
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is False
     # Old versions don't support setting some configs globally
+    assert dokku.nginx.has("global_settings")
     command = dokku.nginx.set(app_name=None, key="some-key", value=123, execute=False)
     assert command.command == ["dokku", "nginx:set", "--global", "some-key", "123"]
     assert command.stdin is None
@@ -356,13 +359,14 @@ def test_set_command():
 def test_unset_command():
     app_name = "test-app-1"
     dokku = Dokku()
-    dokku._dokku_version = (0, 35, 15)
+    dokku._dokku_version = NEWEST_VERSION
     command = dokku.nginx.unset(app_name=app_name, key="some-key", execute=False)
     assert command.command == ["dokku", "nginx:set", app_name, "some-key"]
     assert command.stdin is None
     assert command.check is True
     assert command.sudo is False
     # Old versions don't support setting some configs globally
+    assert dokku.nginx.has("global_settings")
     command = dokku.nginx.unset(app_name=None, key="some-key", execute=False)
     assert command.command == ["dokku", "nginx:set", "--global", "some-key"]
     assert command.stdin is None
@@ -410,7 +414,7 @@ def test_set_unset_list(create_apps):
     before = [obj for obj in dokku.nginx.list() if obj.app_name in [None] + apps_names]
     assert len(before) == len(apps_names) + 1  # apps + global
 
-    if dokku.version() >= (0, 31, 0):
+    if dokku.nginx.has("global_settings"):
         dokku.nginx.set(app_name=None, key="client-max-body-size", value="500m")
         dokku.nginx.set(app_name=apps_names[0], key="hsts-max-age", value=84600)
         dokku.nginx.set(app_name=apps_names[1], key="send-timeout", value="120s")

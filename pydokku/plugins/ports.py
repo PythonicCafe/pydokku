@@ -2,7 +2,7 @@ from functools import cached_property, lru_cache
 from itertools import groupby
 from typing import Dict, Iterator, List, Union
 
-from ..models import App, Command, Port
+from ..models import App, Command, Feature, Port
 from ..utils import clean_stderr, get_app_name, get_stdout_rows_parser, parse_space_separated_list
 from .base import DokkuPlugin
 
@@ -22,15 +22,31 @@ class PortsPlugin(DokkuPlugin):
     name = plugin_name = "ports"
     object_classes = (Port,)
     requires = ("apps", "domains")
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+        Feature(
+            name="global_settings",
+            is_available=Feature.from_version,
+            dokku_version=(0, 31, 0),
+            dokku_git_commit="64f0f2674db9dd309916a326a8c239c54cfc5d4e",
+            description="Global port object doesn't exist prior to Dokku 0.31.0",
+        ),
+        Feature(
+            name="own_plugin",
+            is_available=Feature.from_version,
+            dokku_version=(0, 31, 0),
+            dokku_git_commit="64f0f2674db9dd309916a326a8c239c54cfc5d4e",
+            description="Proxy plugin was split into proxy and ports on Dokku 0.31.0",
+        ),
+    ]
 
     @cached_property
     def subcommand(self):
-        return "ports" if self.dokku.version() >= (0, 31, 0) else "proxy"
+        return "ports" if self.has("own_plugin") else "proxy"
 
     @cached_property
     def _operation_prefix(self):
-        return "" if self.dokku.version() >= (0, 31, 0) else "ports-"
+        return "" if self.has("own_plugin") else "ports-"
 
     @lru_cache
     def _get_rows_parser(self):
@@ -82,7 +98,7 @@ class PortsPlugin(DokkuPlugin):
         # Dokku WILL return error in this `report` command, so `check=False` is used in all `:report/list` because of
         # this inconsistent behavior <https://github.com/dokku/dokku/issues/7454>
         system = app_name is None
-        if self.dokku.version() >= (0, 31, 0):
+        if self.has("own_plugin"):
             _, stdout, stderr = self._evaluate(
                 "report",
                 params=[] if system else [app_name],

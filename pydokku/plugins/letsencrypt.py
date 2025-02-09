@@ -1,7 +1,7 @@
 import datetime
 from typing import Any, Dict, List, Union
 
-from ..models import App, Command, LetsEncrypt
+from ..models import App, Command, Feature, LetsEncrypt
 from ..utils import clean_stderr, get_system_tzinfo, parse_iso_format, parse_timedelta
 from .base import DokkuPlugin
 
@@ -24,7 +24,13 @@ class LetsEncryptPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "letsencrypt"
     object_classes = (LetsEncrypt,)
     requires = ("apps", "domains", "proxy", "nginx")
-    requires_extra_commands = True
+    features = [
+        Feature(
+            name="requires_extra_commands",
+            is_available=Feature.always,
+            description="Required to get options, like email, dns provider etc.",
+        ),
+    ]
 
     def _parse_list(self, stdout: str) -> List[Dict]:
         lines = stdout.strip().splitlines()

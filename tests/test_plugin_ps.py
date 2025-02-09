@@ -6,6 +6,20 @@ from pydokku import Dokku
 from pydokku.models import Process, ProcessInfo
 
 
+def test_features():
+    for version in ((0, 30, 0), (0, 34, 2), (0, 35, 15)):
+        dokku = Dokku()
+        dokku._dokku_version = version
+        assert not dokku.ps.has("requires_extra_commands")
+
+    dokku = Dokku()
+    dokku._dokku_version = (0, 30, 0)
+    assert not dokku.ps.has("global_settings")
+    dokku = Dokku()
+    dokku._dokku_version = (0, 34, 2)
+    assert dokku.ps.has("global_settings")
+
+
 def test_object_classes():
     dokku = Dokku()
     assert dokku.ps.object_classes == (ProcessInfo,)

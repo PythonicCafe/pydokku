@@ -2,7 +2,7 @@ import json
 import re
 from typing import List, Union
 
-from ..models import App, Command, SSHKey
+from ..models import App, Command, Feature, SSHKey
 from ..ssh import REGEXP_SSH_PUBLIC_KEY
 from ..utils import clean_stderr
 from .base import DokkuPlugin
@@ -38,8 +38,14 @@ class SSHKeysPlugin(DokkuPlugin):
     name = "ssh_keys"
     object_classes = (SSHKey,)
     requires = ()
-    requires_extra_commands = True
     subcommand = plugin_name = "ssh-keys"
+    features = [
+        Feature(
+            name="requires_extra_commands",
+            is_available=Feature.always,
+            description="Required to see public keys' contents so the list action have all the needed data",
+        ),
+    ]
 
     def _read_authorized_keys(self):
         """

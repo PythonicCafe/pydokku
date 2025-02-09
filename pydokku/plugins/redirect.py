@@ -1,7 +1,7 @@
 from itertools import zip_longest
 from typing import List, Union
 
-from ..models import App, Command, Redirect
+from ..models import App, Command, Feature, Redirect
 from .base import DokkuPlugin
 
 
@@ -16,7 +16,9 @@ class RedirectPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "redirect"
     object_classes = (Redirect,)
     requires = ("apps", "domains")
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+    ]
 
     def _parse_list(self, stdout: str) -> List[dict]:
         lines = stdout.splitlines()

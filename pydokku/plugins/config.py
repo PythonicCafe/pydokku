@@ -3,7 +3,7 @@ import json
 from itertools import groupby
 from typing import Iterator, List, Union
 
-from ..models import App, Command, Config
+from ..models import App, Command, Config, Feature
 from ..utils import get_app_name
 from .base import DokkuPlugin
 
@@ -25,7 +25,9 @@ class ConfigPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "config"
     object_classes = (Config,)
     requires = ("apps",)
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+    ]
 
     def get(
         self, app_name: Union[str, None], merged: bool = False, hide_internal: bool = True, as_dict: bool = False

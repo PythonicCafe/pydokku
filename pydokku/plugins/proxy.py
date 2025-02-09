@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import List, Union
 
-from ..models import App, Command, Proxy
+from ..models import App, Command, Feature, Proxy
 from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool
 from .base import DokkuPlugin
 
@@ -18,7 +18,16 @@ class ProxyPlugin(DokkuPlugin):
     name = subcommand = plugin_name = "proxy"
     object_classes = (Proxy,)
     requires = ("apps",)
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+        Feature(
+            name="global_settings",
+            is_available=Feature.from_version,
+            dokku_version=(0, 33, 0),
+            dokku_git_commit="7fbb86093bdbda735d05b1159c970711341e9c77",
+            description="Old versions do not support setting global config for this plugin",
+        ),
+    ]
 
     @lru_cache
     def _get_rows_parser(self):
@@ -45,7 +54,7 @@ class ProxyPlugin(DokkuPlugin):
             raise RuntimeError(f"Error executing proxy:report: {stderr}")
         rows_parser = self._get_rows_parser()
         parsed_rows = rows_parser(stdout)
-        if self.dokku.version() < (0, 31, 0):
+        if not self.has("global_settings"):
             for row in parsed_rows:
                 del row["port_map"]
         return [Proxy(**row) for row in parsed_rows]
@@ -86,7 +95,7 @@ class ProxyPlugin(DokkuPlugin):
     ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         result = []
-        if not skip_system and obj.global_type is not None and self.dokku.version() >= (0, 31, 0):
+        if not skip_system and obj.global_type is not None and self.has("global_settings"):
             result.append(self.set(app_name=None, proxy_type=obj.global_type, execute=execute))
         if obj.app_type is not None:
             result.append(self.set(app_name=app_name, proxy_type=obj.app_type, execute=execute))

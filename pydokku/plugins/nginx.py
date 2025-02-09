@@ -2,7 +2,7 @@ import datetime
 from functools import lru_cache
 from typing import Any, List, Union
 
-from ..models import App, Command, Nginx
+from ..models import App, Command, Feature, Nginx
 from ..utils import (
     dataclass_field_set,
     get_stdout_rows_parser,
@@ -28,7 +28,16 @@ class NginxPlugin(DokkuPlugin):
     plugin_name = "nginx-vhosts"
     object_classes = (Nginx,)
     requires = ("apps", "domains", "ports", "proxy", "redirect")
-    requires_extra_commands = False
+    features = [
+        Feature(name="requires_extra_commands", is_available=Feature.never),
+        Feature(
+            name="global_settings",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 2),
+            dokku_git_commit="e70169f591e4d4db01bb55d289503f9e17d85aa9",
+            description="Old versions do not support setting global config for this plugin",
+        ),
+    ]
 
     @lru_cache
     def _get_rows_parser(self):
@@ -186,6 +195,9 @@ class NginxPlugin(DokkuPlugin):
             if field_name in ("app_name", "last_visited_at"):  # Not actual properties to set
                 continue
             value = getattr(obj, field_name)
+            if app_name is None and not self.has("global_settings"):
+                # Old versions do not support setting global config for this plugin
+                continue
             if value is None:
                 result.append(self.unset(app_name=app_name, key=field_name.replace("_", "-"), execute=execute))
             else:
