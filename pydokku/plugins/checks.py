@@ -22,6 +22,12 @@ class ChecksPlugin(DokkuPlugin):
     requires = ("apps",)
     features = [
         Feature(name="requires_extra_commands", is_available=Feature.never),
+        Feature(
+            name="set:wait-to-retire",
+            is_available=Feature.from_version,
+            dokku_version=(0, 29, 0),
+            dokku_git_commit="f5c3b5dc347748c7f70479b970b0356f5b38efd1",
+        ),
     ]
 
     @lru_cache
@@ -149,16 +155,18 @@ class ChecksPlugin(DokkuPlugin):
         system = app_name is None
         result = []
         # First, set wait to retire
-        if system:
+        if system and obj.global_wait_to_retire is not None:
             # Since there's a specific object for "system" (having `app_name=None`), `skip_system` is ignored here
             # (it's different from other plugins like `proxy`, where the system object is "hidden" in another object).
-            result.append(
-                self.set(app_name=None, key="wait-to-retire", value=obj.global_wait_to_retire, execute=execute)
-            )
+            if self.has("set:wait-to-retire"):
+                result.append(
+                    self.set(app_name=None, key="wait-to-retire", value=obj.global_wait_to_retire, execute=execute)
+                )
         elif obj.app_wait_to_retire is not None:
-            result.append(
-                self.set(app_name=app_name, key="wait-to-retire", value=obj.app_wait_to_retire, execute=execute)
-            )
+            if self.has("set:wait-to-retire"):
+                result.append(
+                    self.set(app_name=app_name, key="wait-to-retire", value=obj.app_wait_to_retire, execute=execute)
+                )
         if not system:  # Set process status (only if not global)
             if obj.status == "enabled":
                 result.append(self.enable(app_name=obj.app_name, process_names=[obj.process], execute=execute))
