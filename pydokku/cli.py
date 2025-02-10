@@ -140,9 +140,11 @@ def plugin_apply(
     system_plugin: Union[Plugin, None],
     values: List[Dict],
     errlog: Callable,
+    verbose: bool = False,
     execute: bool = True,
 ):
-    plugin.plugin_name
+    if verbose and not execute:
+        raise ValueError("Options `verbose` and `execute` cannot be set together")
     prefix = ("# " if not execute else "") + f"[{plugin.name}] "
     if values is None:
         errlog(f"{prefix}No data found, skipping.")
@@ -157,13 +159,19 @@ def plugin_apply(
     objects = [plugin.object_deserialize(row) for row in values]
     errlog(f" {len(objects)} loaded.")
     errlog(f"{prefix}Creating objects")
-    for result in plugin.object_create_many(objects, execute=execute):
-        # `result` will be command's stdout (if execute) or Command object (if not execute)
-        output = str(result).strip()
-        if execute:
-            output = indent(output, "    ")
-        print(output)
-        # TODO: add option to return output instead of printing
+    # TODO: add option to return output instead of printing
+    if verbose:
+        print(f"# Executing:")
+        for result in plugin.object_create_many(objects, execute=False):
+            print("# " + str(result).strip())
+    if execute:
+        for result in plugin.object_create_many(objects, execute=True):
+            # `result` will be command's stdout
+            print(indent(str(result).strip(), "    "))
+    else:
+        for result in plugin.object_create_many(objects, execute=False):
+            # `result` will be a Command object
+            print(str(result).strip())
 
 
 def dokku_apply(
@@ -172,6 +180,7 @@ def dokku_apply(
     force: bool = False,
     quiet: bool = False,
     target_version: Union[List[int], None] = None,
+    verbose: bool = False,
     execute: bool = True,
 ):
     errlog = no_log if quiet else error_log
@@ -228,6 +237,7 @@ def dokku_apply(
             system_plugin=system_plugins.get("plugin"),
             values=data.pop("plugin", None),
             errlog=errlog,
+            verbose=verbose,
             execute=execute,
         )
         system_plugins = {plugin.name: plugin for plugin in dokku.plugin.list()}  # Update after installing new ones
@@ -244,6 +254,7 @@ def dokku_apply(
                 system_plugin=system_plugins.get(plugin.plugin_name),
                 values=data.pop(name, None),
                 errlog=errlog,
+                verbose=verbose,
                 execute=execute,
             )
     if data:
@@ -293,13 +304,14 @@ def main():
         "--target-version", "-t", type=str, help="Target Dokku version to create commands (requires `--print-only`)"
     )
     apply_parser.add_argument("--force", "-f", action="store_true", help="Force execution even if version mismatches")
-    apply_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
     apply_parser.add_argument(
         "--print-only",
         "-p",
         action="store_true",
         help="Print the commands to be executed instead of actually executing them",
     )
+    apply_parser.add_argument("--quiet", "-q", action="store_true", help="Do not show warnings on stderr")
+    apply_parser.add_argument("--verbose", "-v", action="store_true", help="Print commands before executing them (only if `--print-only` is not set)")
     apply_parser.add_argument("json_filename", type=Path, help="Filename created by `pydokku export` command")
 
     args = parser.parse_args()
@@ -332,6 +344,7 @@ def main():
     elif args.command == "apply":
         execute = not args.print_only
         target_version = args.target_version
+        verbose = args.verbose
         if execute and target_version is not None:
             print(
                 "ERROR: --target-version must be only provided when --print-only is set. If --print-only is not set, the Dokku target will be the Dokku installation version",
@@ -354,6 +367,7 @@ def main():
             force=args.force,
             quiet=args.quiet,
             execute=execute,
+            verbose=verbose,
             target_version=target_version,
             ssh_config=ssh_config,
         )

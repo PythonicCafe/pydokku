@@ -37,6 +37,180 @@ class NginxPlugin(DokkuPlugin):
             dokku_git_commit="e70169f591e4d4db01bb55d289503f9e17d85aa9",
             description="Old versions do not support setting global config for this plugin",
         ),
+        Feature(
+            name="set:access-log-format",
+            is_available=Feature.from_version,
+            dokku_version=(0, 22, 0),
+            dokku_git_commit="c0581a0e375a24f0fca77b9c01876573f2168bd7",
+        ),
+        Feature(
+            name="set:access-log-path",
+            is_available=Feature.from_version,
+            dokku_version=(0, 20, 1),
+            dokku_git_commit="62caa85423f9ab2d4e7d01e9e57226359bc7b7f8",
+        ),
+        Feature(
+            name="set:bind-address-ipv4",
+            is_available=Feature.from_version,
+            dokku_version=(0, 19, 12),
+            dokku_git_commit="6b431378a15207e7a74579094496dc82990bb0bd",
+        ),
+        Feature(
+            name="set:bind-address-ipv6",
+            is_available=Feature.from_version,
+            dokku_version=(0, 19, 12),
+            dokku_git_commit="6b431378a15207e7a74579094496dc82990bb0bd",
+        ),
+        Feature(
+            name="set:client-body-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 6),
+            dokku_git_commit="4d7f779c28f5a5866a3d3a730084aebea61b581c",
+        ),
+        Feature(
+            name="set:client-header-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 6),
+            dokku_git_commit="4d7f779c28f5a5866a3d3a730084aebea61b581c",
+        ),
+        Feature(
+            name="set:client-max-body-size",
+            is_available=Feature.from_version,
+            dokku_version=(0, 23, 0),
+            dokku_git_commit="277e9691e1dd07b532da977d1f7022aa7fc3549a",
+        ),
+        Feature(
+            name="set:disable-custom-config",
+            is_available=Feature.from_version,
+            dokku_version=(0, 22, 0),
+            dokku_git_commit="f5ba843cf30cbe9d7ce41b0795451fb584994836",
+        ),
+        Feature(
+            name="set:error-log-path",
+            is_available=Feature.from_version,
+            dokku_version=(0, 20, 1),
+            dokku_git_commit="62caa85423f9ab2d4e7d01e9e57226359bc7b7f8",
+        ),
+        Feature(
+            name="set:hsts",
+            is_available=Feature.from_version,
+            dokku_version=(0, 20, 0),
+            dokku_git_commit="73e7ff7b18c7324b60e849bbc00e40573c64dedd",
+        ),
+        Feature(
+            name="set:hsts-include-subdomains",
+            is_available=Feature.from_version,
+            dokku_version=(0, 20, 0),
+            dokku_git_commit="73e7ff7b18c7324b60e849bbc00e40573c64dedd",
+        ),
+        Feature(
+            name="set:hsts-max-age",
+            is_available=Feature.from_version,
+            dokku_version=(0, 20, 0),
+            dokku_git_commit="73e7ff7b18c7324b60e849bbc00e40573c64dedd",
+        ),
+        Feature(
+            name="set:hsts-preload",
+            is_available=Feature.from_version,
+            dokku_version=(0, 20, 0),
+            dokku_git_commit="73e7ff7b18c7324b60e849bbc00e40573c64dedd",
+        ),
+        Feature(
+            name="set:keepalive-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 6),
+            dokku_git_commit="4d7f779c28f5a5866a3d3a730084aebea61b581c",
+        ),
+        Feature(
+            name="set:lingering-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 6),
+            dokku_git_commit="4d7f779c28f5a5866a3d3a730084aebea61b581c",
+        ),
+        Feature(
+            name="set:nginx-conf-sigil-path",
+            is_available=Feature.from_version,
+            dokku_version=(0, 29, 0),
+            dokku_git_commit="17814d484717e17a38912c1bf4a370b053e88ecc",
+        ),
+        Feature(
+            name="set:proxy-buffer-size",
+            is_available=Feature.from_version,
+            dokku_version=(0, 22, 0),
+            dokku_git_commit="30414cbd0c5eb55891984740a6cab86f401d622b",
+        ),
+        Feature(
+            name="set:proxy-buffering",
+            is_available=Feature.from_version,
+            dokku_version=(0, 22, 0),
+            dokku_git_commit="30414cbd0c5eb55891984740a6cab86f401d622b",
+        ),
+        Feature(
+            name="set:proxy-buffers",
+            is_available=Feature.from_version,
+            dokku_version=(0, 22, 0),
+            dokku_git_commit="30414cbd0c5eb55891984740a6cab86f401d622b",
+        ),
+        Feature(
+            name="set:proxy-busy-buffers-size",
+            is_available=Feature.from_version,
+            dokku_version=(0, 22, 0),
+            dokku_git_commit="30414cbd0c5eb55891984740a6cab86f401d622b",
+        ),
+        Feature(
+            name="set:proxy-connect-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 6),
+            dokku_git_commit="4d7f779c28f5a5866a3d3a730084aebea61b581c",
+        ),
+        Feature(
+            name="set:proxy-read-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 21, 0),
+            dokku_git_commit="42122a7540a22dd9eebee5455393564e7014dda7",
+        ),
+        Feature(
+            name="set:proxy-send-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 6),
+            dokku_git_commit="4d7f779c28f5a5866a3d3a730084aebea61b581c",
+        ),
+        Feature(
+            name="set:send-timeout",
+            is_available=Feature.from_version,
+            dokku_version=(0, 35, 6),
+            dokku_git_commit="4d7f779c28f5a5866a3d3a730084aebea61b581c",
+        ),
+        Feature(
+            name="set:underscore-in-headers",
+            is_available=Feature.from_version,
+            dokku_version=(0, 33, 8),
+            dokku_git_commit="b99c25f090e03a64b01ac7ee54825b414e2d551c",
+        ),
+        Feature(
+            name="set:x-forwarded-for-value",
+            is_available=Feature.from_version,
+            dokku_version=(0, 23, 0),
+            dokku_git_commit="a6062d4ab4c28758c29c397301f0dc52cfa7af07",
+        ),
+        Feature(
+            name="set:x-forwarded-port-value",
+            is_available=Feature.from_version,
+            dokku_version=(0, 23, 0),
+            dokku_git_commit="a6062d4ab4c28758c29c397301f0dc52cfa7af07",
+        ),
+        Feature(
+            name="set:x-forwarded-proto-value",
+            is_available=Feature.from_version,
+            dokku_version=(0, 23, 0),
+            dokku_git_commit="a6062d4ab4c28758c29c397301f0dc52cfa7af07",
+        ),
+        Feature(
+            name="set:x-forwarded-ssl",
+            is_available=Feature.from_version,
+            dokku_version=(0, 23, 7),
+            dokku_git_commit="f7e218637ec9bff002899eed35241f64b5e2c0ea",
+        ),
     ]
 
     @lru_cache
@@ -201,7 +375,7 @@ class NginxPlugin(DokkuPlugin):
             if value is None:
                 result.append(self.unset(app_name=app_name, key=field_name.replace("_", "-"), execute=execute))
             else:
-                result.append(
-                    self.set(app_name=app_name, key=field_name.replace("_", "-"), value=value, execute=execute)
-                )
+                property_name = field_name.replace("_", "-")
+                if self.has(f"set:{property_name}"):
+                    result.append(self.set(app_name=app_name, key=property_name, value=value, execute=execute))
         return result
