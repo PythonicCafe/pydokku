@@ -5,10 +5,13 @@ from functools import lru_cache
 from typing import Dict, List, Union
 
 from ..models import App, Command, Feature, Process, ProcessInfo
-from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_path
+from ..utils import clean_stderr, get_stdout_rows_parser, parse_bool, parse_int, parse_path
 from .base import DokkuPlugin
 
 REGEXP_PROCESS_STATUS = re.compile(r"^([^(]+) \(CID: ([^)]+)\)")
+
+
+# TODO: 0.36.0 - Process stop timeouts are now configured via the `ps` property `stop-timeout-seconds`. Existing `DOKKU_DOCKER_STOP_TIMEOUT` environment variables will be automatically migrated to the new value.
 
 
 class PsPlugin(DokkuPlugin):
@@ -34,6 +37,9 @@ class PsPlugin(DokkuPlugin):
             dokku_git_commit="2516c79264cec54d1ef752a608d47371adcc5449",
         ),
     ]
+    # TODO: ps:setstop-timeout-seconds >= 0.35.17? <https://github.com/dokku/dokku/pull/7577/files>
+    # TODO: add dokku ps:set node-js-app maintenance true <https://github.com/dokku/dokku/pull/7578/files>
+    # TODO: add set mailfrom/mailto <https://github.com/dokku/dokku/pull/7578/files>
 
     def inspect(self, app_name: str, execute: bool = True) -> List[dict]:
         result = self._evaluate("inspect", [app_name], execute=execute)
@@ -45,7 +51,11 @@ class PsPlugin(DokkuPlugin):
     def _get_rows_parser(self):
         return get_stdout_rows_parser(
             normalize_keys=False,  # So we get original "Status" string for each process
-            discards=["Processes", "Ps computed procfile path"],
+            discards=[
+                "Processes",
+                "Ps computed procfile path",
+                "Computed stop timeout seconds",
+            ],
             renames={
                 "Ps can scale": "can_scale",
                 "Ps procfile path": "app_procfile_path",
@@ -54,6 +64,8 @@ class PsPlugin(DokkuPlugin):
                 "Deployed": "deployed",
                 "Restore": "restore",
                 "Running": "running",
+                "Global stop timeout seconds": "global_stop_timeout",
+                "Stop timeout seconds": "stop_timeout",
             },
             parsers={
                 "can_scale": parse_bool,
@@ -62,6 +74,8 @@ class PsPlugin(DokkuPlugin):
                 "running": parse_bool,
                 "global_procfile_path": parse_path,
                 "app_procfile_path": parse_path,
+                "global_stop_timeout": parse_int,
+                "stop_timeout": parse_int,
             },
         )
 
@@ -234,8 +248,11 @@ class PsPlugin(DokkuPlugin):
     ) -> Union[List[str], List[Command]]:
         app_name = obj.app_name
         result = []
+        # TODO: skip `set` commands if the feature is not found
         if not skip_system and obj.global_procfile_path is not None and self.has("global_settings"):
             # Old versions do not support setting global config for this plugin
+            # TODO: object_create_many must deal with other versions by applying global configs individually
+            # TODO: add similar TODOs for other plugins
             result.append(self.set(app_name=None, key="procfile-path", value=obj.global_procfile_path, execute=execute))
         if obj.app_procfile_path is not None:
             result.append(

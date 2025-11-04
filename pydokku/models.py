@@ -125,6 +125,8 @@ class ProcessInfo(BaseModel):
     running: bool
     global_procfile_path: Union[Path, None] = None
     app_procfile_path: Union[Path, None] = None
+    global_stop_timeout: Union[int, None] = None
+    stop_timeout: Union[int, None] = None
 
     def __post_init__(self):
         if self.processes and not isinstance(self.processes[0], Process):
@@ -313,3 +315,6 @@ class Feature:
     @staticmethod
     def before_version(target_version: Tuple[int, int, int], current_version: Tuple[int, int, int]) -> bool:
         return current_version < target_version
+
+
+# TODO: add test for features for all plugins
