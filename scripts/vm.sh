@@ -25,7 +25,6 @@ VM_VCPUS=2
 VM_RAM=2048
 SHARED_FOLDER="/var/lib/libvirt/shared/${VM_NAME}"
 
-
 function log() {
 	echo
 	echo
@@ -34,24 +33,11 @@ function log() {
 
 function vm_create() {
 	log "Installing system packages"
-	apt update
-	apt install -y libvirt-daemon-system virtiofsd
-
-	log "Configuring libvirt user permission and network"
-	if ! groups $USER | grep -q "\blibvirt\b"; then
-		adduser $USER libvirt
-	fi
-	if ! virsh --connect "qemu:///system" net-info default | grep -q "Active:.*yes"; then
-		virsh --connect "qemu:///system" net-start default
-	fi
-	if ! virsh --connect "qemu:///system" net-info default | grep -q "Autostart:.*yes"; then
-		virsh --connect "qemu:///system" net-autostart default
-	fi
-	mkdir -p "$SHARED_FOLDER"
-	chown -R ${SUDO_USER:-$USER}:libvirt "$SHARED_FOLDER"
-
-	log "Downloading Debian cloud-ready image"
-	wget -c -t 0 -O "$DEBIAN_QCOW2" "$DEBIAN_QCOW2_URL"
+	install_libs
+	config_permissions
+	qemu_connect
+	create_shared_folder
+	download_image
 
 	log "Creating cloud-init YAML files"
 	cat <<EOF > "$CLOUDINIT_USER_YAML"
@@ -104,6 +90,12 @@ EOF
 	qemu-img create -f qcow2 -F qcow2 -b "$DEBIAN_QCOW2" "$OVERLAY_QCOW2" "$OVERLAY_DISK_SIZE"
 
 	log "Creating virtual machine"
+
+	if is_gentoo; then
+		mkdir /var/lib/libvirt/shared/debian12-pydokku
+		mkdir /var/lib/libvirt/boot
+	fi
+
 	virt-install \
 		--connect "qemu:///system" \
 		--name "$VM_NAME" \
@@ -125,6 +117,58 @@ EOF
 	ip=$(vm_wait_for_ip)
 	echo "VM IP address: $ip"
 	echo "Use: ssh $DEFAULT_USERNAME@$ip (password: $DEFAULT_PASSWORD)"
+}
+
+function is_gentoo() {
+	if uname -r | grep -iq "gentoo"; then
+		true
+	else
+		false
+	fi
+}
+
+function install_libs() {
+	if is_gentoo; then
+		echo "Gentoo system detected. Running emerge --sync..."
+		emerge --sync
+		emerge --deep app-emulation/libvirt app-emulation/qemu virtiofsd app-emulation/virt-manager whois
+		systemctl start libvirtd
+	else
+		echo "Non-Gentoo system detected. Running apt update..."
+		apt update
+		apt install -y libvirt-daemon-system virtiofsd
+	fi
+}
+
+function config_permissions() {
+	log "Configuring libvirt user permission and network"
+	if ! groups $USER | grep -q "\blibvirt\b"; then
+		usermod -a -G libvirt $USER
+	fi
+}
+
+function qemu_connect() {
+	if ! virsh --connect "qemu:///system" net-info default | grep -q "Active:.*yes"; then
+		virsh --connect "qemu:///system" net-start default
+	fi
+	if ! virsh --connect "qemu:///system" net-info default | grep -q "Autostart:.*yes"; then
+		virsh --connect "qemu:///system" net-autostart default
+	fi
+}
+
+function create_shared_folder() {
+	log "Creating shared folder"
+	mkdir -p "$SHARED_FOLDER"
+	chown -R ${SUDO_USER:-$USER}:libvirt "$SHARED_FOLDER"
+}
+
+function download_image() {
+	log "Downloading Debian cloud-ready image"
+
+	if is_gentoo; then
+		mkdir -p /var/lib/libvirt/images
+	fi
+	wget -c -t 0 -O "$DEBIAN_QCOW2" "$DEBIAN_QCOW2_URL"
 }
 
 function vm_start() {
